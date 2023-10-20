@@ -1,14 +1,16 @@
 //const { MongoClient } = require('mongodb');
 const express = require('express');
-const { connectToDatabase, createTableUser } = require('./db/database');
-
-connectToDatabase();
-createTableUser();
-/** const {
-	dbConnexion,
-	getDatabase,
+const {
+	connectToDatabase,
+	createTableUser,
 	getClientsCollection,
 } = require('./db/database');
+
+getClientsCollection();
+connectToDatabase();
+createTableUser();
+
+const { dbConnexion, getDatabase } = require('./db/database');
 const path = require('path');
 const app = express();
 const port = 3000;
@@ -24,4 +26,4 @@ app.use(express.json());
 // permet de lancer serveur web
 app.listen(port, () => {
 	console.log(`App listening port ${port}`);
-});*/
+});

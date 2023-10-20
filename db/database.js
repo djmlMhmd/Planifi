@@ -1,5 +1,3 @@
-require('dotenv').config();
-const { func } = require('joi');
 const { Client } = require('pg');
 
 const client = new Client({
@@ -24,23 +22,43 @@ const connectToDatabase = async () => {
 
 const createTableUser = async () => {
 	try {
-		const query = `
-            CREATE TABLE users (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(100),
-				password VARCHAR(100),
-                email VARCHAR(100) UNIQUE NOT NULL
-            );
-        `;
+		const checkTableQuery = `
+      SELECT to_regclass('users') as table_exists;
+    `;
 
-		await client.query(query);
-		console.log('Table users créée avec succès');
+		const result = await client.query(checkTableQuery);
+		if (result.rows[0].table_exists === null) {
+			// La table n'existe pas, alors on la crée
+			const createTableQuery = `
+        CREATE TABLE users (
+          id SERIAL PRIMARY KEY,
+          "firstName" VARCHAR(100),
+		  "lastName" VARCHAR(100),
+          password VARCHAR(100),
+          email VARCHAR(100) UNIQUE NOT NULL,
+		  phone VARCHAR(20)
+        );
+      `;
+
+			await client.query(createTableQuery);
+			console.log('Table users créée avec succès');
+		} else {
+			console.log('La table users existe déjà.');
+		}
 	} catch (e) {
-		console.error('Erreur lors de la création de la table', e.stack);
+		console.error(
+			'Erreur lors de la création/verification de la table',
+			e.stack
+		);
 	}
+};
+
+const getClientsCollection = () => {
+	return client;
 };
 
 module.exports = {
 	connectToDatabase,
 	createTableUser,
+	getClientsCollection,
 };

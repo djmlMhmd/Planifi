@@ -6,6 +6,7 @@ function userValidation(data) {
 		lastName: Joi.string().min(2).max(30).trim().required(),
 		email: Joi.string().email().trim().required(),
 		password: Joi.string().min(8).max(60).required(),
+		phone: Joi.string().min(10).max(12),
 	});
 	return userValidationSchema.validate(data);
 }
