@@ -38,7 +38,8 @@ const createTableUser = async () => {
           email VARCHAR(100) UNIQUE NOT NULL,
 		  phone VARCHAR(20),
 		  company_name VARCHAR(100),
-		  company_address VARCHAR(300)
+		  company_address VARCHAR(300),
+		  creation_date DATE NOT NULL DEFAULT CURRENT_DATE 
         );
       `;
 

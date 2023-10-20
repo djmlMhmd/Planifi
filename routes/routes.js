@@ -8,7 +8,7 @@ const saltRounds = 10;
 
 router.use(express.json());
 
-// INDIVIDUAL REGISTRATION
+/* INDIVIDUAL REGISTRATION
 
 router.post('/inscription/particulier', async (req, res) => {
 	// recover data
@@ -26,24 +26,20 @@ router.post('/inscription/particulier', async (req, res) => {
 		const client = getClientsCollection();
 
 		//Insert the user in the database with the hashed password
-		const result = await client.query(
-			'INSERT INTO users("firstName", "lastName", password, email, phone) VALUES($1, $2, $3, $4, $5) RETURNING *',
-			[body.firstName, body.lastName, hash, body.email, body.phone]
-		);
-		console.log('Utilisateur inséré avec succès:', result.rows[0]);
+
 		res.json(result.rows[0]);
 	} catch (e) {
 		console.error("Erreur lors de l'insertion de l'utilisateur:", e.stack);
 		res.status(500).json("Erreur serveur lors de l'inscription.");
 	}
-});
+}); */
 
 // PROFESSIONAL REGISTRATION
 
-router.post('/inscription/professionnel', async (req, res) => {
+router.post('/inscription', async (req, res) => {
 	const { body } = req;
+	const reqValue = req.query['user_type'];
 	const { error } = userValidation(body);
-
 	try {
 		//hash password
 		const hash = await bcrypt.hash(body.password, saltRounds);
@@ -53,21 +49,36 @@ router.post('/inscription/professionnel', async (req, res) => {
 		}
 
 		const client = getClientsCollection();
-		const result = await client.query(
-			'INSERT INTO users("firstName", "lastName", password, email, phone, company_name, company_address) VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-			[
-				body.firstName,
-				body.lastName,
-				hash,
-				body.email,
-				body.phone,
-				body.company_name,
-				body.company_address,
-			]
-		);
 
-		console.log('Professionnel inscrit avec succès:', result.rows[0]);
-		res.json(result.rows[0]);
+		if (reqValue == 'professionnel') {
+			const result = await client.query(
+				'INSERT INTO users("firstName", "lastName", password, email, phone, company_name, company_address) VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING RETURNING *',
+				[
+					body.firstName,
+					body.lastName,
+					hash,
+					body.email,
+					body.phone,
+					body.company_name,
+					body.company_address,
+				]
+			);
+
+			if (result.rows == undefined) {
+				res.json('Le compte existe déjà');
+				return;
+			}
+
+			console.log('Professionnel inscrit avec succès:', result.rows[0]);
+			res.json('Professionnel inscrit avec succès');
+		} else if (reqValue == 'client') {
+			const result = await client.query(
+				'INSERT INTO users("firstName", "lastName", password, email, phone) VALUES($1, $2, $3, $4, $5) RETURNING *',
+				[body.firstName, body.lastName, hash, body.email, body.phone]
+			);
+			console.log('Utilisateur inséré avec succès:', result.rows[0]);
+			res.json(result.rows[0]);
+		}
 	} catch (e) {
 		console.error(
 			"Erreur lors de l'inscription du professionnel:",
