@@ -36,7 +36,9 @@ const createTableUser = async () => {
 		  "lastName" VARCHAR(100),
           password VARCHAR(100),
           email VARCHAR(100) UNIQUE NOT NULL,
-		  phone VARCHAR(20)
+		  phone VARCHAR(20),
+		  company_name VARCHAR(100),
+		  company_address VARCHAR(300)
         );
       `;
 

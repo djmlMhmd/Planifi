@@ -8,7 +8,9 @@ const saltRounds = 10;
 
 router.use(express.json());
 
-router.post('/inscription', async (req, res) => {
+// INDIVIDUAL REGISTRATION
+
+router.post('/inscription/particulier', async (req, res) => {
 	// recover data
 	const { body } = req;
 
@@ -35,6 +37,49 @@ router.post('/inscription', async (req, res) => {
 		res.status(500).json("Erreur serveur lors de l'inscription.");
 	}
 });
+
+// PROFESSIONAL REGISTRATION
+
+router.post('/inscription/professionnel', async (req, res) => {
+	const { body } = req;
+	const { error } = userValidation(body);
+
+	try {
+		//hash password
+		const hash = await bcrypt.hash(body.password, saltRounds);
+
+		if (error) {
+			return res.status(400).json(error.details[0].message);
+		}
+
+		const client = getClientsCollection();
+		const result = await client.query(
+			'INSERT INTO users("firstName", "lastName", password, email, phone, company_name, company_address) VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+			[
+				body.firstName,
+				body.lastName,
+				hash,
+				body.email,
+				body.phone,
+				body.company_name,
+				body.company_address,
+			]
+		);
+
+		console.log('Professionnel inscrit avec succès:', result.rows[0]);
+		res.json(result.rows[0]);
+	} catch (e) {
+		console.error(
+			"Erreur lors de l'inscription du professionnel:",
+			e.stack
+		);
+		res.status(500).json(
+			"Erreur serveur lors de l'inscription." + e.message
+		);
+	}
+});
+
+// CONNEXION
 
 router.post('/connexion', async (req, res) => {
 	const { email, password } = req.body;
