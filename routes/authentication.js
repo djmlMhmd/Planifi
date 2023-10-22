@@ -1,7 +1,7 @@
 const express = require('express');
 const { Router } = require('express');
 const router = Router();
-const userValidation = require('../validation/validation');
+const { userValidation } = require('../validation/validation');
 const { getClientsCollection } = require('../db/database');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;

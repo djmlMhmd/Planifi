@@ -90,6 +90,39 @@ const createTableProfessional = async () => {
 	}
 };
 
+const createTableService = async () => {
+	try {
+		const checkTableQuery = `
+      SELECT to_regclass('services') as table_exists;
+    `;
+
+		const result = await client.query(checkTableQuery);
+		if (result.rows[0].table_exists === null) {
+			const createTableQuery = `
+        CREATE TABLE services (
+          service_id SERIAL PRIMARY KEY,
+          service_name VARCHAR(100),
+          service_description TEXT,
+          service_price DECIMAL(10, 2),
+          duration INT,
+		  professional_id INT,
+		  CONSTRAINT FK_professional_id FOREIGN KEY(professional_id)
+        REFERENCES professionals(id)
+		  );
+		  `;
+
+			//professional_id INTEGER REFERENCES professionals (id)
+
+			await client.query(createTableQuery);
+			console.log('Table créée avec succès');
+		} else {
+			console.log('Le service existe déjà.');
+		}
+	} catch (e) {
+		console.error('Erreur lors de la création du service', e.stack);
+	}
+};
+
 const getClientsCollection = () => {
 	return client;
 };
@@ -98,5 +131,6 @@ module.exports = {
 	connectToDatabase,
 	createTableUser,
 	createTableProfessional,
+	createTableService,
 	getClientsCollection,
 };

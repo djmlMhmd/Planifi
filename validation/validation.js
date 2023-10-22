@@ -13,4 +13,14 @@ function userValidation(data) {
 	return userValidationSchema.validate(data);
 }
 
-module.exports = userValidation;
+function serviceValidation(data) {
+	const serviceValidationSchema = Joi.object({
+		service_name: Joi.string().min(2).max(30).trim().required(),
+		service_description: Joi.string().min(2).max(30).trim().required(),
+		service_price: Joi.string().email().trim().required(),
+		duration: Joi.string().min(8).max(60).required(),
+	});
+	return serviceValidationSchema.validate(data);
+}
+
+module.exports = { userValidation, serviceValidation };
