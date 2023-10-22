@@ -3,12 +3,14 @@ const express = require('express');
 const {
 	connectToDatabase,
 	createTableUser,
+	createTableProfessional,
 	getClientsCollection,
 } = require('./db/database');
 
 getClientsCollection();
 connectToDatabase();
 createTableUser();
+createTableProfessional();
 
 const { dbConnexion, getDatabase } = require('./db/database');
 const path = require('path');

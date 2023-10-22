@@ -1,11 +1,12 @@
 const { Client } = require('pg');
+require('dotenv').config();
 
 const client = new Client({
-	user: 'user',
-	host: 'localhost',
-	database: 'postgresql',
-	password: 'password',
-	port: 5432,
+	user: process.env.DB_USER,
+	host: process.env.DB_HOST,
+	database: process.env.DB_DATABASE,
+	password: process.env.DB_PASSWORD,
+	port: process.env.DB_PORT,
 });
 
 const connectToDatabase = async () => {
@@ -37,8 +38,6 @@ const createTableUser = async () => {
           password VARCHAR(100),
           email VARCHAR(100) UNIQUE NOT NULL,
 		  phone VARCHAR(20),
-		  company_name VARCHAR(100),
-		  company_address VARCHAR(300),
 		  creation_date DATE NOT NULL DEFAULT CURRENT_DATE 
         );
       `;
@@ -56,6 +55,41 @@ const createTableUser = async () => {
 	}
 };
 
+const createTableProfessional = async () => {
+	try {
+		const checkTableQuery = `
+      SELECT to_regclass('professionals') as table_exists;
+    `;
+
+		const result = await client.query(checkTableQuery);
+		if (result.rows[0].table_exists === null) {
+			const createTableQuery = `
+        CREATE TABLE professionals (
+          id SERIAL PRIMARY KEY,
+          "firstName" VARCHAR(100),
+          "lastName" VARCHAR(100),
+          password VARCHAR(100),
+          email VARCHAR(100) UNIQUE NOT NULL,
+          phone VARCHAR(20),
+          company_name VARCHAR(100),
+          company_address VARCHAR(300),
+          creation_date DATE NOT NULL DEFAULT CURRENT_DATE
+        );
+      `;
+
+			await client.query(createTableQuery);
+			console.log('Table professionals créée avec succès');
+		} else {
+			console.log('La table professionals existe déjà.');
+		}
+	} catch (e) {
+		console.error(
+			'Erreur lors de la création/verification de la table des professionnels',
+			e.stack
+		);
+	}
+};
+
 const getClientsCollection = () => {
 	return client;
 };
@@ -63,5 +97,6 @@ const getClientsCollection = () => {
 module.exports = {
 	connectToDatabase,
 	createTableUser,
+	createTableProfessional,
 	getClientsCollection,
 };
