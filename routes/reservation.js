@@ -22,6 +22,30 @@ router.post('/reservation', async (req, res) => {
 	// Check if the time slot is already booked
 	const client = getClientsCollection();
 
+	// Check if the time is in default_availability
+	const default_availability = await client.query(
+		'SELECT * FROM default_availability WHERE professional_id = $1 AND day_of_week = $2 AND start_time <= $3 AND end_time >= $3',
+		[professional_id, day_of_week, start_time]
+	);
+	// The time is in default_availability, mark it as unavailable
+
+	if (default_availability.rows.length > 0) {
+		await client.query(
+			'UPDATE default_availability SET is_available = false WHERE professional_id = $1 AND day_of_week = $2 AND start_time <= $3 AND end_time >= $3',
+			[professional_id, day_of_week, start_time]
+		);
+	} else {
+		// Check if the time is in availability
+		const availability = await client.query(
+			'SELECT * FROM availability WHERE professional_id = $1 AND start_time <= $2 AND end_time >= $2',
+			[professional_id, start_time]
+		);
+		if (availability.rows.length === 0) {
+			return res
+				.status(400)
+				.json({ message: 'Disponibilité non valide' });
+		}
+	}
 	// users_id verification
 	const user = await client.query('SELECT * FROM users WHERE users_id = $1', [
 		users_id,
@@ -53,15 +77,8 @@ router.post('/reservation', async (req, res) => {
 	}
 
 	const existingReservation = await client.query(
-		'SELECT * FROM reservations WHERE professional_id = $1 AND start_time = $2 AND end_time = $3 AND users_id = $4 AND service_id = $5 AND availability_id = $6',
-		[
-			professional_id,
-			start_time,
-			end_time,
-			users_id,
-			service_id,
-			availability_id,
-		]
+		'SELECT * FROM reservations WHERE professional_id = $1 AND start_time = $2 AND end_time = $3 AND service_id = $4 AND availability_id = $5',
+		[professional_id, start_time, end_time, service_id, availability_id]
 	);
 	if (existingReservation.rows.length > 0) {
 		return res.status(400).json({ message: 'Plage horaire déjà réservée' });
