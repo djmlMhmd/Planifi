@@ -45,9 +45,29 @@ router.post('/inscription', async (req, res) => {
 				res.json('Le compte existe déjà');
 				return;
 			}
-
 			console.log(`${reqValue} inscrit avec succès:`, result.rows[0]);
 			res.json(`${reqValue} inscrit avec succès`);
+
+			const professionalId = result.rows[0].professional_id;
+			const checkDefaultAvailabilityQuery = `
+    SELECT * FROM default_availability WHERE professional_id = $1;
+`;
+			const checkDefaultAvailabilityResult = await client.query(
+				checkDefaultAvailabilityQuery,
+				[professionalId]
+			);
+
+			if (checkDefaultAvailabilityResult.rows.length === 0) {
+				const insertDefaultAvailabilityQuery = `
+        INSERT INTO default_availability (professional_id, day_of_week, start_time, end_time)
+        SELECT $1, day_of_week, '08:00:00', '21:00:00'
+        FROM unnest(ARRAY['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']) day_of_week;
+    `;
+
+				await client.query(insertDefaultAvailabilityQuery, [
+					professionalId,
+				]);
+			}
 		} else if (reqValue == 'client') {
 			const result = await client.query(
 				'INSERT INTO users("firstName", "lastName", password, email, phone) VALUES($1, $2, $3, $4, $5) RETURNING *',

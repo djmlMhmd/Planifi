@@ -32,7 +32,7 @@ const createTableUser = async () => {
 			// La table n'existe pas, alors on la crée
 			const createTableQuery = `
         CREATE TABLE users (
-          id SERIAL PRIMARY KEY,
+          users_id SERIAL PRIMARY KEY,
           "firstName" VARCHAR(100),
 		  "lastName" VARCHAR(100),
           password VARCHAR(100),
@@ -65,7 +65,7 @@ const createTableProfessional = async () => {
 		if (result.rows[0].table_exists === null) {
 			const createTableQuery = `
         CREATE TABLE professionals (
-          id SERIAL PRIMARY KEY,
+          professional_id SERIAL PRIMARY KEY,
           "firstName" VARCHAR(100),
           "lastName" VARCHAR(100),
           password VARCHAR(100),
@@ -107,11 +107,13 @@ const createTableService = async () => {
           duration INT,
 		  professional_id INT,
 		  CONSTRAINT FK_professional_id FOREIGN KEY(professional_id)
-        REFERENCES professionals(id)
+		  REFERENCES professionals(professional_id),
+		  ALTER TABLE availability
+		  ADD CONSTRAINT uc_availability
+		  UNIQUE (professional_id, day_of_week, start_time, end_time);
+
 		  );
 		  `;
-
-			//professional_id INTEGER REFERENCES professionals (id)
 
 			await client.query(createTableQuery);
 			console.log('Table créée avec succès');
@@ -120,6 +122,111 @@ const createTableService = async () => {
 		}
 	} catch (e) {
 		console.error('Erreur lors de la création du service', e.stack);
+	}
+};
+
+const createTableAvailability = async () => {
+	try {
+		const checkTableQuery = `
+            SELECT to_regclass('availability') as table_exists;
+        `;
+
+		const result = await client.query(checkTableQuery);
+		if (result.rows[0].table_exists === null) {
+			const createTableQuery = `
+                CREATE TABLE availability (
+                    availability_id SERIAL PRIMARY KEY,
+                    professional_id INT,
+					CONSTRAINT FK_professional_id FOREIGN KEY(professional_id)
+					REFERENCES professionals(professional_id),
+                    day_of_week INT,
+                    start_time TIME,
+                    end_time TIME
+                );
+            `;
+
+			await client.query(createTableQuery);
+			console.log('Table availability créée avec succès');
+		} else {
+			console.log('La table availability existe déjà.');
+		}
+	} catch (e) {
+		console.error(
+			'Erreur lors de la création/verification de la table availability',
+			e.stack
+		);
+	}
+};
+
+const createTableReservation = async () => {
+	try {
+		const checkTableQuery = `
+            SELECT to_regclass('reservations') as table_exists;
+        `;
+
+		const result = await client.query(checkTableQuery);
+		if (result.rows[0].table_exists === null) {
+			const createTableQuery = `
+                CREATE TABLE reservations (
+    				reservation_id SERIAL PRIMARY KEY,
+    				professional_id INT,
+					CONSTRAINT FK_professional_id FOREIGN KEY(professional_id)
+					REFERENCES professionals(id),
+					users_id INT,
+					CONSTRAINT FK_users_id FOREIGN KEY (users_id)
+					REFERENCES users(id),
+					availability_id INT,
+					CONSTRAINT FK_availability_id FOREIGN KEY (availability_id)
+					REFERENCES availability(availability_id),
+    				start_time TIME,
+    				end_time TIME,
+					service_id INT,
+					CONSTRAINT FK_service_id FOREIGN KEY (service_id)
+					REFERENCES services(service_id)
+				);
+            `;
+
+			await client.query(createTableQuery);
+			console.log('La table reservation créée avec succès');
+		} else {
+			console.log('La table reservation existe déjà.');
+		}
+	} catch (e) {
+		console.error(
+			'Erreur lors de la création/verification de la table reservation',
+			e.stack
+		);
+	}
+};
+
+const createTableDefaultAvailability = async () => {
+	try {
+		const checkTableQuery = `
+            SELECT to_regclass('default_availability') as table_exists;
+        `;
+
+		const result = await client.query(checkTableQuery);
+		if (result.rows[0].table_exists === null) {
+			const createTableQuery = `
+                CREATE TABLE default_availability (
+					default_availability_id SERIAL PRIMARY KEY,
+					professional_id INT,
+					day_of_week VARCHAR(10) NOT NULL CHECK (day_of_week IN ('Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche')),
+					start_time TIME NOT NULL DEFAULT '08:00:00',
+					end_time TIME NOT NULL DEFAULT '21:00:00'
+                );
+            `;
+
+			await client.query(createTableQuery);
+			console.log('Table de disponibilité par défaut créée avec succès');
+		} else {
+			console.log('La table de disponibilité par défaut existe déjà.');
+		}
+	} catch (e) {
+		console.error(
+			'Erreur lors de la création de la table de disponibilité par défaut',
+			e.stack
+		);
 	}
 };
 
@@ -132,5 +239,8 @@ module.exports = {
 	createTableUser,
 	createTableProfessional,
 	createTableService,
+	createTableReservation,
+	createTableAvailability,
+	createTableDefaultAvailability,
 	getClientsCollection,
 };
