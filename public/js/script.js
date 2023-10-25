@@ -17,9 +17,9 @@ document.addEventListener('DOMContentLoaded', function () {
 		],
 
 		headerToolbar: {
-			start: false,
+			start: 'prev next',
 			center: 'title',
-			end: 'jourButton moisButton semaineButton listeRendezVousButton',
+			end: 'today jourButton moisButton semaineButton listeRendezVousButton',
 		},
 
 		customButtons: {
@@ -41,6 +41,10 @@ document.addEventListener('DOMContentLoaded', function () {
 				click: function () {
 					calendar.changeView('timeGridWeek');
 				},
+			},
+
+			today: {
+				text: "Aujourd'hui",
 			},
 
 			listeRendezVousButton: {
@@ -69,9 +73,9 @@ document.addEventListener('DOMContentLoaded', function () {
 			var professinal =
 				info.event.extendedProps.reservation.professional_name;
 
-			$('#eventModalTitle').text('Détails de lévénement');
+			$('#eventModalTitle').text("Détails de l'événement");
 			$('#eventModalContent').html(
-				'Client:' +
+				'Client: ' +
 					client +
 					'<br> Service: ' +
 					service +
