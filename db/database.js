@@ -104,14 +104,10 @@ const createTableService = async () => {
           service_name VARCHAR(100),
           service_description TEXT,
           service_price DECIMAL(10, 2),
-          duration INT,
+          duration INTERVAL,
 		  professional_id INT,
 		  CONSTRAINT FK_professional_id FOREIGN KEY(professional_id)
-		  REFERENCES professionals(professional_id),
-		  ALTER TABLE availability
-		  ADD CONSTRAINT uc_availability
-		  UNIQUE (professional_id, day_of_week, start_time, end_time);
-
+		  REFERENCES professionals(professional_id)
 		  );
 		  `;
 
@@ -139,7 +135,7 @@ const createTableAvailability = async () => {
                     professional_id INT,
 					CONSTRAINT FK_professional_id FOREIGN KEY(professional_id)
 					REFERENCES professionals(professional_id),
-                    day_of_week INT,
+                    day_of_week VARCHAR(10),
                     start_time TIME,
                     end_time TIME
                 );
@@ -171,10 +167,10 @@ const createTableReservation = async () => {
     				reservation_id SERIAL PRIMARY KEY,
     				professional_id INT,
 					CONSTRAINT FK_professional_id FOREIGN KEY(professional_id)
-					REFERENCES professionals(id),
+					REFERENCES professionals(professional_id),
 					users_id INT,
 					CONSTRAINT FK_users_id FOREIGN KEY (users_id)
-					REFERENCES users(id),
+					REFERENCES users(users_id),
 					availability_id INT,
 					CONSTRAINT FK_availability_id FOREIGN KEY (availability_id)
 					REFERENCES availability(availability_id),

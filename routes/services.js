@@ -17,15 +17,18 @@ router.post('/service/create', async (req, res) => {
 		professional_id,
 	} = req.body;
 
+	const durationText = duration;
+
 	try {
 		const client = getClientsCollection();
 		await client.query(
-			`INSERT INTO services (service_name, service_description, service_price, duration,professional_id) VALUES($1, $2, $3, $4, $5) RETURNING *`,
+			`INSERT INTO services (service_name, service_description, service_price, duration, professional_id)
+			VALUES($1, $2, $3, $4, $5) RETURNING *`,
 			[
 				service_name,
 				service_description,
 				service_price,
-				duration,
+				durationText,
 				professional_id,
 			]
 		);
@@ -49,7 +52,7 @@ router.get('/service', async (req, res) => {
             professionals.email, professionals.phone, professionals.company_name, professionals.company_address 
             FROM services 
             INNER JOIN professionals 
-            ON services.professional_id = professionals.id;`
+            ON services.professional_id = professionals.professional_id;`
 		);
 		return res.json(services.rows);
 	} catch (e) {

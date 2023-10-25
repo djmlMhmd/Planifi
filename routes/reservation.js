@@ -100,4 +100,67 @@ router.post('/reservation', async (req, res) => {
 	return res.status(201).json({ message: 'Réservation créée avec succès' });
 });
 
+router.get('/reservations/:professional_id', async (req, res) => {
+	const professionalId = req.params.professional_id;
+
+	try {
+		const client = getClientsCollection();
+		const query = {
+			text: `
+                SELECT
+                    reservations.*,
+                    services.service_name,
+                    CONCAT(users."firstName", ' ', users."lastName") AS user_fullName,
+                    professionals.professional_id
+                FROM
+                    reservations
+                JOIN
+                    services ON reservations.service_id = services.service_id
+                JOIN
+                    users ON reservations.users_id = users.users_id
+                JOIN
+                    professionals ON reservations.professional_id = professionals.professional_id
+                WHERE
+                    reservations.professional_id = $1
+            `,
+			values: [professionalId],
+		};
+
+		const result = await client.query(query);
+
+		if (result.rows.length === 0) {
+			return res
+				.status(404)
+				.json({ message: 'Aucune réservation trouvée' });
+		}
+
+		const reservations = result.rows.map((reservation) => ({
+			title: reservation.user_fullName,
+			start: moment(reservation.start_time, 'HH:mm:ss').format(
+				'YYYY-MM-DDTHH:mm:ss'
+			),
+			end: moment(reservation.end_time, 'HH:mm:ss').format(
+				'YYYY-MM-DDTHH:mm:ss'
+			),
+			extendedProps: {
+				reservation: {
+					service_id: reservation.service_name,
+					professional_name: reservation.professional_name,
+				},
+			},
+		}));
+		console.log('contenu de reservation :', reservations);
+
+		res.json(reservations);
+	} catch (e) {
+		console.error(
+			'Erreur lors de la récupération des réservations :',
+			e.stack
+		);
+		res.status(500).json(
+			'Erreur lors de la récupération des réservations : ' + e.message
+		);
+	}
+});
+
 module.exports = router;
