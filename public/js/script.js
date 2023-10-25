@@ -14,6 +14,32 @@ document.addEventListener('DOMContentLoaded', function () {
 				textColor: 'white', // Couleur du texte de l'événement
 				//display: 'background', // Affichage de l'événement
 			},
+
+			fetch('http://localhost:3000/service') // Assurez-vous que l'URL de l'API est correcte
+				.then((response) => response.json())
+				.then((services) => {
+					// Traitez les données des services reçues de l'API
+					services.forEach((service) => {
+						const listItem = document.createElement('li');
+						listItem.innerHTML = `
+                    <strong>Service: </strong>${service.service_name}<br>
+                    <strong>Description: </strong>${service.service_description}<br>
+                    <strong>Prix: </strong>${service.service_price} €<br>
+                    <strong>Durée: </strong>${service.duration} minutes<br>
+                    <strong>Professionnel: </strong>${service.email}<br>
+                    <strong>Téléphone: </strong>${service.phone}<br>
+                    <strong>Entreprise: </strong>${service.company_name}<br>
+                    <strong>Adresse: </strong>${service.company_address}<br><br>
+                `;
+						servicesList.appendChild(listItem);
+					});
+				})
+				.catch((error) => {
+					console.error(
+						'Erreur lors de la récupération des services:',
+						error
+					);
+				}),
 		],
 
 		headerToolbar: {

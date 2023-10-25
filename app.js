@@ -38,6 +38,11 @@ app.use(services);
 app.use(availability);
 app.use(reservation);
 
+// Définissez la route pour la page "À propos"
+app.get('/services', (req, res) => {
+	res.sendFile(path.join(__dirname, 'views', 'services.html'));
+});
+
 // dbConnexion();
 app.use(express.json());
 
@@ -52,32 +57,3 @@ app.use(
 		'Content-Type': 'text/javascript',
 	})
 );
-
-// Configurez vos routes et la connexion à la base de données ici
-
-// Récupérez les disponibilités du professionnel
-app.get('/disponibilite/:professional_id', async (req, res) => {
-	const professionalId = req.params.professional_id;
-	try {
-		// Effectuez une requête à la base de données pour récupérer les disponibilités du professionnel
-		// Par exemple, si vous avez une table "availability" dans votre base de données :
-		const client = getClientsCollection();
-		const query = {
-			text: 'SELECT * FROM availability WHERE professional_id = $1',
-			values: [professionalId],
-		};
-
-		const result = await client.query(query);
-
-		// Assurez-vous que les données sont renvoyées au format JSON
-		res.json(result.rows);
-	} catch (error) {
-		console.error(
-			'Erreur lors de la récupération des disponibilités :',
-			error
-		);
-		res.status(500).json({
-			message: 'Erreur lors de la récupération des disponibilités.',
-		});
-	}
-});
