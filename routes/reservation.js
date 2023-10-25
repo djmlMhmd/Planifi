@@ -110,8 +110,8 @@ router.get('/reservations/:professional_id', async (req, res) => {
                 SELECT
                     reservations.*,
                     services.service_name,
-                    CONCAT(users."firstName", ' ', users."lastName") AS user_fullName,
-                    professionals.professional_id
+                    CONCAT(users."firstName", ' ', users."lastName") AS user_name,
+                    CONCAT(professionals."firstName", ' ', professionals."lastName") AS professional_name
                 FROM
                     reservations
                 JOIN
@@ -135,7 +135,7 @@ router.get('/reservations/:professional_id', async (req, res) => {
 		}
 
 		const reservations = result.rows.map((reservation) => ({
-			title: reservation.user_fullName,
+			title: reservation.user_name + ' - ' + reservation.service_name,
 			start: moment(reservation.start_time, 'HH:mm:ss').format(
 				'YYYY-MM-DDTHH:mm:ss'
 			),
