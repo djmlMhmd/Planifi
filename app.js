@@ -37,6 +37,7 @@ app.use(profilRoutes);
 app.use(services);
 app.use(availability);
 app.use(reservation);
+app.use('/api', require('./routes/reservation'));
 
 // Définissez la route pour la page "À propos"
 app.get('/services', (req, res) => {

@@ -4,16 +4,83 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Liste des Services</title>
-		<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-		<link
-			href="https://unpkg.com/@fullcalendar/core/main.css"
-			rel="stylesheet"
-		/>
-		<script src="https://unpkg.com/@fullcalendar/core/main.js"></script>
 	</head>
 	<body>
 		<h1>Liste des Services</h1>
-		<script src="/public/js/script.js"></script>
 		<ul id="services-list"></ul>
+
+		<script>
+			// Fonction pour effectuer une requête API et afficher les services
+			function getServices() {
+				fetch('/service', { method: 'GET' })
+					.then((response) => response.json())
+					.then((services) => {
+						const servicesList =
+							document.getElementById('services-list');
+						services.forEach((service) => {
+							const listItem = document.createElement('li');
+							const durationHours = service.duration.hours;
+							listItem.innerHTML = `
+			                         <strong>Service: </strong>${service.service_name}<br>
+			                         <strong>Description: </strong>${service.service_description}<br>
+			                         <strong>Prix: </strong>${service.service_price} €<br>
+			                         <strong>Durée: </strong>${durationHours} heures<br>
+			                         <strong>Professionnel: </strong>${service.email}<br>
+			                         <strong>Téléphone: </strong>${service.phone}<br>
+			                         <strong>Entreprise: </strong>${service.company_name}<br>
+			                         <strong>Adresse: </strong>${service.company_address}<br><br>
+			                         <button onclick="reserveService(${service.service_id})">Réserver</button><br><br>
+			                     `;
+							servicesList.appendChild(listItem);
+						});
+					})
+					.catch((error) => {
+						console.error(
+							'Erreur lors de la récupération des services:',
+							error
+						);
+					});
+			}
+
+			function reserveService(serviceId) {
+				const reservationData = {
+					service_id: 1, // Service à réserver
+					users_id: 1, // ID de l'utilisateur qui réserve
+					professional_id: 1,
+					start_time: '12:00:00',
+					end_time: '13:00:00',
+					availability_id: 1,
+				};
+
+				fetch('/reservation', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify(reservationData),
+				})
+					.then((response) => {
+						if (response.status === 201) {
+							return response.json();
+						} else {
+							throw new Error('Erreur lors de la réservation');
+						}
+					})
+					.then((data) => {
+						alert(
+							'Réservation effectuée avec succès : ' +
+								data.message
+						);
+					})
+					.catch((error) => {
+						alert(
+							'Erreur lors de la réservation : ' + error.message
+						);
+					});
+			}
+
+			// Appeler la fonction pour obtenir la liste des services lors du chargement de la page
+			document.addEventListener('DOMContentLoaded', getServices);
+		</script>
 	</body>
 </html>

@@ -149,7 +149,6 @@ router.get('/reservations/:professional_id', async (req, res) => {
 				},
 			},
 		}));
-		console.log('contenu de reservation :', reservations);
 
 		res.json(reservations);
 	} catch (e) {
