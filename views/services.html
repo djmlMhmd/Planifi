@@ -44,12 +44,12 @@
 
 			function reserveService(serviceId) {
 				const reservationData = {
-					service_id: 1, // Service à réserver
-					users_id: 1, // ID de l'utilisateur qui réserve
+					service_id: 1,
+					users_id: 1,
 					professional_id: 1,
-					start_time: '12:00:00',
-					end_time: '13:00:00',
-					availability_id: 1,
+					start_time: '14:00:00',
+					default_availability_id: 1,
+					day_of_week: 'Lundi',
 				};
 
 				fetch('/reservation', {
