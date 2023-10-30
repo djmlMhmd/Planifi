@@ -1,31 +1,61 @@
-<!DOCTYPE html>
-<html lang="fr">
+<html>
 	<head>
-		<!-- Meta et liens CSS ici -->
-		<link
-			href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.css"
-			rel="stylesheet"
-		/>
-		<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.js"></script>
-		<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-<!-- Inclure Bootstrap (avec les styles CSS) -->
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+		<meta charset="utf-8" />
+		<title>Planifi</title>
+		<link href="/css/home.css" rel="stylesheet" type="text/css" />
 	</head>
 	<body>
-		<h1>Disponibilités</h1>
-		<div id="calendar"></div>
-		<div class="modal fade" id="eventModal" tabindex="-1" role="dialog" aria-labelledby="eventModalTitle" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="eventModalTitle"></h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body" id="eventModalContent">
-		<script src="/public/js/script.js"></script>
+		<div class="header">
+			<div class="inner-header flex">
+				<h1>PLANIFI</h1>
+			</div>
+
+			<div>
+				<svg
+					class="waves"
+					xmlns="http://www.w3.org/2000/svg"
+					xmlns:xlink="http://www.w3.org/1999/xlink"
+					viewBox="0 24 150 28"
+					preserveAspectRatio="none"
+					shape-rendering="auto"
+				>
+					<defs>
+						<path
+							id="gentle-wave"
+							d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z"
+						/>
+					</defs>
+					<g class="parallax">
+						<use
+							xlink:href="#gentle-wave"
+							x="48"
+							y="0"
+							fill="rgba(255,255,255,0.7)"
+						/>
+						<use
+							xlink:href="#gentle-wave"
+							x="48"
+							y="3"
+							fill="rgba(255,255,255,0.5)"
+						/>
+						<use
+							xlink:href="#gentle-wave"
+							x="48"
+							y="5"
+							fill="rgba(255,255,255,0.3)"
+						/>
+						<use
+							xlink:href="#gentle-wave"
+							x="48"
+							y="7"
+							fill="#fff"
+						/>
+					</g>
+				</svg>
+			</div>
+		</div>
+		<div class="content flex">
+			<p>Add footer here</p>
+		</div>
 	</body>
 </html>
