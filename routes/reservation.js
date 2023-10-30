@@ -7,93 +7,67 @@ const { getClientsCollection } = require('../db/database');
 router.use(express.json());
 
 router.post('/reservation', async (req, res) => {
-	const {
-		professional_id,
-		start_time,
-		end_time,
-		users_id,
-		service_id,
-		availability_id,
-	} = req.body;
+	const { professional_id, users_id, service_id, default_availability_id } =
+		req.body;
 
-	const startDateTime = moment(start_time, 'HH:mm:ss');
-	const day_of_week = startDateTime.day();
+	const start_time = req.body.start_time;
+	const day_of_week = moment().format('dddd'); // Convertir en nom de jour
 
-	// Check if the time slot is already booked
 	const client = getClientsCollection();
 
-	// Check if the time is in default_availability
-	const default_availability = await client.query(
-		'SELECT * FROM default_availability WHERE professional_id = $1 AND day_of_week = $2 AND start_time <= $3 AND end_time >= $3',
-		[professional_id, day_of_week, start_time]
-	);
-	// The time is in default_availability, mark it as unavailable
-
-	if (default_availability.rows.length > 0) {
-		await client.query(
-			'UPDATE default_availability SET is_available = false WHERE professional_id = $1 AND day_of_week = $2 AND start_time <= $3 AND end_time >= $3',
-			[professional_id, day_of_week, start_time]
-		);
-	} else {
-		// Check if the time is in availability
-		const availability = await client.query(
-			'SELECT * FROM availability WHERE professional_id = $1 AND start_time <= $2 AND end_time >= $2',
-			[professional_id, start_time]
-		);
-		if (availability.rows.length === 0) {
-			return res
-				.status(400)
-				.json({ message: 'Disponibilité non valide' });
-		}
-	}
-	// users_id verification
-	const user = await client.query('SELECT * FROM users WHERE users_id = $1', [
-		users_id,
-	]);
-	if (user.rows.length === 0) {
-		return res.status(400).json({ message: 'Utilisateur non valide' });
-	}
-	//service_id verification
+	// Récupérer la durée du service depuis la table des services
 	const service = await client.query(
-		'SELECT * FROM services WHERE service_id = $1',
+		'SELECT duration FROM services WHERE service_id = $1',
 		[service_id]
 	);
+
 	if (service.rows.length === 0) {
 		return res.status(400).json({ message: 'Service non valide' });
 	}
 
-	// availability verification
-	const availability = await client.query(
-		'SELECT * FROM availability WHERE professional_id = $1 AND start_time <= $2 AND end_time >= $2',
-		[professional_id, start_time]
-	);
-	if (availability.rows.length === 0) {
-		return res.status(400).json({ message: 'Disponibilité non valide' });
+	const duration = service.rows[0].duration; // Durée du service enregistrée dans la table
+
+	// Calculer l'heure de fin en utilisant une simple chaîne de caractères
+	const startDateTime = start_time;
+	const end_time = moment(start_time, 'HH:mm:ss')
+		.clone()
+		.add(duration)
+		.format('HH:mm:ss');
+
+	// Vérifier si le temps de début est valide
+	if (
+		moment(start_time, 'HH:mm:ss').isBefore('08:00:00', 'HH:mm:ss') ||
+		moment(start_time, 'HH:mm:ss').isAfter('21:00:00', 'HH:mm:ss')
+	) {
+		return res.status(400).json({ message: 'Heure de début non valide' });
 	}
 
-	// Vérification end_time
-	if (end_time <= start_time) {
-		return res.status(400).json({ message: 'Heure de fin non valide' });
-	}
-
+	// Vérifier si le créneau horaire est déjà réservé
 	const existingReservation = await client.query(
-		'SELECT * FROM reservations WHERE professional_id = $1 AND start_time = $2 AND end_time = $3 AND service_id = $4 AND availability_id = $5',
-		[professional_id, start_time, end_time, service_id, availability_id]
+		'SELECT * FROM reservations WHERE professional_id = $1 AND start_time = $2 AND service_id = $3 AND default_availability_id = $4',
+		[professional_id, start_time, service_id, default_availability_id]
 	);
+
 	if (existingReservation.rows.length > 0) {
 		return res.status(400).json({ message: 'Plage horaire déjà réservée' });
 	}
 
-	// Making a reservation
+	// Marquer le créneau horaire comme non disponible
 	await client.query(
-		'INSERT INTO reservations (professional_id, start_time, end_time, users_id, service_id, availability_id) VALUES ($1, $2, $3, $4, $5, $6)',
+		'UPDATE default_availability SET is_available = false WHERE professional_id = $1 AND day_of_week = $2 AND start_time <= $3 AND end_time >= $4',
+		[professional_id, day_of_week, start_time, end_time]
+	);
+
+	// Faire la réservation
+	await client.query(
+		'INSERT INTO reservations (professional_id, start_time, users_id, service_id, default_availability_id, day_of_week) VALUES ($1, $2, $3, $4, $5, $6)',
 		[
 			professional_id,
 			start_time,
-			end_time,
 			users_id,
 			service_id,
-			availability_id,
+			default_availability_id,
+			day_of_week,
 		]
 	);
 

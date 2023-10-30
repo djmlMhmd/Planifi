@@ -40,8 +40,31 @@ app.use(reservation);
 app.use('/api', require('./routes/reservation'));
 
 // Définissez la route pour la page "À propos"
+app.get('/', (req, res) => {
+	res.sendFile(path.join(__dirname, 'views', 'home.html'));
+});
 app.get('/services', (req, res) => {
 	res.sendFile(path.join(__dirname, 'views', 'services.html'));
+});
+
+app.get('/availability/', (req, res) => {
+	res.sendFile(path.join(__dirname, 'views', 'availability.html'));
+});
+
+app.get('/inscription/', (req, res) => {
+	res.sendFile(path.join(__dirname, 'views', 'signup.html'));
+});
+
+app.get('/connexion/', (req, res) => {
+	res.sendFile(path.join(__dirname, 'views', 'login.html'));
+});
+
+app.get('/client/:id', (req, res) => {
+	res.sendFile(path.join(__dirname, 'views', 'profil-client.html'));
+});
+
+app.get('/profil/:id', (req, res) => {
+	res.sendFile(path.join(__dirname, 'views', 'profil-client.html'));
 });
 
 // dbConnexion();

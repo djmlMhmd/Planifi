@@ -164,32 +164,32 @@ const createTableReservation = async () => {
 		if (result.rows[0].table_exists === null) {
 			const createTableQuery = `
                 CREATE TABLE reservations (
-    				reservation_id SERIAL PRIMARY KEY,
-    				professional_id INT,
-					CONSTRAINT FK_professional_id FOREIGN KEY(professional_id)
-					REFERENCES professionals(professional_id),
-					users_id INT,
-					CONSTRAINT FK_users_id FOREIGN KEY (users_id)
-					REFERENCES users(users_id),
-					availability_id INT,
-					CONSTRAINT FK_availability_id FOREIGN KEY (availability_id)
-					REFERENCES availability(availability_id),
-    				start_time TIME,
-    				end_time TIME,
-					service_id INT,
-					CONSTRAINT FK_service_id FOREIGN KEY (service_id)
-					REFERENCES services(service_id)
-				);
+                    reservation_id SERIAL PRIMARY KEY,
+                    professional_id INT,
+                    CONSTRAINT FK_professional_id FOREIGN KEY(professional_id)
+                    REFERENCES professionals(professional_id),
+                    users_id INT,
+                    CONSTRAINT FK_users_id FOREIGN KEY (users_id)
+                    REFERENCES users(users_id),
+                    day_of_week VARCHAR(10) NOT NULL,
+                    start_time TIME NOT NULL,
+                    service_id INT,
+                    CONSTRAINT FK_service_id FOREIGN KEY (service_id)
+                    REFERENCES services(service_id),
+                    default_availability_id INT,
+                    CONSTRAINT FK_default_availability_id FOREIGN KEY (default_availability_id)
+                    REFERENCES default_availability(default_availability_id)
+                );
             `;
 
 			await client.query(createTableQuery);
-			console.log('La table reservation créée avec succès');
+			console.log('La table reservation a été mise à jour avec succès.');
 		} else {
 			console.log('La table reservation existe déjà.');
 		}
 	} catch (e) {
 		console.error(
-			'Erreur lors de la création/verification de la table reservation',
+			'Erreur lors de la création/mise à jour de la table reservation',
 			e.stack
 		);
 	}
@@ -209,7 +209,8 @@ const createTableDefaultAvailability = async () => {
 					professional_id INT,
 					day_of_week VARCHAR(10) NOT NULL CHECK (day_of_week IN ('Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche')),
 					start_time TIME NOT NULL DEFAULT '08:00:00',
-					end_time TIME NOT NULL DEFAULT '21:00:00'
+					end_time TIME NOT NULL DEFAULT '21:00:00',
+					is_available BOOLEAN DEFAULT TRUE
                 );
             `;
 

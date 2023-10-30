@@ -29,7 +29,8 @@ router.post('/inscription', async (req, res) => {
 
 		if (reqValue == 'professionnel') {
 			const result = await client.query(
-				`INSERT INTO ${tableName}("firstName", "lastName", password, email, phone, company_name, company_address) VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING RETURNING *`,
+				`INSERT INTO ${tableName}("firstName", "lastName", password, email, phone, company_name, company_address)
+				VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING RETURNING *`,
 				[
 					body.firstName,
 					body.lastName,
@@ -108,8 +109,9 @@ router.post('/connexion', async (req, res) => {
 			const match = await bcrypt.compare(password, hashedPassword);
 
 			if (match) {
+				const clientID = connexionResult.rows[0].id;
+				res.redirect(`/profil/client/${clientID}`);
 				console.log('Authentification réussie');
-				res.json({ message: 'Authentification réussie' });
 			} else {
 				console.log(
 					"Échec de l'authentification: mot de passe incorrect"

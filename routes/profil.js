@@ -13,7 +13,7 @@ router.get('/profil/professionnel/:id', async (req, res) => {
 	try {
 		const client = getClientsCollection();
 		const query = {
-			text: 'SELECT * FROM professionals WHERE id = $1',
+			text: 'SELECT * FROM professionals WHERE professional_id = $1',
 			values: [professionnelId],
 		};
 
@@ -45,7 +45,7 @@ router.get('/profil/client/:id', async (req, res) => {
 	try {
 		const client = getClientsCollection();
 		const query = {
-			text: 'SELECT * FROM users WHERE id = $1',
+			text: 'SELECT * FROM users WHERE users_id = $1',
 			values: [clientId],
 		};
 
