@@ -4,6 +4,7 @@ const router = Router();
 const { getClientsCollection } = require('../db/database');
 const session = require('express-session');
 router.use(express.json());
+const path = require('path');
 
 // PROFESSIONAL PROFILE
 

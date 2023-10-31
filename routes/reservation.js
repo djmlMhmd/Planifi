@@ -74,8 +74,8 @@ router.post('/reservation', async (req, res) => {
 	return res.status(201).json({ message: 'Réservation créée avec succès' });
 });
 
-router.get('/reservations/:professional_id', async (req, res) => {
-	const professionalId = req.params.professional_id;
+router.get('/reservations', async (req, res) => {
+	const professionalId = req.session.professionalID;
 
 	try {
 		const client = getClientsCollection();
@@ -128,6 +128,64 @@ router.get('/reservations/:professional_id', async (req, res) => {
 	} catch (e) {
 		console.error(
 			'Erreur lors de la récupération des réservations :',
+			e.stack
+		);
+		res.status(500).json(
+			'Erreur lors de la récupération des réservations : ' + e.message
+		);
+	}
+});
+
+router.get('/reservations/client', async (req, res) => {
+	const clientID = req.session.clientID;
+
+	if (!clientID) {
+		return res.status(401).json({ message: 'Authentification requise' });
+	}
+
+	try {
+		const client = getClientsCollection();
+		const query = {
+			text: `
+                SELECT
+                    reservations.*,
+                    services.service_name,
+                    CONCAT(professionals."firstName", ' ', professionals."lastName") AS professional_name
+                FROM
+                    reservations
+                JOIN
+                    services ON reservations.service_id = services.service_id
+                JOIN
+                    professionals ON reservations.professional_id = professionals.professional_id
+                WHERE
+                    reservations.users_id = $1
+            `,
+			values: [clientID],
+		};
+
+		const result = await client.query(query);
+
+		if (result.rows.length === 0) {
+			return res
+				.status(404)
+				.json({ message: 'Aucune réservation trouvée' });
+		}
+
+		const reservations = result.rows.map((reservation) => ({
+			title: reservation.professional_name,
+			service_name: reservation.service_name,
+			start: moment(reservation.start_time, 'HH:mm:ss').format(
+				'DD/MM/YY HH:mm'
+			),
+			end: moment(reservation.end_time, 'HH:mm:ss').format(
+				'YYYY-MM-DDTHH:mm:ss'
+			),
+		}));
+
+		res.json(reservations);
+	} catch (e) {
+		console.error(
+			'Erreur lors de la récupération des réservations du client:',
 			e.stack
 		);
 		res.status(500).json(

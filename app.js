@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
-
+const router = require('./routes/profil');
 const {
 	connectToDatabase,
 	createTableUser,
@@ -110,7 +110,7 @@ app.use(
 
 // middleware verifyToken
 
-function verifyToken(req, res, next) {
+/*function verifyToken(req, res, next) {
 	const token = req.session.token;
 	if (!token) {
 		return res
@@ -125,5 +125,4 @@ function verifyToken(req, res, next) {
 		req.clientID = decoded.clientID;
 		next();
 	});
-}
-module.exports = { verifyToken };
+}*/

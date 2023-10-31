@@ -14,11 +14,20 @@
 			<div id="client-profile">
 				<!-- Les informations du profil client affichées ici -->
 			</div>
+			<h2>Mes Réservations</h2>
+			<div id="reservations-list">
+				<!-- Les réservations du client seront affichées ici -->
+			</div>
 			<button id="logout-button">Déconnexion</button>
 		</div>
 
 		<script>
 			document.addEventListener('DOMContentLoaded', () => {
+				const clientProfileDiv =
+					document.getElementById('client-profile');
+				const reservationsListDiv =
+					document.getElementById('reservations-list');
+
 				fetch('/profil/client/${clientID}')
 					.then((response) => {
 						if (!response.ok) {
@@ -28,18 +37,41 @@
 					})
 					.then((data) => {
 						const clientID = data.clientID;
-						const clientProfileDiv =
-							document.getElementById('client-profile');
 						clientProfileDiv.innerHTML = `
-          <h2>Nom : ${data.firstName} ${data.lastName}</h2>
-          <p>Email : ${data.email}</p>
-          <p>Téléphone : ${data.phone}</p>
-          
-        `;
+			       <h2>Nom : ${data.firstName} ${data.lastName}</h2>
+			       <p>Email : ${data.email}</p>
+			       <p>Téléphone : ${data.phone}</p>
+
+			     `;
 					})
 					.catch((error) => {
 						console.error(
 							'Erreur lors de la récupération du profil client:',
+							error
+						);
+					});
+
+				fetch(`/reservations/client`)
+					.then((response) => {
+						if (!response.ok) {
+							throw new Error('La requête a échoué');
+						}
+						return response.json();
+					})
+					.then((data) => {
+						if (data.length > 0) {
+							const reservation = data[0]; // Extrait le premier objet de réservation
+							reservationsListDiv.innerHTML = `
+			             <p>Réservation le ${reservation.start} avec ${reservation.title} (${reservation.service_name})</p>
+			         `;
+						} else {
+							reservationsListDiv.innerHTML =
+								'Aucune réservation trouvée';
+						}
+					})
+					.catch((error) => {
+						console.error(
+							'Erreur lors de la récupération des réservations du professionnel :',
 							error
 						);
 					});

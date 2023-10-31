@@ -15,10 +15,11 @@
 				<!-- Les informations du profil professionnel affichées ici -->
 			</div>
 			<button id="logout-button">Déconnexion</button>
+			<button id="calendar-button">Calendrier</button>
 		</div>
 		<script>
 			document.addEventListener('DOMContentLoaded', () => {
-				fetch('/profil/professionnel/${professionalID}')
+				fetch(`/profil/professionnel/${professionalID}`)
 					.then((response) => {
 						if (!response.ok) {
 							throw new Error('La requête a échoué');
@@ -62,6 +63,13 @@
 								);
 							});
 					});
+				const calendarButton =
+					document.getElementById('calendar-button');
+
+				calendarButton.addEventListener('click', () => {
+					// Redirects the user to the "availability.html" page
+					window.location.href = '/availability.html';
+				});
 			});
 		</script>
 	</body>

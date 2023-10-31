@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		initialView: 'timeGridWeek',
 		eventSources: [
 			{
-				url: 'http://localhost:3000/reservations/1',
+				url: '/reservations',
 				method: 'GET',
 				extraParams: {
 					custom_param: 'value',
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		headerToolbar: {
 			start: 'prev next',
 			center: 'title',
-			end: 'today jourButton moisButton semaineButton listeRendezVousButton',
+			end: 'today jourButton semaineButton moisButton listeRendezVousButton',
 		},
 
 		customButtons: {
@@ -45,6 +45,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 			today: {
 				text: "Aujourd'hui",
+				click: function () {
+					calendar.today();
+				},
 			},
 
 			listeRendezVousButton: {
