@@ -1,5 +1,8 @@
-//const { MongoClient } = require('mongodb');
+require('dotenv').config();
 const express = require('express');
+const session = require('express-session');
+const cookieParser = require('cookie-parser');
+
 const {
 	connectToDatabase,
 	createTableUser,
@@ -29,9 +32,21 @@ const profilRoutes = require('./routes/profil');
 const services = require('./routes/services');
 const availability = require('./routes/availability');
 const reservation = require('./routes/reservation');
+const jwt = require('jsonwebtoken');
+const secretKey = process.env.SECRET_KEY;
+
+app.use(
+	session({
+		secret: secretKey,
+		resave: false,
+		saveUninitialized: true,
+	})
+);
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'views')));
+app.use(express.json());
+app.use(cookieParser());
 app.use(routes);
 app.use(profilRoutes);
 app.use(services);
@@ -47,7 +62,7 @@ app.get('/services', (req, res) => {
 	res.sendFile(path.join(__dirname, 'views', 'services.html'));
 });
 
-app.get('/availability/', (req, res) => {
+app.get('/disponibilite/', (req, res) => {
 	res.sendFile(path.join(__dirname, 'views', 'availability.html'));
 });
 
@@ -64,11 +79,20 @@ app.get('/client/:id', (req, res) => {
 });
 
 app.get('/profil/:id', (req, res) => {
-	res.sendFile(path.join(__dirname, 'views', 'profil-client.html'));
+	// Checks whether it is a customer or a connected professional
+	if (req.session.clientID) {
+		// If it's a customer, return the customer profile
+		res.sendFile(path.join(__dirname, 'views', 'profil-client.html'));
+	} else if (req.session.professionalID) {
+		// If it's a professional, return the professional's profile
+		res.sendFile(path.join(__dirname, 'views', 'profil-pro.html'));
+	} else {
+		// If no one is logged in, return an error message or redirect to the login page
+		res.status(401).send('Authentification requise');
+	}
 });
 
 // dbConnexion();
-app.use(express.json());
 
 // permet de lancer serveur web
 app.listen(port, () => {
@@ -81,3 +105,23 @@ app.use(
 		'Content-Type': 'text/javascript',
 	})
 );
+
+// middleware verifyToken
+
+function verifyToken(req, res, next) {
+	const token = req.session.token;
+	if (!token) {
+		return res
+			.status(403)
+			.json({ message: 'Accès refusé. Token manquant.' });
+	}
+	jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
+		if (err) {
+			return res.status(401).json({ message: 'Token invalide.' });
+		}
+
+		req.clientID = decoded.clientID;
+		next();
+	});
+}
+module.exports = { verifyToken };

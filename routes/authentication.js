@@ -1,3 +1,4 @@
+const session = require('express-session');
 const express = require('express');
 const { Router } = require('express');
 const router = Router();
@@ -109,9 +110,11 @@ router.post('/connexion', async (req, res) => {
 			const match = await bcrypt.compare(password, hashedPassword);
 
 			if (match) {
-				const clientID = connexionResult.rows[0].id;
-				res.redirect(`/profil/client/${clientID}`);
+				const clientID = connexionResult.rows[0].users_id;
+				req.session.clientID = clientID;
 				console.log('Authentification réussie');
+				console.log('clientID dans la session :', req.session.clientID);
+				res.redirect(`/profil/client/${clientID}`);
 			} else {
 				console.log(
 					"Échec de l'authentification: mot de passe incorrect"
@@ -127,13 +130,16 @@ router.post('/connexion', async (req, res) => {
 			const match = await bcrypt.compare(password, hashedPassword);
 
 			if (match) {
+				const professionalID = professional.professional_id;
+				req.session.professionalID = professionalID;
 				console.log(
 					'Authentification réussie en tant que professionnel'
 				);
-				res.json({
-					message:
-						'Authentification réussie en tant que professionnel',
-				});
+				console.log(
+					'professionalID dans la session :',
+					req.session.professionalID
+				);
+				res.redirect(`/profil/professionnel/${professionalID}`);
 			} else {
 				console.log(
 					"Échec de l'authentification en tant que professionnel : mot de passe incorrect"

@@ -12,28 +12,27 @@
 		<div class="container">
 			<h1>Profil du Client</h1>
 			<div id="client-profile">
-				<!-- Les informations du profil client seront affichées ici -->
+				<!-- Les informations du profil client affichées ici -->
 			</div>
 		</div>
 		<script>
-			const clientId = 3; // Remplacez par l'ID du client que vous souhaitez afficher
-
-			// Effectuez une requête AJAX pour récupérer les données du profil client
-			fetch(`/profil/client/${clientId}`)
-				.then((response) => response.json())
+			fetch('/profil/client/${clientID}')
+				.then((response) => {
+					if (!response.ok) {
+						throw new Error('La requête a échoué');
+					}
+					return response.json();
+				})
 				.then((data) => {
-					// Les données du profil client sont maintenant stockées dans la variable "data"
-					const clientProfile = data;
+					const clientID = data.clientID;
 					const clientProfileDiv =
 						document.getElementById('client-profile');
-
-					// Affichez les informations du profil client dans la page
 					clientProfileDiv.innerHTML = `
-            <h2>Nom : ${clientProfile.firstName} ${clientProfile.lastName}</h2>
-            <p>Email : ${clientProfile.email}</p>
-            <p>Téléphone : ${clientProfile.phone}</p>
-            <!-- Ajoutez d'autres informations du profil client si nécessaire -->
-        `;
+      <h2>Nom : ${data.firstName} ${data.lastName}</h2>
+      <p>Email : ${data.email}</p>
+      <p>Téléphone : ${data.phone}</p>
+      <!-- Ajoutez d'autres informations du profil client si nécessaire -->
+    `;
 				})
 				.catch((error) => {
 					console.error(

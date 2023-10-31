@@ -2,14 +2,17 @@ const express = require('express');
 const { Router } = require('express');
 const router = Router();
 const { getClientsCollection } = require('../db/database');
-
+const session = require('express-session');
 router.use(express.json());
 
 // PROFESSIONAL PROFILE
 
 router.get('/profil/professionnel/:id', async (req, res) => {
-	const professionnelId = req.params.id;
+	const professionnelId = req.session.professionalID;
 
+	if (!professionnelId) {
+		return res.status(401).json({ message: 'Authentification requise' });
+	}
 	try {
 		const client = getClientsCollection();
 		const query = {
@@ -26,8 +29,9 @@ router.get('/profil/professionnel/:id', async (req, res) => {
 		}
 
 		//const professionnel = result.rows[0];
-		const { password, creation_date, ...professionnel } = result.rows[0];
-		res.json(professionnel);
+		const { password, creation_date, ...professionalProfile } =
+			result.rows[0];
+		res.json(professionalProfile);
 	} catch (e) {
 		console.error(
 			'Erreur lors de la récupération du profil professionnel:',
@@ -40,13 +44,18 @@ router.get('/profil/professionnel/:id', async (req, res) => {
 // CLIENT PROFILE
 
 router.get('/profil/client/:id', async (req, res) => {
-	const clientId = req.params.id;
+	// Retrieves the client ID from the session or cookie
+	const clientID = req.session.clientID;
+
+	if (!clientID) {
+		return res.status(401).json({ message: 'Authentification requise' });
+	}
 
 	try {
 		const client = getClientsCollection();
 		const query = {
 			text: 'SELECT * FROM users WHERE users_id = $1',
-			values: [clientId],
+			values: [clientID],
 		};
 
 		const result = await client.query(query);
@@ -57,7 +66,6 @@ router.get('/profil/client/:id', async (req, res) => {
 				.json({ message: 'Profil client non trouvé' });
 		}
 
-		//const clientProfile = result.rows[0];
 		const { password, creation_date, ...clientProfile } = result.rows[0];
 		res.json(clientProfile);
 	} catch (e) {

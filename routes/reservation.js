@@ -1,9 +1,9 @@
 const express = require('express');
 const { Router } = require('express');
 const moment = require('moment');
-const router = Router();
 const { getClientsCollection } = require('../db/database');
 
+const router = Router();
 router.use(express.json());
 
 router.post('/reservation', async (req, res) => {
