@@ -14,32 +14,56 @@
 			<div id="client-profile">
 				<!-- Les informations du profil client affichées ici -->
 			</div>
+			<button id="logout-button">Déconnexion</button>
 		</div>
+
 		<script>
-			fetch('/profil/client/${clientID}')
-				.then((response) => {
-					if (!response.ok) {
-						throw new Error('La requête a échoué');
-					}
-					return response.json();
-				})
-				.then((data) => {
-					const clientID = data.clientID;
-					const clientProfileDiv =
-						document.getElementById('client-profile');
-					clientProfileDiv.innerHTML = `
-      <h2>Nom : ${data.firstName} ${data.lastName}</h2>
-      <p>Email : ${data.email}</p>
-      <p>Téléphone : ${data.phone}</p>
-      <!-- Ajoutez d'autres informations du profil client si nécessaire -->
-    `;
-				})
-				.catch((error) => {
-					console.error(
-						'Erreur lors de la récupération du profil client:',
-						error
-					);
-				});
+			document.addEventListener('DOMContentLoaded', () => {
+				fetch('/profil/client/${clientID}')
+					.then((response) => {
+						if (!response.ok) {
+							throw new Error('La requête a échoué');
+						}
+						return response.json();
+					})
+					.then((data) => {
+						const clientID = data.clientID;
+						const clientProfileDiv =
+							document.getElementById('client-profile');
+						clientProfileDiv.innerHTML = `
+          <h2>Nom : ${data.firstName} ${data.lastName}</h2>
+          <p>Email : ${data.email}</p>
+          <p>Téléphone : ${data.phone}</p>
+          
+        `;
+					})
+					.catch((error) => {
+						console.error(
+							'Erreur lors de la récupération du profil client:',
+							error
+						);
+					});
+
+				document
+					.getElementById('logout-button')
+					.addEventListener('click', () => {
+						fetch('/deconnexion/client', { method: 'POST' })
+							.then((response) => {
+								if (response.ok) {
+									// Redirect the user to the login page after logging out
+									window.location.href = '/connexion';
+								} else {
+									console.error('Échec de la déconnexion');
+								}
+							})
+							.catch((error) => {
+								console.error(
+									'Erreur lors de la déconnexion:',
+									error
+								);
+							});
+					});
+			});
 		</script>
 	</body>
 </html>
