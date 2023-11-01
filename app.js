@@ -57,6 +57,7 @@ app.use(availability);
 app.use(reservation);
 app.use('/api', require('./routes/reservation'));
 app.use(deleteReservation);
+app.use(express.urlencoded({ extended: true }));
 
 // Définissez la route pour la page "À propos"
 app.get('/', (req, res) => {

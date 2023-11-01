@@ -9,15 +9,11 @@ router.use(express.json());
 // SERVICE CREATE
 
 router.post('/service/create', async (req, res) => {
-	const {
-		service_name,
-		service_description,
-		service_price,
-		duration,
-		professional_id,
-	} = req.body;
-
+	const { service_name, service_description, service_price, duration } =
+		req.body;
+	console.log('Données reçues du formulaire :', req.body);
 	const durationText = duration;
+	const professional_id = req.session.professionalID;
 
 	try {
 		const client = getClientsCollection();
@@ -32,8 +28,8 @@ router.post('/service/create', async (req, res) => {
 				professional_id,
 			]
 		);
-
-		return res.status(201).json({ message: 'Service créer' });
+		console.log('Service créé avec succès.');
+		return res.status(200).json({ message: 'Service créer' });
 	} catch (e) {
 		console.error('Erreur lors la création du service :', e.stack);
 		res.status(500).json(

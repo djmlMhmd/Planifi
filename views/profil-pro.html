@@ -7,6 +7,36 @@
 			name="viewport"
 			content="width=device-width, initial-scale=1, shrink-to-fit=no"
 		/>
+		<style>
+			.modal-container {
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: rgba(0, 0, 0, 0.5);
+			}
+
+			.modal {
+				background: #fff;
+				padding: 20px;
+				border-radius: 5px;
+				box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+				position: relative;
+				text-align: center;
+			}
+
+			.close {
+				position: absolute;
+				top: 10px;
+				right: 10px;
+				font-size: 24px;
+				cursor: pointer;
+			}
+		</style>
 	</head>
 	<body>
 		<div class="container">
@@ -64,6 +94,7 @@
 								);
 							});
 					});
+
 				const calendarButton =
 					document.getElementById('calendar-button');
 
@@ -82,34 +113,36 @@
 					const serviceForm = document.createElement('form');
 					serviceForm.innerHTML = `
             <h3>Ajouter un service</h3>
-            <label for="service-name">Nom du service:</label>
+            <label for="service-name">Nom du service:</label><br>
             <input type="text" id="service-name" name="service_name" required>
 
-            <label for="service-description">Description:</label>
+           <br><label for="service-description">Description:</label><br>
             <textarea id="service-description" name="service_description" required></textarea>
 
-            <label for="service-price">Prix:</label>
+          <br><label for="service-price">Prix:</label><br>
             <input type="number" id="service-price" name="service_price" required>
 
-            <label for="duration">Durée (en minutes):</label>
-            <input type="number" id="duration" name="duration" required>
+            <br><label for="duration">Durée:</label><br>
+            <input type="number" id="duration" name="duration" required> <br>
 
             <button type="submit">Créer</button>
         `;
 
 					professionalProfileDiv.appendChild(serviceForm);
 
-					// Gérez la soumission du formulaire pour créer le service
 					serviceForm.addEventListener('submit', (event) => {
 						event.preventDefault();
 						const formData = new FormData(serviceForm);
+
+						const duration = formData.get('duration');
+						formData.set('duration', duration);
 						fetch('/service/create', {
 							method: 'POST',
 							body: formData,
 						})
 							.then((response) => {
 								if (response.ok) {
-									// Service créé avec succès, peut-être afficher un message de réussite
+									displaySuccessModal();
 								} else {
 									console.error(
 										'Échec de la création du service'
@@ -125,6 +158,25 @@
 					});
 				});
 			});
+			function displaySuccessModal() {
+				const modalContainer = document.createElement('div');
+				modalContainer.className = 'modal-container';
+				modalContainer.innerHTML = `
+        <div class="modal">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Service créé avec succès!</h2>
+            <p>Votre service a été ajouté avec succès.</p>
+        </div>
+    `;
+				document.body.appendChild(modalContainer);
+			}
+
+			// Fonction pour fermer la fenêtre modale
+			function closeModal() {
+				const modalContainer =
+					document.querySelector('.modal-container');
+				modalContainer.remove();
+			}
 		</script>
 	</body>
 </html>
