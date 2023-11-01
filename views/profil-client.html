@@ -7,6 +7,12 @@
 			name="viewport"
 			content="width=device-width, initial-scale=1, shrink-to-fit=no"
 		/>
+		<style>
+			.delete-icon {
+				cursor: pointer;
+				color: red;
+			}
+		</style>
 	</head>
 	<body>
 		<div class="container">
@@ -38,11 +44,10 @@
 					.then((data) => {
 						const clientID = data.clientID;
 						clientProfileDiv.innerHTML = `
-			       <h2>Nom : ${data.firstName} ${data.lastName}</h2>
-			       <p>Email : ${data.email}</p>
-			       <p>Téléphone : ${data.phone}</p>
-
-			     `;
+                    <h2>Nom : ${data.firstName} ${data.lastName}</h2>
+                    <p>Email : ${data.email}</p>
+                    <p>Téléphone : ${data.phone}</p>
+                `;
 					})
 					.catch((error) => {
 						console.error(
@@ -60,10 +65,15 @@
 					})
 					.then((data) => {
 						if (data.length > 0) {
-							const reservation = data[0]; // Extrait le premier objet de réservation
-							reservationsListDiv.innerHTML = `
-			             <p>Réservation le ${reservation.start} avec ${reservation.title} (${reservation.service_name})</p>
-			         `;
+							const reservationsHTML = data
+								.map(
+									(reservation) => `
+                            <p>Réservation : ${reservation.start} - ${reservation.title} (${reservation.service_name})
+                            <span class="delete-icon" data-reservation-id="${reservation.id}">&#10006;</span></p>
+                        `
+								)
+								.join('');
+							reservationsListDiv.innerHTML = reservationsHTML;
 						} else {
 							reservationsListDiv.innerHTML =
 								'Aucune réservation trouvée';
@@ -75,6 +85,39 @@
 							error
 						);
 					});
+
+				reservationsListDiv.addEventListener('click', (event) => {
+					if (event.target.classList.contains('delete-icon')) {
+						const reservationId = event.target.getAttribute(
+							'data-reservation-id'
+						);
+						if (
+							confirm(
+								'Voulez-vous vraiment supprimer cette réservation ?'
+							)
+						) {
+							fetch(`/supprimer-reservation/${reservationId}`, {
+								method: 'DELETE',
+							})
+								.then((response) => {
+									if (response.ok) {
+										// Actualisez la liste des réservations
+										fetchAndDisplayReservations();
+									} else {
+										console.error(
+											'Échec de la suppression de la réservation'
+										);
+									}
+								})
+								.catch((error) => {
+									console.error(
+										'Erreur lors de la suppression de la réservation:',
+										error
+									);
+								});
+						}
+					}
+				});
 
 				document
 					.getElementById('logout-button')

@@ -66,4 +66,47 @@ router.get('/service', async (req, res) => {
 	}
 });
 
+// Nouvelle route pour afficher les services d'une entreprise spécifique
+router.get('/services/:professionalId', async (req, res) => {
+	try {
+		const client = getClientsCollection();
+		const professionalId = req.params.professionalId;
+		console.log('ID du professionnel:', professionalId);
+		const services = await client.query(
+			`SELECT services.service_id, services.service_name, services.service_description, services.service_price, services.duration, 
+            professionals.email, professionals.phone, professionals.company_name, professionals.company_address 
+            FROM services 
+            INNER JOIN professionals 
+            ON services.professional_id = professionals.professional_id
+            WHERE professionals.professional_id = $1`,
+			[professionalId]
+		);
+		return res.json(services.rows);
+	} catch (e) {
+		console.error('Erreur lors de la récupération des services :', e.stack);
+		res.status(500).json(
+			'Erreur lors de la récupération des services :' + e.message
+		);
+	}
+});
+
+// Route pour obtenir la liste des professionnels avec leurs ID
+router.get('/professionals', async (req, res) => {
+	try {
+		const client = getClientsCollection();
+		const professionals = await client.query(
+			'SELECT professional_id, company_name FROM professionals'
+		);
+		return res.json(professionals.rows);
+	} catch (e) {
+		console.error(
+			'Erreur lors de la récupération des professionnels :',
+			e.stack
+		);
+		res.status(500).json(
+			'Erreur lors de la récupération des professionnels :' + e.message
+		);
+	}
+});
+
 module.exports = router;

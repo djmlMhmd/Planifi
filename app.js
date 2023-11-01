@@ -30,6 +30,7 @@ const port = 3000;
 const disconnect = require('./routes/disconnect');
 const routes = require('./routes/authentication');
 const profilRoutes = require('./routes/profil');
+const deleteReservation = require('./routes/delete');
 const services = require('./routes/services');
 const availability = require('./routes/availability');
 const reservation = require('./routes/reservation');
@@ -55,6 +56,7 @@ app.use(services);
 app.use(availability);
 app.use(reservation);
 app.use('/api', require('./routes/reservation'));
+app.use(deleteReservation);
 
 // Définissez la route pour la page "À propos"
 app.get('/', (req, res) => {
@@ -92,6 +94,14 @@ app.get('/profil/:id', (req, res) => {
 		// If no one is logged in, return an error message or redirect to the login page
 		res.status(401).send('Authentification requise');
 	}
+});
+
+app.get('/reservation', (req, res) => {
+	res.sendFile(path.join(__dirname, 'views', 'reservations.html'));
+});
+
+app.get('/navigation', (req, res) => {
+	res.sendFile(path.join(__dirname, 'views', 'navigation.html'));
 });
 
 // dbConnexion();

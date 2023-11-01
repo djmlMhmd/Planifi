@@ -4,79 +4,167 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Liste des Services</title>
+		<style>
+			.modal {
+				display: none;
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background-color: rgba(0, 0, 0, 0.7);
+				z-index: 1;
+			}
+
+			.modal-content {
+				background-color: #fff;
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%);
+				padding: 20px;
+				border: 1px solid #ccc;
+			}
+			.calendar-container {
+				width: 150%;
+				height: 100%;
+			}
+		</style>
 	</head>
 	<body>
 		<h1>Liste des Services</h1>
 		<ul id="services-list"></ul>
 
+		<!-- Ajoutez un bouton pour ouvrir la fenêtre modale -->
+		<button id="open-calendar">Sélectionner la date</button>
+
+		<!-- Fenêtre modale -->
+		<div id="calendar-modal" class="modal">
+			<div class="modal-content">
+				<!-- Contenu du calendrier ici -->
+				<p>Selectionnez une date</p>
+				<div id="calendar" class="calendar-container"></div>
+				<div id="calendar"></div>
+				<button id="close-calendar">Fermer</button>
+			</div>
+		</div>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.0/fullcalendar.min.js"></script>
+
 		<script>
 			// Fonction pour effectuer une requête API et afficher les services
 			function getServices() {
-				fetch('/service', { method: 'GET' })
-					.then((response) => response.json())
-					.then((services) => {
-						const servicesList =
-							document.getElementById('services-list');
-						services.forEach((service) => {
-							const listItem = document.createElement('li');
-							const durationHours = service.duration.hours;
-							listItem.innerHTML = `
-			                         <strong>Service: </strong>${service.service_name}<br>
-			                         <strong>Description: </strong>${service.service_description}<br>
-			                         <strong>Prix: </strong>${service.service_price} €<br>
-			                         <strong>Durée: </strong>${durationHours} heures<br>
-			                         <strong>Professionnel: </strong>${service.email}<br>
-			                         <strong>Téléphone: </strong>${service.phone}<br>
-			                         <strong>Entreprise: </strong>${service.company_name}<br>
-			                         <strong>Adresse: </strong>${service.company_address}<br><br>
-			                         <button onclick="reserveService(${service.service_id})">Réserver</button><br><br>
-			                     `;
-							servicesList.appendChild(listItem);
+				const urlParams = new URLSearchParams(window.location.search);
+				const professionalId = urlParams.get('professionalId');
+				console.log(
+					'ID du professionnel (dans getServices):',
+					professionalId
+				);
+				if (professionalId) {
+					fetch(`/services/${professionalId}`, { method: 'GET' })
+						.then((response) => response.json())
+						.then((services) => {
+							const servicesList =
+								document.getElementById('services-list');
+							services.forEach((service) => {
+								const listItem = document.createElement('li');
+								const durationHours = service.duration.hours;
+								listItem.innerHTML = `
+                            <strong>Service: </strong>${service.service_name}<br>
+                            <strong>Description: </strong>${service.service_description}<br>
+                            <strong>Prix: </strong>${service.service_price} €<br>
+                            <strong>Durée: </strong>${durationHours} heures<br>
+                            <strong>Professionnel: </strong>${service.email}<br>
+                            <strong>Téléphone: </strong>${service.phone}<br>
+                            <strong>Entreprise: </strong>${service.company_name}<br>
+                            <strong>Adresse: </strong>${service.company_address}<br><br>
+                            <button onclick="reserveService(${service.service_id})">Réserver</button><br><br>
+                        `;
+								servicesList.appendChild(listItem);
+							});
+						})
+						.catch((error) => {
+							console.error(
+								'Erreur lors de la récupération des services:',
+								error
+							);
 						});
-					})
-					.catch((error) => {
-						console.error(
-							'Erreur lors de la récupération des services:',
-							error
-						);
-					});
+				} else {
+					console.error("ID du professionnel non défini dans l'URL");
+				}
 			}
 
-			function reserveService(serviceId) {
-				const reservationData = {
-					service_id: 3,
-					users_id: 4,
-					professional_id: 4,
-					start_time: '14:00:00',
-					default_availability_id: 9,
-					day_of_week: 'Mardi',
-				};
+			// Gestionnaire d'événement pour ouvrir la fenêtre modale
+			const openButton = document.getElementById('open-calendar');
+			const modal = document.getElementById('calendar-modal');
+			const closeButton = document.getElementById('close-calendar');
 
-				fetch('/reservation', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
+			openButton.addEventListener('click', () => {
+				modal.style.display = 'block';
+
+				// Initialisation du calendrier une fois que la fenêtre modale est ouverte
+				const calendar = $('#calendar').fullCalendar({
+					header: {},
+					defaultView: 'month',
+					editable: true,
+					handleWindowResize: true,
+					//aspectRatio: 2,
+					// Personnalisez le calendrier selon vos besoins
+					// ...
+					dayClick: function (date, jsEvent, view) {
+						// Gestion de la sélection de la date
+						const availabilityHours =
+							document.getElementById('availability-hours');
+						const reserveButton =
+							document.getElementById('reserve-button');
+
+						// Vous pouvez récupérer ici les heures de disponibilité pour la date sélectionnée
+						const selectedDate = date.format('DD-MM-YY');
+						const availableHours = [
+							'09:00',
+							'10:00',
+							'11:00',
+							'14:00',
+							'15:00',
+						]; // Exemple
+
+						// Affichez les heures de disponibilité
+						const hoursList = availableHours.map(
+							(hour) =>
+								`<button class="hour-button" data-hour="${hour}">${hour}</button>`
+						);
+						availabilityHours.innerHTML = hoursList.join('');
+
+						// Activez le bouton de réservation
+						reserveButton.removeAttribute('disabled');
+
+						// Gestion de la sélection de l'heure
+						const hourButtons =
+							document.querySelectorAll('.hour-button');
+						hourButtons.forEach((button) => {
+							button.addEventListener('click', function () {
+								// Ajoutez ici la logique pour réserver à une heure spécifique
+								const selectedHour =
+									button.getAttribute('data-hour');
+								alert(
+									`Réservation pour ${selectedDate} à ${selectedHour}`
+								);
+							});
+						});
 					},
-					body: JSON.stringify(reservationData),
-				})
-					.then((response) => {
-						if (response.status === 201) {
-							return response.json();
-						} else {
-							throw new Error('Erreur lors de la réservation');
-						}
-					})
-					.then((data) => {
-						alert(
-							'Réservation effectuée avec succès : ' +
-								data.message
-						);
-					})
-					.catch((error) => {
-						alert(
-							'Erreur lors de la réservation : ' + error.message
-						);
-					});
+				});
+			});
+
+			// Gestionnaire d'événement pour fermer la fenêtre modale
+			closeButton.addEventListener('click', () => {
+				modal.style.display = 'none';
+			});
+
+			function reserveService(serviceId) {
+				// Au lieu de faire une requête API, redirigez vers votre page "reservations.html" en incluant le serviceId comme paramètre dans l'URL
+				window.location.href = `/reservations.html?serviceId=${serviceId}`;
 			}
 
 			// Appeler la fonction pour obtenir la liste des services lors du chargement de la page

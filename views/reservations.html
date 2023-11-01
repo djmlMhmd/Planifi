@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Page de réservation</title>
+		<!-- Inclure les fichiers CSS de FullCalendar -->
+		<link
+			href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.0/fullcalendar.min.css"
+			rel="stylesheet"
+		/>
+	</head>
+	<body>
+		<h1>Page de réservation</h1>
+
+		<!-- Section de réservation (masquée par défaut) -->
+		<div id="reservation-section" style="display: none">
+			<h2>Réservation</h2>
+			<!-- Calendrier minimaliste -->
+			<div id="calendar"></div>
+			<!-- Heures de disponibilité (initiallement vide) -->
+			<div id="availability-hours"></div>
+			<!-- Bouton de réservation (initiallement désactivé) -->
+			<button id="reserve-button" disabled>Réserver</button>
+		</div>
+
+		<!-- Inclure les fichiers JavaScript de FullCalendar et jQuery -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.0/fullcalendar.min.js"></script>
+
+		<script>
+			document.addEventListener('DOMContentLoaded', function () {
+				const clientId = '<%= req.session.clientID %>'; // Récupérez l'ID de session du client depuis la variable serveur
+
+				if (clientId) {
+					// Le client est authentifié, affichez la section de réservation
+					const reservationSection = document.getElementById(
+						'reservation-section'
+					);
+					reservationSection.style.display = 'block';
+
+					// Initialisation du calendrier
+					const calendar = $('#calendar').fullCalendar({
+						header: {
+							left: 'prev,next today',
+							center: 'title',
+							right: 'month,agendaWeek,agendaDay',
+						},
+						defaultView: 'month',
+						editable: true,
+						// Personnalisez le calendrier selon vos besoins
+						// ...
+						dayClick: function (date, jsEvent, view) {
+							// Gestion de la sélection de la date
+							const availabilityHours =
+								document.getElementById('availability-hours');
+							const reserveButton =
+								document.getElementById('reserve-button');
+
+							// Vous pouvez récupérer ici les heures de disponibilité pour la date sélectionnée
+							const selectedDate = date.format('DD-MM-YY');
+							const availableHours = [
+								'09:00',
+								'10:00',
+								'11:00',
+								'14:00',
+								'15:00',
+							]; // Exemple
+
+							// Affichez les heures de disponibilité
+							const hoursList = availableHours.map(
+								(hour) =>
+									`<button class="hour-button" data-hour="${hour}">${hour}</button>`
+							);
+							availabilityHours.innerHTML = hoursList.join('');
+
+							// Activez le bouton de réservation
+							reserveButton.removeAttribute('disabled');
+
+							// Gestion de la sélection de l'heure
+							const hourButtons =
+								document.querySelectorAll('.hour-button');
+							hourButtons.forEach((button) => {
+								button.addEventListener('click', function () {
+									// Ajoutez ici la logique pour réserver à une heure spécifique
+									const selectedHour =
+										button.getAttribute('data-hour');
+									alert(
+										`Réservation pour ${selectedDate} à ${selectedHour}`
+									);
+								});
+							});
+						},
+					});
+
+					// Configuration de l'événement de réservation (à personnaliser)
+					const reserveButton =
+						document.getElementById('reserve-button');
+					reserveButton.addEventListener('click', function () {
+						// Ajoutez ici la logique de réservation
+						alert('Réservation effectuée avec succès');
+					});
+				}
+			});
+		</script>
+	</body>
+</html>
