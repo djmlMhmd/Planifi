@@ -73,6 +73,7 @@ const createTableProfessional = async () => {
           phone VARCHAR(20),
           company_name VARCHAR(100),
           company_address VARCHAR(300),
+		  profile_image VARCHAR(400),
           creation_date DATE NOT NULL DEFAULT CURRENT_DATE
         );
       `;

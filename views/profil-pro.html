@@ -11,6 +11,21 @@
 	</head>
 	<body>
 		<div class="container">
+			<div class="profile-image">
+				<img
+					src="/img/2.jpg"
+					alt="Photo de profil"
+					id="profile-image"
+				/>
+			</div>
+
+			<input
+				type="file"
+				accept="image/*"
+				id="file-input"
+				style="display: none"
+			/>
+
 			<h1>Profil du Professionnel</h1>
 			<div id="professional-profile">
 				<!-- Les informations du profil professionnel affichées ici -->
@@ -22,10 +37,15 @@
 			<div id="professional-services">
 				<!-- Les services du professionnel seront affichés ici -->
 			</div>
+			<!-- Ajouter un bouton pour fermer le formulaire -->
+
 			<button id="logout-button">Déconnexion</button>
 			<button id="calendar-button">Calendrier</button>
 			<button id="add-service-button">Ajouter un service</button>
 		</div>
+
 		<script src="../public/js/profil-pro.js"></script>
+		<script src="../public/js/profilephoto.js"></script>
+		<script src="../public/js/add-service.js"></script>
 	</body>
 </html>

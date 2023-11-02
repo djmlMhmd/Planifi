@@ -46,6 +46,8 @@ app.use(
 );
 app.use(express.static('public'));
 
+app.use('/profile-images', express.static('img'));
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'views')));
 app.use(express.json());
@@ -93,6 +95,23 @@ app.get('/profil/:id', (req, res) => {
 		res.status(401).send('Authentification requise');
 	}
 });
+
+/*app.get('/profil/:id', (req, res) => {
+	// Checks whether it is a customer or a connected professional
+	if (req.session.clientID) {
+		// If it's a customer, return the customer profile
+		res.sendFile(path.join(__dirname, 'views', 'profil-client.html'));
+	} else if (req.session.professionalID) {
+		// If it's a professional, get the professionalID from the session
+		const professionalID = req.session.professionalID;
+
+		// Render the professional profile, passing professionalID as a parameter
+		res.render('profil-pro.html', { professionalID: professionalID });
+	} else {
+		// If no one is logged in, return an error message or redirect to the login page
+		res.status(401).send('Authentification requise');
+	}
+});*/
 
 app.get('/reservation', (req, res) => {
 	res.sendFile(path.join(__dirname, 'views', 'reservations.html'));
