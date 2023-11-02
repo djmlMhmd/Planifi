@@ -1,14 +1,21 @@
-const uploadFile = async (file) => {
-	const fileRef = storageRef.child('profile-images/' + file.originalname);
+const profileImage = document.getElementById('profile-image');
+const fileInput = document.getElementById('file-input');
 
-	try {
-		const snapshot = await fileRef.put(file.buffer);
-		console.log('Fichier téléchargé avec succès !', snapshot.ref.fullPath);
+// Ajoutez un gestionnaire d'événements pour le clic sur la photo de profil
+profileImage.addEventListener('click', () => {
+	// Déclenchez le clic sur l'élément d'entrée de type fichier
+	fileInput.click();
+});
 
-		// Récupérez l'URL de téléchargement du fichier
-		const downloadURL = await snapshot.ref.getDownloadURL();
-		console.log('URL de téléchargement :', downloadURL);
-	} catch (error) {
-		console.error('Erreur lors du téléchargement du fichier :', error);
+// Ajoutez un gestionnaire d'événements pour le changement de fichier
+fileInput.addEventListener('change', (event) => {
+	const selectedFile = event.target.files[0];
+	if (selectedFile) {
+		// Mettez à jour la source de l'image avec le nouveau fichier
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			profileImage.src = e.target.result;
+		};
+		reader.readAsDataURL(selectedFile);
 	}
-};
+});

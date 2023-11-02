@@ -30,8 +30,8 @@ router.post('/inscription', async (req, res) => {
 
 		if (reqValue == 'professionnel') {
 			const result = await client.query(
-				`INSERT INTO ${tableName}("firstName", "lastName", password, email, phone, company_name, company_address, profile_image)
-				VALUES($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT DO NOTHING RETURNING *`,
+				`INSERT INTO ${tableName}("firstName", "lastName", password, email, phone, company_name, company_address)
+				VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING RETURNING *`,
 				[
 					body.firstName,
 					body.lastName,
@@ -40,7 +40,6 @@ router.post('/inscription', async (req, res) => {
 					body.phone,
 					body.company_name,
 					body.company_address,
-					body.profile_image,
 				]
 			);
 

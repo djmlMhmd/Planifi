@@ -37,6 +37,14 @@ const reservation = require('./routes/reservation');
 const jwt = require('jsonwebtoken');
 const secretKey = process.env.SECRET_KEY;
 
+const EventEmitter = require('events');
+
+// Increase the listener limit for an EventEmitter object
+const bus = new EventEmitter();
+bus.setMaxListeners(20);
+
+bus.on('monEvenement', () => {});
+
 app.use(
 	session({
 		secret: secretKey,

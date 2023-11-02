@@ -1,3 +1,29 @@
+function displaySuccessModal() {
+	const modalContainer = document.createElement('div');
+	modalContainer.className = 'modal-container';
+	modalContainer.innerHTML = `
+        <div class="modal" id="success-modal">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Service créé avec succès!</h2>
+            <p>Votre service a été ajouté avec succès.</p>
+        </div>
+    `;
+	modalContainer
+		.querySelector('.close')
+		.addEventListener('click', (event) => {
+			event.stopPropagation();
+			closeModal();
+		});
+	document.body.appendChild(modalContainer);
+}
+// close the modal window
+function closeModal() {
+	const modalContainer = document.querySelector('.modal-container');
+	if (modalContainer) {
+		modalContainer.remove();
+	}
+}
+
 const addServiceButton = document.getElementById('add-service-button');
 const professionalProfileDiv = document.getElementById('professional-profile');
 
