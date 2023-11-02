@@ -66,8 +66,8 @@ router.get('/service', async (req, res) => {
 router.get('/services/:professionalId', async (req, res) => {
 	try {
 		const client = getClientsCollection();
-		const professionalId = req.params.professionalId;
-		console.log('ID du professionnel:', professionalId);
+		const professionalId = req.session.professionalID;
+
 		const services = await client.query(
 			`SELECT services.service_id, services.service_name, services.service_description, services.service_price, services.duration, 
             professionals.email, professionals.phone, professionals.company_name, professionals.company_address 

@@ -7,36 +7,7 @@
 			name="viewport"
 			content="width=device-width, initial-scale=1, shrink-to-fit=no"
 		/>
-		<style>
-			.modal-container {
-				display: flex;
-				justify-content: center;
-				align-items: center;
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				background: rgba(0, 0, 0, 0.5);
-			}
-
-			.modal {
-				background: #fff;
-				padding: 20px;
-				border-radius: 5px;
-				box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-				position: relative;
-				text-align: center;
-			}
-
-			.close {
-				position: absolute;
-				top: 10px;
-				right: 10px;
-				font-size: 24px;
-				cursor: pointer;
-			}
-		</style>
+		<link rel="stylesheet" type="text/css" href="/css/profil-pro.css" />
 	</head>
 	<body>
 		<div class="container">
@@ -44,171 +15,14 @@
 			<div id="professional-profile">
 				<!-- Les informations du profil professionnel affichées ici -->
 			</div>
+			<h1>Mes Services</h1>
+			<div id="professional-services">
+				<!-- Les services du professionnel seront affichés ici -->
+			</div>
 			<button id="logout-button">Déconnexion</button>
 			<button id="calendar-button">Calendrier</button>
 			<button id="add-service-button">Ajouter un service</button>
 		</div>
-		<script>
-			document.addEventListener('DOMContentLoaded', () => {
-				fetch('/profil/professionnel/${professionalID}')
-					.then((response) => {
-						if (!response.ok) {
-							throw new Error('La requête a échoué');
-						}
-						return response.json();
-					})
-					.then((data) => {
-						const professionalProfileDiv = document.getElementById(
-							'professional-profile'
-						);
-						professionalProfileDiv.innerHTML = `
-			                 <h2>Nom de l'entreprise : ${data.company_name}</h2>
-			                 <p>Nom du professionnel : ${data.firstName} ${data.lastName}</p>
-			                 <p>Email : ${data.email}</p>
-			                 <p>Téléphone : ${data.phone}</p>
-			                 <p>Adresse de l'entreprise : ${data.company_address}</p>
-			             `;
-					})
-					.catch((error) => {
-						console.error(
-							'Erreur lors de la récupération du profil professionnel:',
-							error
-						);
-					});
-				document
-					.getElementById('logout-button')
-					.addEventListener('click', () => {
-						fetch('/deconnexion/client', { method: 'POST' })
-							.then((response) => {
-								if (response.ok) {
-									// Redirect the user to the login page after logging out
-									window.location.href = '/connexion';
-								} else {
-									console.error('Échec de la déconnexion');
-								}
-							})
-							.catch((error) => {
-								console.error(
-									'Erreur lors de la déconnexion:',
-									error
-								);
-							});
-					});
-
-				const calendarButton =
-					document.getElementById('calendar-button');
-
-				calendarButton.addEventListener('click', () => {
-					// Redirects the user to the "availability.html" page
-					window.location.href = '/availability.html';
-				});
-				const addServiceButton =
-					document.getElementById('add-service-button');
-				const professionalProfileDiv = document.getElementById(
-					'professional-profile'
-				);
-
-				addServiceButton.addEventListener('click', () => {
-					// Créez un formulaire pour ajouter un service
-					const serviceForm = document.createElement('form');
-					serviceForm.innerHTML = `
-            <h3>Ajouter un service</h3>
-            <label for="service_name">Nom du service:</label><br>
-            <input type="text" id="service_name" name="service_name" required>
-
-           <br><label for="service_description">Description:</label><br>
-            <textarea id="service_description" name="service_description" required></textarea>
-
-          <br><label for="service_price">Prix:</label><br>
-            <input type="number" id="service_price" name="service_price" required>
-
-            <br><label for="duration">Durée:</label><br>
-            <select id="duration" name="duration" required>
-			<option value="1800">30 min</option>
-    		<option value="3600">1 h 00</option>
-    		<option value="5400">1 h 30</option>
-    		<option value="7200">2 h 00</option>
-			<option value="9000">2 h 30</option>
-			<option value="10800">3 h 00</option>
-			<option value="12600">3 h 30</option>
-			<option value="14400">4 h 00</option>
-			<option value="16200">4 h 30</option>
-			<option value="18000">5 h 00</option>
-			<option value="19800">5 h 30</option>
-			<option value="21600">6 h 00</option>
-			<option value="23400">6 h 30</option>
-			<option value="25200">7 h 00</option>
-			<option value="27000">7 h 30</option>
-			<option value="28800">8 h 00</option>
-			</select>
-
-            <button type="submit">Créer</button>
-        `;
-
-					professionalProfileDiv.appendChild(serviceForm);
-
-					serviceForm.addEventListener('submit', (event) => {
-						event.preventDefault();
-						const formData = {
-							service_name:
-								serviceForm.querySelector('#service_name')
-									.value,
-							service_description: serviceForm.querySelector(
-								'#service_description'
-							).value,
-							service_price:
-								serviceForm.querySelector('#service_price')
-									.value,
-							duration: parseInt(
-								serviceForm.querySelector('#duration').value,
-								10
-							),
-						};
-
-						fetch('/service/create', {
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json',
-							},
-							body: JSON.stringify(formData),
-						})
-							.then((response) => {
-								if (response.ok) {
-									displaySuccessModal();
-								} else {
-									console.error(
-										'Échec de la création du service'
-									);
-								}
-							})
-							.catch((error) => {
-								console.error(
-									'Erreur lors de la création du service:',
-									error
-								);
-							});
-					});
-				});
-			});
-			function displaySuccessModal() {
-				const modalContainer = document.createElement('div');
-				modalContainer.className = 'modal-container';
-				modalContainer.innerHTML = `
-        <div class="modal">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <h2>Service créé avec succès!</h2>
-            <p>Votre service a été ajouté avec succès.</p>
-        </div>
-    `;
-				document.body.appendChild(modalContainer);
-			}
-
-			// Fonction pour fermer la fenêtre modale
-			function closeModal() {
-				const modalContainer =
-					document.querySelector('.modal-container');
-				modalContainer.remove();
-			}
-		</script>
+		<script src="../public/js/profil-pro.js"></script>
 	</body>
 </html>

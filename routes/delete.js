@@ -47,4 +47,44 @@ router.delete('/supprimerReservation', async (req, res) => {
 	}
 });
 
+router.delete('/services/delete/:serviceId', async (req, res) => {
+	try {
+		const serviceId = req.params.serviceId;
+		const professionalId = req.session.professionalID;
+
+		const client = getClientsCollection();
+
+		// Requête pour obtenir le professional_id du service avec l'ID donné
+		const serviceQuery = await client.query(
+			'SELECT professional_id FROM services WHERE service_id = $1',
+			[serviceId]
+		);
+
+		const service = serviceQuery.rows[0];
+
+		if (!service) {
+			return res.status(404).json({ message: 'Service non trouvé' });
+		}
+
+		// Vérifiez si le professional_id du service correspond à professionalId de la session
+		if (service.professional_id !== professionalId) {
+			return res.status(403).json({
+				message: "Vous n'êtes pas autorisé à supprimer ce service",
+			});
+		}
+
+		// Supprimez le service s'il appartient au professionnel
+		await client.query('DELETE FROM services WHERE service_id = $1', [
+			serviceId,
+		]);
+
+		return res.json({ message: 'Service supprimé avec succès' });
+	} catch (e) {
+		console.error('Erreur lors de la suppression du service :', e.stack);
+		res.status(500).json(
+			'Erreur lors de la suppression du service :' + e.message
+		);
+	}
+});
+
 module.exports = router;

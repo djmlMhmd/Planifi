@@ -44,6 +44,7 @@ app.use(
 		saveUninitialized: true,
 	})
 );
+app.use(express.static('public'));
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'views')));
@@ -77,10 +78,6 @@ app.get('/inscription/', (req, res) => {
 
 app.get('/connexion/', (req, res) => {
 	res.sendFile(path.join(__dirname, 'views', 'login.html'));
-});
-
-app.get('/client/:id', (req, res) => {
-	res.sendFile(path.join(__dirname, 'views', 'profil-client.html'));
 });
 
 app.get('/profil/:id', (req, res) => {
