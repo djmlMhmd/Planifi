@@ -142,6 +142,17 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	});
 });
+
+const servicesHeading = document.getElementById('services-heading');
+const professionalServices = document.getElementById('professional-services');
+servicesHeading.addEventListener('click', () => {
+	if (professionalServices.style.display === 'none') {
+		professionalServices.style.display = 'block';
+	} else {
+		professionalServices.style.display = 'none';
+	}
+});
+
 function displaySuccessModal() {
 	const modalContainer = document.createElement('div');
 	modalContainer.className = 'modal-container';

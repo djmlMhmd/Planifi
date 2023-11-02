@@ -26,3 +26,12 @@
 	font-size: 24px;
 	cursor: pointer;
 }
+
+.professional-services {
+	display: none;
+}
+
+.arrow-down {
+	font-size: 12px; /* Taille de la flèche */
+	margin-left: 5px; /* Espace entre le texte et la flèche */
+}
