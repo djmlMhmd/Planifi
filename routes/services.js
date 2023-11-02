@@ -14,7 +14,7 @@ router.post('/service/create', async (req, res) => {
 	console.log('Données reçues du formulaire :', req.body);
 	const durationText = duration;
 	const professional_id = req.session.professionalID;
-
+	//console.log('id pro:', professional_id);
 	try {
 		const client = getClientsCollection();
 		await client.query(
