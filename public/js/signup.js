@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
 	console.log('je me lance');
-	const form = document.querySelector('#registration-form');
-	const user_type = document.querySelector('#user_type');
+	const form = document.getElementById('registration-form');
+	const user_type = document.getElementById('user_type');
 	const professionalFields = document.querySelectorAll('.professional-field');
 
 	// Fonction pour gérer l'affichage conditionnel des champs professionnels
@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		// Créez un objet pour stocker les données du formulaire
 		const formDataObject = {};
+
 		formData.forEach((value, key) => {
 			formDataObject[key] = value;
 		});
@@ -42,8 +43,14 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 
 		try {
+			let userType = user_type.value;
+			if (userType === 'client') {
+				userType = 'client';
+			} else {
+				userType = 'professionnel';
+			}
 			// Effectuez une requête POST vers votre endpoint d'inscription
-			const response = await fetch('/inscription', {
+			const response = await fetch(`/inscription?user_type=${userType}`, {
 				method: 'POST',
 				body: JSON.stringify(formDataObject),
 				headers: {

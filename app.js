@@ -112,6 +112,9 @@ app.get('/reservation', (req, res) => {
 app.get('/navigation', (req, res) => {
 	res.sendFile(path.join(__dirname, 'views', 'navigation.html'));
 });
+app.get('/test', (req, res) => {
+	res.sendFile(path.join(__dirname, 'test', 'test.html'));
+});
 
 // dbConnexion();
 

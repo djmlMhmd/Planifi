@@ -14,7 +14,8 @@ router.post('/inscription', async (req, res) => {
 	const { body } = req;
 	const reqValue = req.query['user_type'];
 	const { error } = userValidation(body);
-	console.log('Mot de passe avant hachage :', body.password);
+	console.log(req.query['user_type']);
+	console.log(body);
 	try {
 		// Hash password
 		const hash = await bcrypt.hash(body.password, saltRounds);
