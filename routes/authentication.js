@@ -14,8 +14,7 @@ router.post('/inscription', async (req, res) => {
 	const { body } = req;
 	const reqValue = req.query['user_type'];
 	const { error } = userValidation(body);
-	console.log(req.query['user_type']);
-	console.log(body);
+
 	try {
 		// Hash password
 		const hash = await bcrypt.hash(body.password, saltRounds);
@@ -50,7 +49,8 @@ router.post('/inscription', async (req, res) => {
 			}
 
 			console.log(`${reqValue} inscrit avec succès:`, result.rows[0]);
-			res.json(`${reqValue} inscrit avec succès`);
+
+			res.redirect('http://localhost:3000/connexion');
 		} else if (reqValue == 'client') {
 			const result = await client.query(
 				'INSERT INTO users("firstName", "lastName", password, email, phone) VALUES($1, $2, $3, $4, $5) RETURNING *',
