@@ -1,4 +1,5 @@
 require('dotenv').config();
+
 const express = require('express');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
@@ -41,7 +42,7 @@ const EventEmitter = require('events');
 
 // Increase the listener limit for an EventEmitter object
 const bus = new EventEmitter();
-bus.setMaxListeners(20);
+bus.setMaxListeners(30);
 
 bus.on('monEvenement', () => {});
 
