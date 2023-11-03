@@ -165,24 +165,22 @@ router.get('/reservations/client', async (req, res) => {
 
 		const result = await client.query(query);
 
-		if (result.rows.length === 0) {
-			return res
-				.status(404)
-				.json({ message: 'Aucune réservation trouvée' });
+		if (result.rows.length > 0) {
+			const reservations = result.rows.map((reservation) => ({
+				title: reservation.professional_name,
+				service_name: reservation.service_name,
+				start: moment(reservation.start_time, 'HH:mm:ss').format(
+					'DD/MM/YY HH:mm'
+				),
+				end: moment(reservation.end_time, 'HH:mm:ss').format(
+					'YYYY-MM-DDTHH:mm:ss'
+				),
+			}));
+
+			res.json(reservations);
+		} else {
+			res.json({ message: 'Aucune réservation trouvée' });
 		}
-
-		const reservations = result.rows.map((reservation) => ({
-			title: reservation.professional_name,
-			service_name: reservation.service_name,
-			start: moment(reservation.start_time, 'HH:mm:ss').format(
-				'DD/MM/YY HH:mm'
-			),
-			end: moment(reservation.end_time, 'HH:mm:ss').format(
-				'YYYY-MM-DDTHH:mm:ss'
-			),
-		}));
-
-		res.json(reservations);
 	} catch (e) {
 		console.error(
 			'Erreur lors de la récupération des réservations du client:',

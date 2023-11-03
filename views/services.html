@@ -84,12 +84,14 @@
                         `;
 								servicesList.appendChild(listItem);
 							});
+							console.log(services);
 						})
 						.catch((error) => {
 							console.error(
 								'Erreur lors de la récupération des services:',
 								error
 							);
+							console.log(service);
 						});
 				} else {
 					console.error("ID du professionnel non défini dans l'URL");

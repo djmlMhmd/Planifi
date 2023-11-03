@@ -33,7 +33,7 @@
 					document.getElementById('client-profile');
 				const reservationsListDiv =
 					document.getElementById('reservations-list');
-
+				let clientID;
 				fetch('/profil/client/${clientID}')
 					.then((response) => {
 						if (!response.ok) {
@@ -42,7 +42,7 @@
 						return response.json();
 					})
 					.then((data) => {
-						const clientID = data.clientID;
+						clientID = data.clientID;
 						clientProfileDiv.innerHTML = `
                     <h2>Nom : ${data.firstName} ${data.lastName}</h2>
                     <p>Email : ${data.email}</p>

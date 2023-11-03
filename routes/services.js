@@ -66,7 +66,8 @@ router.get('/service', async (req, res) => {
 router.get('/services/:professionalId', async (req, res) => {
 	try {
 		const client = getClientsCollection();
-		const professionalId = req.session.professionalID;
+		const professionalId = req.params.professionalId;
+		console.log('id pro:', professionalId);
 
 		const services = await client.query(
 			`SELECT services.service_id, services.service_name, services.service_description, services.service_price, services.duration, 
@@ -77,6 +78,7 @@ router.get('/services/:professionalId', async (req, res) => {
             WHERE professionals.professional_id = $1`,
 			[professionalId]
 		);
+
 		return res.json(services.rows);
 	} catch (e) {
 		console.error('Erreur lors de la récupération des services :', e.stack);

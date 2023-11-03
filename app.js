@@ -105,23 +105,6 @@ app.get('/profil/:id', (req, res) => {
 	}
 });
 
-/*app.get('/profil/:id', (req, res) => {
-	// Checks whether it is a customer or a connected professional
-	if (req.session.clientID) {
-		// If it's a customer, return the customer profile
-		res.sendFile(path.join(__dirname, 'views', 'profil-client.html'));
-	} else if (req.session.professionalID) {
-		// If it's a professional, get the professionalID from the session
-		const professionalID = req.session.professionalID;
-
-		// Render the professional profile, passing professionalID as a parameter
-		res.render('profil-pro.html', { professionalID: professionalID });
-	} else {
-		// If no one is logged in, return an error message or redirect to the login page
-		res.status(401).send('Authentification requise');
-	}
-});*/
-
 app.get('/reservation', (req, res) => {
 	res.sendFile(path.join(__dirname, 'views', 'reservations.html'));
 });
@@ -143,22 +126,3 @@ app.use(
 		'Content-Type': 'text/javascript',
 	})
 );
-
-// middleware verifyToken
-
-/*function verifyToken(req, res, next) {
-	const token = req.session.token;
-	if (!token) {
-		return res
-			.status(403)
-			.json({ message: 'Accès refusé. Token manquant.' });
-	}
-	jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
-		if (err) {
-			return res.status(401).json({ message: 'Token invalide.' });
-		}
-
-		req.clientID = decoded.clientID;
-		next();
-	});
-}*/
