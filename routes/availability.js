@@ -62,34 +62,28 @@ router.post('/availability', async (req, res) => {
 
 // Route to display the availability of a professional
 
-router.get('/availability/:professional_id', async (req, res) => {
-	const professionalId = req.params.professional_id;
-
+// Route pour obtenir les disponibilités d'un professionnel
+router.get('/availability/:professionalId/:dayOfWeek', async (req, res) => {
 	try {
 		const client = getClientsCollection();
-		const query = {
-			text: 'SELECT * FROM availability WHERE professional_id = $1',
-			values: [professionalId],
-		};
+		const { professionalId, dayOfWeek } = req.params;
 
-		const result = await client.query(query);
+		// Récupére les heures disponibles pour le professionnel et le jour de la semaine
+		const availability = await client.query(
+			'SELECT start_time FROM default_availability WHERE professional_id = $1 AND day_of_week = $2 AND is_available = TRUE',
+			[professionalId, dayOfWeek]
+		);
 
-		if (result.rows.length === 0) {
-			return res
-				.status(404)
-				.json({ message: 'Aucune disponibilité trouvée' });
-		}
-
-		const availability = result.rows;
-		res.json(availability);
-	} catch (e) {
+		const availableHours = availability.rows.map((row) => row.start_time);
+		res.json(availableHours);
+	} catch (error) {
 		console.error(
-			'Erreur lors de la récupération des disponibilités :',
-			e.stack
+			'Erreur lors de la récupération des disponibilités',
+			error
 		);
-		res.status(500).json(
-			'Erreur lors de la récupération des disponibilités : ' + e.message
-		);
+		res.status(500).json({
+			error: 'Erreur lors de la récupération des disponibilités',
+		});
 	}
 });
 

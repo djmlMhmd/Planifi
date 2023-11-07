@@ -51,6 +51,7 @@ router.get('/profil/client/:id', async (req, res) => {
 	if (!clientID) {
 		return res.status(401).json({ message: 'Authentification requise' });
 	}
+	req.session.clientID = clientID;
 
 	try {
 		const client = getClientsCollection();

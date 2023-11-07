@@ -60,15 +60,8 @@ router.post('/reservation', async (req, res) => {
 
 	// Faire la réservation
 	await client.query(
-		'INSERT INTO reservations (professional_id, start_time, users_id, service_id, default_availability_id, day_of_week) VALUES ($1, $2, $3, $4, $5, $6)',
-		[
-			professional_id,
-			start_time,
-			users_id,
-			service_id,
-			default_availability_id,
-			day_of_week,
-		]
+		'INSERT INTO reservations (professional_id, start_time, users_id, service_id, day_of_week) VALUES ($1, $2, $3, $4, $5)',
+		[professional_id, start_time, users_id, service_id, day_of_week]
 	);
 
 	return res.status(201).json({ message: 'Réservation créée avec succès' });

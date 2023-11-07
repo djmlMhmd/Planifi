@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	function fetchAndDisplayServices() {
 		const urlParams = new URLSearchParams(window.location.search);
 		const professionalId = urlParams.get('professionalId');
+
 		fetch(`/services/${professionalId}`, { method: 'GET' })
 			.then((response) => {
 				if (!response.ok) {

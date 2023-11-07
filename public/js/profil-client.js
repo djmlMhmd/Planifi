@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				})
 					.then((response) => {
 						if (response.ok) {
-							// Actualisez la liste des réservations
+							// Actualise la liste des réservations
 							fetchAndDisplayReservations();
 						} else {
 							console.error(

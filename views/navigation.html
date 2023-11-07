@@ -13,17 +13,19 @@
 		<script>
 			// Fonction pour effectuer une requête API et afficher les noms d'entreprise des services
 			function getProfessionals() {
+				let clientID;
+				console.log(clientID);
 				fetch('/professionals', { method: 'GET' })
 					.then((response) => response.json())
 					.then((professionals) => {
 						const professionalsList =
 							document.getElementById('professionals-list');
 						professionals.forEach((professional) => {
-							// Créez un lien pour accéder aux détails des services en incluant l'ID du professionnel dans l'URL
+							// Créer un lien pour accéder aux détails des services en incluant l'ID du professionnel dans l'URL
 							const listItem = document.createElement('li');
 							const link = document.createElement('a');
 							link.href = `/services.html?professionalId=${professional.professional_id}`;
-							link.textContent = professional.company_name; // Affichez le nom de l'entreprise
+							link.textContent = professional.company_name; // Afficher le nom de l'entreprise
 							listItem.appendChild(link);
 							professionalsList.appendChild(listItem);
 						});

@@ -56,7 +56,7 @@ app.use(
 app.use(express.static('public'));
 
 app.use('/profile-images', express.static('img'));
-
+app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'views')));
 app.use(express.json());

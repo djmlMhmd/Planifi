@@ -54,14 +54,16 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.0/fullcalendar.min.js"></script>
 
 		<script>
+			const urlParams = new URLSearchParams(window.location.search);
+			const professionalId = urlParams.get('professionalId');
+
+			function reserveService(serviceId) {
+				window.location.href = `/reservations.html?professionalId=${professionalId}&serviceId=${serviceId}`;
+			}
+
 			// Fonction pour effectuer une requête API et afficher les services
 			function getServices() {
-				const urlParams = new URLSearchParams(window.location.search);
-				const professionalId = urlParams.get('professionalId');
-				console.log(
-					'ID du professionnel (dans getServices):',
-					professionalId
-				);
+				let clientID;
 				if (professionalId) {
 					fetch(`/services/${professionalId}`, { method: 'GET' })
 						.then((response) => response.json())
@@ -80,8 +82,10 @@
                             <strong>Téléphone: </strong>${service.phone}<br>
                             <strong>Entreprise: </strong>${service.company_name}<br>
                             <strong>Adresse: </strong>${service.company_address}<br><br>
-                            <button onclick="reserveService(${service.service_id})">Réserver</button><br><br>
+                            <button onclick="reserveService(${service.service_id}, '${professionalId}')">Réserver</button>
+
                         `;
+								console.log('id pro2:', professionalId);
 								servicesList.appendChild(listItem);
 							});
 							console.log(services);
@@ -113,7 +117,7 @@
 					editable: true,
 					handleWindowResize: true,
 					//aspectRatio: 2,
-					// Personnalisez le calendrier selon vos besoins
+					// Personnalise le calendrier
 					// ...
 					dayClick: function (date, jsEvent, view) {
 						// Gestion de la sélection de la date
@@ -122,7 +126,7 @@
 						const reserveButton =
 							document.getElementById('reserve-button');
 
-						// Vous pouvez récupérer ici les heures de disponibilité pour la date sélectionnée
+						// ici les heures de disponibilité pour la date sélectionnée
 						const selectedDate = date.format('DD-MM-YY');
 						const availableHours = [
 							'09:00',
@@ -132,14 +136,14 @@
 							'15:00',
 						]; // Exemple
 
-						// Affichez les heures de disponibilité
+						// Affiche les heures de disponibilité
 						const hoursList = availableHours.map(
 							(hour) =>
 								`<button class="hour-button" data-hour="${hour}">${hour}</button>`
 						);
 						availabilityHours.innerHTML = hoursList.join('');
 
-						// Activez le bouton de réservation
+						// Active le bouton de réservation
 						reserveButton.removeAttribute('disabled');
 
 						// Gestion de la sélection de l'heure
@@ -147,7 +151,7 @@
 							document.querySelectorAll('.hour-button');
 						hourButtons.forEach((button) => {
 							button.addEventListener('click', function () {
-								// Ajoutez ici la logique pour réserver à une heure spécifique
+								// ici la logique pour réserver à une heure spécifique
 								const selectedHour =
 									button.getAttribute('data-hour');
 								alert(
@@ -163,11 +167,6 @@
 			closeButton.addEventListener('click', () => {
 				modal.style.display = 'none';
 			});
-
-			function reserveService(serviceId) {
-				// Au lieu de faire une requête API, redirigez vers votre page "reservations.html" en incluant le serviceId comme paramètre dans l'URL
-				window.location.href = `/reservations.html?serviceId=${serviceId}`;
-			}
 
 			// Appeler la fonction pour obtenir la liste des services lors du chargement de la page
 			document.addEventListener('DOMContentLoaded', getServices);
