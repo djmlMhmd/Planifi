@@ -11,9 +11,10 @@
 		<ul id="professionals-list"></ul>
 
 		<script>
-			// Fonction pour effectuer une requête API et afficher les noms d'entreprise des services
 			function getProfessionals() {
+				// Fonction pour effectuer une requête API et afficher les noms d'entreprise des services
 				let clientID;
+
 				console.log(clientID);
 				fetch('/professionals', { method: 'GET' })
 					.then((response) => response.json())

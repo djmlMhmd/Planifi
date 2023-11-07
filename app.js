@@ -53,6 +53,7 @@ app.use(
 		saveUninitialized: true,
 	})
 );
+
 app.use(express.static('public'));
 
 app.use('/profile-images', express.static('img'));

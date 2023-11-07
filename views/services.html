@@ -65,7 +65,9 @@
 			function getServices() {
 				let clientID;
 				if (professionalId) {
-					fetch(`/services/${professionalId}`, { method: 'GET' })
+					fetch(`/liste-services/${professionalId}`, {
+						method: 'GET',
+					})
 						.then((response) => response.json())
 						.then((services) => {
 							const servicesList =

@@ -113,7 +113,13 @@
 
 					if (response.status === 200) {
 						// Authentication successful, redirect the user to the profile page
-						window.location.href = '/profil/client';
+						const userData = await response.json();
+						if (userData.users_id) {
+							console.log('id client:', userData.users_id);
+							window.location.href = `/profil/${userData.users_id}`;
+						} else if (userData.professional_id) {
+							window.location.href = `/profil/${userData.professional_id}`;
+						}
 					} else {
 						// Handle failed authentication, for example by displaying an error message
 						console.log("Échec de l'authentification");

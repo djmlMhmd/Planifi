@@ -1,7 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
 	const clientProfileDiv = document.getElementById('client-profile');
 	const reservationsListDiv = document.getElementById('reservations-list');
+	const navigationLink = document.getElementById('navigation-link');
+
 	let clientID;
+
+	// Ajoutez un gestionnaire d'événements de clic à la balise <a>
+	navigationLink.addEventListener('click', (event) => {
+		event.preventDefault(); // Empêche le comportement par défaut du lien
+		window.location.href = `/navigation.html?clientId=${clientID}`;
+	});
+
 	fetch('/profil/client/${clientID}')
 		.then((response) => {
 			if (!response.ok) {
