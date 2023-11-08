@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-	const clientId = '<%= req.session.clientID %>';
+	const clientId = getCookie('clientID');
 	const urlParams = new URLSearchParams(window.location.search);
 	const professionalId = urlParams.get('professionalId');
 	const serviceId = urlParams.get('serviceId');

@@ -94,6 +94,7 @@ router.post('/connexion', async (req, res) => {
 
 			if (match) {
 				const clientID = connexionResult.rows[0].users_id;
+				res.cookie('clientID', clientID);
 				req.session.clientID = clientID;
 				console.log('Authentification réussie');
 				console.log('clientID dans la session :', req.session.clientID);

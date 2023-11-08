@@ -3,15 +3,17 @@ document.addEventListener('DOMContentLoaded', () => {
 	const reservationsListDiv = document.getElementById('reservations-list');
 	const navigationLink = document.getElementById('navigation-link');
 
-	let clientID;
+	const urlParams = new URLSearchParams(window.location.search);
+	let clientID = urlParams.get('clientID');
 
-	// Ajoutez un gestionnaire d'événements de clic à la balise <a>
 	navigationLink.addEventListener('click', (event) => {
 		event.preventDefault(); // Empêche le comportement par défaut du lien
 		window.location.href = `/navigation.html?clientId=${clientID}`;
 	});
 
-	fetch('/profil/client/${clientID}')
+	const initialClientID = clientID;
+
+	fetch('/profil/client/' + initialClientID)
 		.then((response) => {
 			if (!response.ok) {
 				throw new Error('La requête a échoué');
@@ -19,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			return response.json();
 		})
 		.then((data) => {
-			clientID = data.clientID;
+			clientID = initialClientID;
 			clientProfileDiv.innerHTML = `
                     <h2>Nom : ${data.firstName} ${data.lastName}</h2>
                     <p>Email : ${data.email}</p>
