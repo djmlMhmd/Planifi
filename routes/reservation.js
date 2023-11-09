@@ -7,11 +7,12 @@ const router = Router();
 router.use(express.json());
 
 router.post('/reservation', async (req, res) => {
-	const { professional_id, users_id, service_id, default_availability_id } =
-		req.body;
+	const { professional_id, users_id, service_id } = req.body;
 
 	const start_time = req.body.start_time;
-	const day_of_week = moment().format('dddd'); // Convertir en nom de jour
+	const selectedDate = req.body.day_of_week; // Assurez-vous que le champ dans le formulaire correspond à "selected_date"
+
+	const day_of_week = moment(selectedDate, 'DD-MM-YYYY').format('DD-MM-YYYY'); // Convertir en nom de jour
 
 	const client = getClientsCollection();
 
@@ -29,23 +30,23 @@ router.post('/reservation', async (req, res) => {
 
 	// Calculer l'heure de fin en utilisant une simple chaîne de caractères
 	const startDateTime = start_time;
-	const end_time = moment(start_time, 'HH:mm:ss')
+	const end_time = moment(start_time, 'HH:mm')
 		.clone()
 		.add(duration)
 		.format('HH:mm:ss');
 
 	// Vérifier si le temps de début est valide
 	if (
-		moment(start_time, 'HH:mm:ss').isBefore('08:00:00', 'HH:mm:ss') ||
-		moment(start_time, 'HH:mm:ss').isAfter('21:00:00', 'HH:mm:ss')
+		moment(start_time, 'HH:mm').isBefore('08:00', 'HH:mm') ||
+		moment(start_time, 'HH:mm').isAfter('21:00', 'HH:mm')
 	) {
 		return res.status(400).json({ message: 'Heure de début non valide' });
 	}
 
 	// Vérifier si le créneau horaire est déjà réservé
 	const existingReservation = await client.query(
-		'SELECT * FROM reservations WHERE professional_id = $1 AND start_time = $2 AND service_id = $3 AND default_availability_id = $4',
-		[professional_id, start_time, service_id, default_availability_id]
+		'SELECT * FROM reservations WHERE professional_id = $1 AND start_time = $2 AND service_id = $3 AND day_of_week = $4',
+		[professional_id, start_time, service_id, day_of_week]
 	);
 
 	if (existingReservation.rows.length > 0) {
@@ -78,7 +79,8 @@ router.get('/reservations', async (req, res) => {
                     reservations.*,
                     services.service_name,
                     CONCAT(users."firstName", ' ', users."lastName") AS user_name,
-                    CONCAT(professionals."firstName", ' ', professionals."lastName") AS professional_name
+                    CONCAT(professionals."firstName", ' ', professionals."lastName") AS professional_name,
+					reservations.day_of_week
                 FROM
                     reservations
                 JOIN
@@ -103,9 +105,11 @@ router.get('/reservations', async (req, res) => {
 
 		const reservations = result.rows.map((reservation) => ({
 			title: reservation.user_name + ' - ' + reservation.service_name,
-			start: moment(reservation.start_time, 'HH:mm:ss').format(
-				'YYYY-MM-DDTHH:mm:ss'
-			),
+			start: moment(
+				reservation.day_of_week + 'T' + reservation.start_time,
+				'DD-MM-YYYYTHH:mm:ss'
+			).format('YYYY-MM-DDTHH:mm:ss'),
+
 			end: moment(reservation.end_time, 'HH:mm:ss').format(
 				'YYYY-MM-DDTHH:mm:ss'
 			),
@@ -116,6 +120,7 @@ router.get('/reservations', async (req, res) => {
 				},
 			},
 		}));
+		console.log('start:', reservations);
 
 		res.json(reservations);
 	} catch (e) {
@@ -182,6 +187,32 @@ router.get('/reservations/client', async (req, res) => {
 		res.status(500).json(
 			'Erreur lors de la récupération des réservations : ' + e.message
 		);
+	}
+});
+
+router.get('/reservedHours', async (req, res) => {
+	try {
+		const selectedDate = req.query.selectedDate; // Assurez-vous que la date est correctement extraite des paramètres de la requête
+
+		const query = `
+            SELECT start_time
+            FROM reservations
+            WHERE day_of_week = $1
+        `;
+
+		const client = getClientsCollection();
+		const result = await client.query(query, [selectedDate]);
+		const reservedHours = result.rows.map((row) => row.start_time);
+
+		res.json(reservedHours);
+	} catch (error) {
+		console.error(
+			'Erreur lors de la récupération des heures réservées',
+			error
+		);
+		res.status(500).json({
+			error: 'Erreur lors de la récupération des heures réservées',
+		});
 	}
 });
 

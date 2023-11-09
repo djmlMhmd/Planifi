@@ -133,4 +133,37 @@ router.get('/professionals', async (req, res) => {
 	}
 });
 
+//récupérer les infos du services en fonction de l'ID du service
+
+/*router.get('/:serviceId', async (req, res) => {
+	try {
+		const client = getClientsCollection();
+		const serviceId = req.params.serviceId;
+
+		const service = await client.query(
+			`SELECT service_name, service_description, service_price, duration
+       FROM services
+       WHERE service_id = $1`,
+			[serviceId]
+		);
+		console.log('id service:', serviceId);
+
+		if (service.rows.length === 0) {
+			return res.status(404).json({ message: 'Service non trouvé' });
+		}
+
+		const serviceInfo = service.rows[0];
+		res.json(serviceInfo);
+	} catch (e) {
+		console.error(
+			'Erreur lors de la récupération des informations du service :',
+			e.stack
+		);
+		res.status(500).json(
+			'Erreur lors de la récupération des informations du service : ' +
+				e.message
+		);
+	}
+});*/
+
 module.exports = router;

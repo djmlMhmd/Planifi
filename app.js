@@ -106,6 +106,8 @@ app.get('/profil/:id', (req, res) => {
 	}
 });
 
+const serviceRouter = require('./routes/services');
+app.use('/service', serviceRouter);
 app.get('/reservation', (req, res) => {
 	res.sendFile(path.join(__dirname, 'views', 'reservations.html'));
 });
