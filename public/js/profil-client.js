@@ -2,14 +2,10 @@ document.addEventListener('DOMContentLoaded', () => {
 	const clientProfileDiv = document.getElementById('client-profile');
 	const reservationsListDiv = document.getElementById('reservations-list');
 	const navigationLink = document.getElementById('navigation-link');
+	loadClientReservations();
 
 	const urlParams = new URLSearchParams(window.location.search);
 	let clientID = urlParams.get('clientID');
-
-	navigationLink.addEventListener('click', (event) => {
-		event.preventDefault(); // Empêche le comportement par défaut du lien
-		window.location.href = `/navigation.html?clientId=${clientID}`;
-	});
 
 	const initialClientID = clientID;
 
@@ -34,49 +30,63 @@ document.addEventListener('DOMContentLoaded', () => {
 				error
 			);
 		});
+	let data;
 
-	fetch(`/reservations/client`)
-		.then((response) => {
-			if (!response.ok) {
-				throw new Error('La requête a échoué');
-			}
-			return response.json();
-		})
-		.then((data) => {
-			if (data.length > 0) {
-				const reservationsHTML = data
-					.map(
-						(reservation) => `
-                            <p>Réservation : ${reservation.start} - ${reservation.title} (${reservation.service_name})
-                            <span class="delete-icon" data-reservation-id="${reservation.id}">&#10006;</span></p>
-                        `
-					)
-					.join('');
-				reservationsListDiv.innerHTML = reservationsHTML;
-			} else {
-				reservationsListDiv.innerHTML = 'Aucune réservation trouvée';
-			}
-		})
-		.catch((error) => {
-			console.error(
-				'Erreur lors de la récupération des réservations du professionnel :',
-				error
-			);
-		});
+	function loadClientReservations() {
+		fetch(`/reservations/client`)
+			.then((response) => {
+				if (!response.ok) {
+					throw new Error('La requête a échoué');
+				}
+				return response.json();
+			})
+			.then((reservationsData) => {
+				console.log('Réservations récupérées : ', reservationsData);
+				data = reservationsData; // Stockez les réservations dans la variable data
+
+				if (data.length > 0) {
+					const reservationsHTML = data
+						.map(
+							(reservation) => `
+                    <p>Réservation : ${reservation.start} - ${reservation.title} (${reservation.service_name})
+                    <span class="delete-icon" data-reservation-id="${reservation.reservation_id}">&#10006;</span></p>
+                `
+						) // Modification ici pour inclure data-reservation-id
+						.join('');
+					reservationsListDiv.innerHTML = reservationsHTML;
+				} else {
+					reservationsListDiv.innerHTML =
+						'Aucune réservation trouvée';
+				}
+			})
+			.catch((error) => {
+				console.error(
+					'Erreur lors de la récupération des réservations du professionnel :',
+					error
+				);
+			});
+	}
 
 	reservationsListDiv.addEventListener('click', (event) => {
 		if (event.target.classList.contains('delete-icon')) {
-			const reservationId = event.target.getAttribute(
-				'data-reservation-id'
+			const reservationId = event.target.dataset.reservationId;
+			console.log(
+				'Tentative de suppression de la réservation avec ID : ',
+				reservationId
 			);
-			if (confirm('Voulez-vous vraiment supprimer cette réservation ?')) {
+			if (
+				reservationId &&
+				confirm('Voulez-vous vraiment supprimer cette réservation ?')
+			) {
 				fetch(`/supprimer-reservation/${reservationId}`, {
 					method: 'DELETE',
 				})
 					.then((response) => {
-						if (response.ok) {
-							// Actualise la liste des réservations
-							fetchAndDisplayReservations();
+						if (response.status === 204) {
+							alert(
+								'La réservation a été supprimée avec succès.'
+							);
+							loadClientReservations();
 						} else {
 							console.error(
 								'Échec de la suppression de la réservation'

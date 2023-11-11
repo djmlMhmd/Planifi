@@ -6,8 +6,24 @@
 		<title>Réservation</title>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 		<script src="/public/js/user-auth.js"></script>
+		<link rel="stylesheet" href="/css/reservation_front.css" />
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+		/>
+
+		<link
+			href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+			rel="stylesheet"
+		/>
 	</head>
 	<body>
+		<div class="profile-button">
+			<a href="./profil-client.html">
+				<i class="fas fa-user-circle"></i>
+				<!-- Icône de profil -->
+			</a>
+		</div>
 		<h1>Réservez un rendez-vous</h1>
 		<div id="service-info"></div>
 
@@ -21,6 +37,12 @@
 		<button id="reserve-button">Réserver</button>
 
 		<div id="message"></div>
+		<div id="myModal" class="modal">
+			<div class="modal-content">
+				<span class="close-modal">×</span>
+				<p id="modal-message"></p>
+			</div>
+		</div>
 
 		<script src="/public/js/reservation_front.js"></script>
 	</body>

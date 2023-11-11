@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css?family=Lato:300,400');
+
+body,
+html {
+	margin: 0;
+	height: 100%;
+	font-family: 'Lato', sans-serif;
+	background: linear-gradient(to right, #414345, #232526);
+}
+
+.section {
+	justify-content: center;
+	align-items: center;
+	position: relative;
+	text-align: center;
+}
+
+h4,
+h6 {
+	font-weight: 300;
+	letter-spacing: 2px;
+	color: #232526;
+}
+
+.form-group {
+	position: relative;
+}
+
+.form-style {
+	border: none;
+	padding: 1rem 2rem;
+	border-radius: 30px;
+	background-color: rgba(255, 255, 255, 0.8);
+	box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+	padding-left: 50px;
+}
+
+.input-icon {
+	position: absolute;
+	left: 20px;
+	top: 50%;
+	transform: translateY(-50%);
+	color: #555;
+}
+
+select.form-style {
+	padding-left: 3rem;
+}
+
+button {
+	border: none;
+	padding: 1rem 2rem;
+	border-radius: 20px;
+	background-color: #232526;
+	color: white;
+	font-weight: bold;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+	transition: background-color 0.3s ease;
+	cursor: pointer;
+}
+
+button:hover {
+	background-color: #414345;
+}
+
+.card {
+	padding: 40px;
+	border-radius: 10px;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	width: 500px;
+	max-width: 600px;
+	margin: auto;
+	position: relative;
+	z-index: 2;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+	.form-style {
+		padding: 0.5rem 1rem;
+	}
+
+	button {
+		padding: 0.5rem 1rem;
+	}
+}

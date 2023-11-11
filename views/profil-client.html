@@ -13,28 +13,71 @@
 				color: red;
 			}
 		</style>
+		<link href="/css/profil-client.css" rel="stylesheet" type="text/css" />
+		<link href="/css/nav.css" rel="stylesheet" type="text/css" />
 		<script src="/public/js/user-auth.js"></script>
+
 	</head>
 	<body>
+		 <nav>
+        <div class="logo">
+            <span>PLANIFI</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/navigation">Services</a></li>
+            <li><a href="/contact">Contact Us</a></li>
+            <li>
+                <div class="dropdown">
+                    <button class="dropbtn">Profil</button>
+                    <div class="dropdown-content">
+                        <a href="#" class="nav-link" id="profile-link"
+								>Voir Profil</a
+							>
+                        <a id="logout-button">Déconnexion</a>
+                    </div>
+                </div>
+            </li>
+        </ul>
+        <div class="hamburger">
+            <div class="line1"></div>
+            <div class="line2"></div>
+            <div class="line3"></div>
+        </div>
+    </nav>
+
 		<div class="container">
 			<h1>Profil du Client</h1>
-			<a
-				href="http://localhost:3000/navigation"
-				title="Aller à la page de navigation"
-				id="navigation-link"
-			>
-				<i class="uil uil-arrow-circle-right"></i> Aller à la navigation
-			</a>
+			<div class="rounded border border-4 border-dark p-3 w-50"></div>
 			<div id="client-profile">
 				<!-- Les informations du profil client affichées ici -->
 			</div>
+			<div class="dropdown-divider" class="mt-4 mb-4"></div>
 			<h2>Mes Réservations</h2>
 			<div id="reservations-list">
 				<!-- Les réservations du client seront affichées ici -->
 			</div>
-			<button id="logout-button">Déconnexion</button>
+			<div class="dropdown-divider" class="mt-4 mb-4"></div>
+			
+		</div>
 		</div>
 
 		<script src="/public/js/profil-client.js"></script>
+		<script>
+	const hamburger = document.querySelector(".hamburger");
+const navLinks = document.querySelector(".nav-links");
+const links = document.querySelectorAll(".nav-links li");
+
+hamburger.addEventListener('click', () => {
+    // Animer les liens
+    navLinks.classList.toggle("open");
+    links.forEach(link => {
+        link.classList.toggle("fade");
+    });
+
+    // Animation du hamburger
+    hamburger.classList.toggle("toggle");
+});
+		</script>
 	</body>
 </html>

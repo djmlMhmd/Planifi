@@ -1,0 +1,171 @@
+@import url('https://fonts.googleapis.com/css?family=Lato:300,400');
+
+body,
+html {
+	margin: 0;
+	height: 100%;
+	font-family: 'Lato', sans-serif;
+}
+
+h1,
+h4 {
+	font-weight: 300;
+	letter-spacing: 2px;
+	color: white;
+}
+
+p {
+	letter-spacing: 1px;
+	font-size: 14px;
+	color: #333333;
+}
+
+.header {
+	display: flex;
+	flex-direction: column;
+	justify-content: center; /* Centre verticalement */
+	align-items: center; /* Centre horizontalement */
+	min-height: 100vh; /* Utilise la pleine hauteur de la fenêtre */
+	position: relative;
+	text-align: center;
+	background: linear-gradient(to right, #414345, #232526);
+}
+
+/* Styles for the login card */
+.card {
+	margin-top: -20vh;
+	background: rgba(255, 255, 255, 0.8);
+	border-radius: 10px;
+	padding: 20px;
+	width: 450px; /* ou une autre valeur fixe, ou utilisez max-width pour la largeur maximale */
+	margin: auto; /* pour centrer la carte si nécessaire */
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* optionnel : ajoutez de l'ombre pour un effet de profondeur */
+}
+
+.btn {
+	border: none;
+	padding: 1rem 2rem;
+	border-radius: 20px; /* arrondi des bordures du bouton */
+	background-color: #232526; /* couleur du bouton en noir */
+	color: white;
+	font-weight: bold;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+	transition: background-color 0.3s ease;
+	cursor: pointer;
+}
+
+.btn:hover {
+	background-color: #414345;
+}
+
+/* Center the card in the middle of the screen */
+.flex-center {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+}
+
+/* Styles for input fields and icons */
+.form-control {
+	position: relative;
+	box-shadow: none;
+	border-radius: 30px;
+}
+
+.input-icon {
+	position: absolute;
+	left: 10px;
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+/* Adjust the position of the icon inside the input */
+.input-icon {
+	position: absolute;
+	left: 15px; /* adjust as necessary */
+	top: 50%;
+	transform: translateY(-50%);
+	color: #555; /* color of the icon */
+}
+
+/* Adjust the padding inside the input to make room for the icon */
+.form-control {
+	padding-left: 40px; /* adjust the padding to make room for the icon */
+}
+
+/* Additional styles to ensure the inputs and icons are aligned */
+.form-group {
+	position: relative;
+	margin-bottom: 20px; /* space between form groups */
+}
+
+/* Style adjustments for the login button and link */
+.btn {
+	width: 100%; /* make the button extend full width of the form */
+	margin-top: 10px; /* space above the button */
+}
+
+.link {
+	display: block; /* make the forgot password link its own line */
+	margin-top: 10px; /* space above the link */
+}
+
+.waves {
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	width: 100%;
+	height: 15vh;
+	margin-bottom: -7px;
+	min-height: 100px;
+	max-height: 150px;
+}
+
+.parallax > use {
+	animation: move-forever 25s cubic-bezier(0.55, 0.5, 0.45, 0.5) infinite;
+}
+.parallax > use:nth-child(1) {
+	animation-delay: -2s;
+	animation-duration: 7s;
+}
+.parallax > use:nth-child(2) {
+	animation-delay: -3s;
+	animation-duration: 10s;
+}
+.parallax > use:nth-child(3) {
+	animation-delay: -4s;
+	animation-duration: 13s;
+}
+.parallax > use:nth-child(4) {
+	animation-delay: -5s;
+	animation-duration: 20s;
+}
+
+@keyframes move-forever {
+	0% {
+		transform: translate3d(-90px, 0, 0);
+	}
+	100% {
+		transform: translate3d(85px, 0, 0);
+	}
+}
+
+/* Make sure the waves cover the footer */
+@media (min-width: 768px) {
+	.waves {
+		height: 20vh;
+	}
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+	h1 {
+		font-size: 24px;
+	}
+
+	.card {
+		padding: 10px;
+	}
+}

@@ -15,51 +15,52 @@ router.post('/inscription', async (req, res) => {
 	const reqValue = req.query['user_type'];
 	const { error } = userValidation(body);
 
+	if (error) {
+		return res.status(400).json(error.details[0].message);
+	}
+
 	try {
-		// Hash password
 		const hash = await bcrypt.hash(body.password, saltRounds);
-
-		if (error) {
-			return res.status(400).json(error.details[0].message);
-		}
-
 		const client = getClientsCollection();
-
 		const tableName =
 			reqValue === 'professionnel' ? 'professionals' : 'users';
 
-		if (reqValue == 'professionnel') {
-			const result = await client.query(
-				`INSERT INTO ${tableName}("firstName", "lastName", password, email, phone, company_name, company_address)
-                VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING RETURNING *`,
-				[
-					body.firstName,
-					body.lastName,
-					hash,
-					body.email,
-					body.phone,
-					body.company_name,
-					body.company_address,
-				]
-			);
+		const values = [
+			body.firstName,
+			body.lastName,
+			hash,
+			body.email,
+			body.phone,
+		];
 
-			if (result.rows == undefined) {
-				res.json('Le compte existe déjà');
-				return;
-			}
+		// Pour les professionnels, on ajoute aussi company_name et company_address
+		if (reqValue === 'professionnel') {
+			values.push(body.company_name);
+			values.push(body.company_address);
+		}
 
+		const insertQuery =
+			reqValue === 'professionnel'
+				? `INSERT INTO ${tableName}("firstName", "lastName", password, email, phone, company_name, company_address)
+       VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING RETURNING *`
+				: `INSERT INTO ${tableName}("firstName", "lastName", password, email, phone)
+       VALUES($1, $2, $3, $4, $5) RETURNING *`;
+
+		const result = await client.query(insertQuery, values);
+
+		// Vérifiez si des lignes ont été insérées
+		if (result.rowCount > 0) {
 			console.log(`${reqValue} inscrit avec succès:`, result.rows[0]);
-
-			res.redirect('http://localhost:3000/connexion');
-		} else if (reqValue == 'client') {
-			const result = await client.query(
-				'INSERT INTO users("firstName", "lastName", password, email, phone) VALUES($1, $2, $3, $4, $5) RETURNING *',
-				[body.firstName, body.lastName, hash, body.email, body.phone]
-			);
-
-			console.log('Client inséré avec succès:', result.rows[0]);
-
-			res.json('Client inscrit avec succès.');
+			res.json({
+				success: true,
+				redirectUrl: 'http://localhost:3000/connexion',
+			});
+		} else {
+			res.status(400).json({
+				success: false,
+				message:
+					'Le compte existe déjà ou une autre erreur est survenue.',
+			});
 		}
 	} catch (e) {
 		console.error("Erreur lors de l'inscription :", e.stack);

@@ -4,17 +4,54 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Navigation</title>
+		<link href="/css/nav.css" rel="stylesheet" type="text/css" />
+		<link href="/css/navigation.css" rel="stylesheet" type="text/css" />
 		<script src="/public/js/user-auth.js"></script>
 	</head>
 	<body>
-		<h1>Services</h1>
-		<ul id="services-list"></ul>
-		<ul id="professionals-list"></ul>
-
+		<nav>
+			<div class="logo">
+				<span>PLANIFI</span>
+			</div>
+			<ul class="nav-links">
+				<li><a href="/">Home</a></li>
+				<li><a href="/navigation">Services</a></li>
+				<li><a href="/contact">Contact Us</a></li>
+				<li>
+					<div class="dropdown">
+						<button class="dropbtn">Profil</button>
+						<div class="dropdown-content">
+							<a href="#" class="nav-link" id="profile-link"
+								>>Voir Profil</a
+							>
+							<a id="logout-button">Déconnexion</a>
+						</div>
+					</div>
+				</li>
+			</ul>
+			<div class="hamburger">
+				<div class="line1"></div>
+				<div class="line2"></div>
+				<div class="line3"></div>
+			</div>
+		</nav>
+		<div class="container">
+			<h1>Services</h1>
+			<ul id="services-list"></ul>
+			<ul id="professionals-list"></ul>
+		</div>
 		<script>
+			// Affiche le lien du profil avec l'ID client récupéré du cookie
+			const clientID = getCookie('clientID');
+			const profileLink = document.getElementById('profile-link');
+			profileLink.href = `/profil/${clientID}`;
+			profileLink.textContent = 'Voir Profil';
+			profileLink.style.display = 'block';
+
 			function getProfessionals() {
 				// Fonction pour effectuer une requête API et afficher les noms d'entreprise des services
-				let clientID;
+				let clientID = getCookie('clientID');
+
 				console.log(clientID);
 				fetch('/professionals', { method: 'GET' })
 					.then((response) => response.json())
@@ -41,6 +78,26 @@
 
 			// Appeler la fonction pour obtenir la liste des professionnels lors du chargement de la page
 			document.addEventListener('DOMContentLoaded', getProfessionals);
+
+			document
+				.getElementById('logout-button')
+				.addEventListener('click', () => {
+					fetch('/deconnexion/client', { method: 'POST' })
+						.then((response) => {
+							if (response.ok) {
+								// Redirect the user to the login page after logging out
+								window.location.href = '/connexion';
+							} else {
+								console.error('Échec de la déconnexion');
+							}
+						})
+						.catch((error) => {
+							console.error(
+								'Erreur lors de la déconnexion:',
+								error
+							);
+						});
+				});
 		</script>
 	</body>
 </html>

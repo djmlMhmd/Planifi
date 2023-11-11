@@ -6,36 +6,43 @@ const { getClientsCollection } = require('../db/database');
 const router = Router();
 router.use(express.json());
 
-router.delete('/supprimerReservation', async (req, res) => {
+// Côté serveur
+router.delete('/supprimer-reservation/:reservationId', async (req, res) => {
 	try {
 		const clientID = req.session.clientID;
-		console.log('client id :', clientID);
+		const reservationId = req.params.reservationId;
+
+		console.log('Client ID:', req.session.clientID);
+		console.log('Reservation ID:', req.params.reservationId);
+
+		// Récupérez le serviceId en interrogeant la base de données à partir de l'ID de réservation.
 		const client = getClientsCollection();
-
-		console.log('réservation id :', reservationId);
-
-		const query = {
-			text: 'SELECT * FROM reservations WHERE reservation_id = $1 AND users_id = $2',
-			values: [reservationId, clientID],
+		const queryForServiceId = {
+			text: 'SELECT service_id FROM reservations WHERE reservation_id = $1',
+			values: [reservationId],
 		};
 
-		const result = await client.query(query);
-
-		if (result.rows.length === 0) {
-			return res
-				.status(403)
-				.json(
-					"Vous n'êtes pas autorisé à supprimer cette réservation."
-				);
+		const service = await client.query(queryForServiceId);
+		if (service.rowCount === 0) {
+			return res.status(404).json('Réservation introuvable.');
 		}
-		const deleteQuery = {
-			text: 'DELETE FROM reservations WHERE reservation_id = $1 AND users_id = $2',
-			values: [reservationId, clientID],
+		const serviceId = service.rows[0].service_id;
+
+		// Continuez avec la suppression si le serviceId correspond
+		const queryForDelete = {
+			text: 'DELETE FROM reservations WHERE reservation_id = $1 AND service_id = $2 AND users_id = $3',
+			values: [reservationId, serviceId, clientID],
 		};
 
-		await client.query(deleteQuery);
+		const result = await client.query(queryForDelete);
 
-		res.status(204).end();
+		if (result.rowCount === 1) {
+			res.status(204).end(); // La réservation a été supprimée avec succès
+		} else {
+			res.status(403).json(
+				"Vous n'êtes pas autorisé à supprimer cette réservation."
+			);
+		}
 	} catch (error) {
 		console.error(
 			'Erreur lors de la suppression de la réservation:',

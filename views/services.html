@@ -36,19 +36,6 @@
 		<h1>Liste des Services</h1>
 		<ul id="services-list"></ul>
 
-		<!-- Ajoutez un bouton pour ouvrir la fenêtre modale -->
-		<button id="open-calendar">Sélectionner la date</button>
-
-		<!-- Fenêtre modale -->
-		<div id="calendar-modal" class="modal">
-			<div class="modal-content">
-				<!-- Contenu du calendrier ici -->
-				<p>Selectionnez une date</p>
-				<div id="calendar" class="calendar-container"></div>
-				<div id="calendar"></div>
-				<button id="close-calendar">Fermer</button>
-			</div>
-		</div>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
@@ -88,7 +75,7 @@
                             <button onclick="reserveService(${service.service_id}, '${professionalId}')">Réserver</button>
 
                         `;
-								console.log('id pro2:', professionalId);
+
 								servicesList.appendChild(listItem);
 							});
 							console.log(services);
@@ -104,73 +91,6 @@
 					console.error("ID du professionnel non défini dans l'URL");
 				}
 			}
-
-			// Gestionnaire d'événement pour ouvrir la fenêtre modale
-			const openButton = document.getElementById('open-calendar');
-			const modal = document.getElementById('calendar-modal');
-			const closeButton = document.getElementById('close-calendar');
-
-			openButton.addEventListener('click', () => {
-				modal.style.display = 'block';
-
-				// Initialisation du calendrier une fois que la fenêtre modale est ouverte
-				const calendar = $('#calendar').fullCalendar({
-					header: {},
-					defaultView: 'month',
-					editable: true,
-					handleWindowResize: true,
-					//aspectRatio: 2,
-					// Personnalise le calendrier
-					// ...
-					dayClick: function (date, jsEvent, view) {
-						// Gestion de la sélection de la date
-						const availabilityHours =
-							document.getElementById('availability-hours');
-						const reserveButton =
-							document.getElementById('reserve-button');
-
-						// ici les heures de disponibilité pour la date sélectionnée
-						const selectedDate = date.format('DD-MM-YY');
-						const availableHours = [
-							'09:00',
-							'10:00',
-							'11:00',
-							'14:00',
-							'15:00',
-						]; // Exemple
-
-						// Affiche les heures de disponibilité
-						const hoursList = availableHours.map(
-							(hour) =>
-								`<button class="hour-button" data-hour="${hour}">${hour}</button>`
-						);
-						availabilityHours.innerHTML = hoursList.join('');
-
-						// Active le bouton de réservation
-						reserveButton.removeAttribute('disabled');
-
-						// Gestion de la sélection de l'heure
-						const hourButtons =
-							document.querySelectorAll('.hour-button');
-						hourButtons.forEach((button) => {
-							button.addEventListener('click', function () {
-								// ici la logique pour réserver à une heure spécifique
-								const selectedHour =
-									button.getAttribute('data-hour');
-								alert(
-									`Réservation pour ${selectedDate} à ${selectedHour}`
-								);
-							});
-						});
-					},
-				});
-			});
-
-			// Gestionnaire d'événement pour fermer la fenêtre modale
-			closeButton.addEventListener('click', () => {
-				modal.style.display = 'none';
-			});
-
 			// Appeler la fonction pour obtenir la liste des services lors du chargement de la page
 			document.addEventListener('DOMContentLoaded', getServices);
 		</script>

@@ -133,7 +133,6 @@ router.get('/reservations', async (req, res) => {
 		);
 	}
 });
-
 router.get('/reservations/client', async (req, res) => {
 	const clientID = req.session.clientID;
 
@@ -146,7 +145,8 @@ router.get('/reservations/client', async (req, res) => {
 		const query = {
 			text: `
                 SELECT
-                    reservations.*,
+                    reservations.reservation_id,
+                    reservations.start_time,
                     services.service_name,
                     CONCAT(professionals."firstName", ' ', professionals."lastName") AS professional_name
                 FROM
@@ -165,14 +165,13 @@ router.get('/reservations/client', async (req, res) => {
 
 		if (result.rows.length > 0) {
 			const reservations = result.rows.map((reservation) => ({
+				reservation_id: reservation.reservation_id, // Ajoutez ceci
 				title: reservation.professional_name,
 				service_name: reservation.service_name,
 				start: moment(reservation.start_time, 'HH:mm:ss').format(
 					'DD/MM/YY HH:mm'
 				),
-				end: moment(reservation.end_time, 'HH:mm:ss').format(
-					'YYYY-MM-DDTHH:mm:ss'
-				),
+				// Assurez-vous que 'end_time' est récupéré et formaté correctement si nécessaire
 			}));
 
 			res.json(reservations);
@@ -192,8 +191,7 @@ router.get('/reservations/client', async (req, res) => {
 
 router.get('/reservedHours', async (req, res) => {
 	try {
-		const selectedDate = req.query.selectedDate; // Assurez-vous que la date est correctement extraite des paramètres de la requête
-
+		const selectedDate = req.query.selectedDate;
 		const query = `
             SELECT start_time
             FROM reservations

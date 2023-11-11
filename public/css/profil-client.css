@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css?family=Lato:300,400');
+
+body,
+html {
+	margin: 0;
+	height: 100%;
+	font-family: 'Lato', sans-serif;
+	background: linear-gradient(
+		to right,
+		#414345,
+		#232526
+	); /* Arrière-plan avec gradient */
+	color: white; /* Texte blanc par défaut */
+}
+
+.container {
+	padding-top: 50px; /* Espace au-dessus du contenu principal */
+	margin-left: 50px;
+}
+
+h1 {
+	font-weight: 300;
+	letter-spacing: 2px;
+	margin-bottom: 20px; /* Espace après le titre principal */
+	margin-top: 50px;
+}
+
+h2 {
+	font-weight: 300;
+	letter-spacing: 2px;
+	margin-bottom: 20px; /* Espace après le titre principal */
+	margin-top: 50px;
+}
+
+a {
+	color: #00bfff; /* Couleur des liens */
+}
+
+.input-group-text {
+	background-color: #414345; /* Couleur de fond des labels des champs */
+	border: none; /* Retire la bordure des labels des champs */
+	color: white; /* Couleur du texte des labels */
+	border-radius: 0; /* Bordures non arrondies pour les labels */
+}
+
+.form-control {
+	border-radius: 0; /* Bordures non arrondies pour les champs de formulaire */
+}
+
+.btn-primary {
+	background-color: #232526; /* Couleur de fond du bouton */
+	border-radius: 10px; /* Retire la bordure du bouton */
+	box-shadow: none; /* Retire l'ombre portée du bouton */
+	margin-left: 15px;
+	margin-top: 30px;
+}
+
+.btn-primary:hover {
+	background-color: #414345; /* Couleur de fond du bouton au survol */
+}
+
+.delete-icon {
+	cursor: pointer;
+	color: red;
+	margin-left: 10px; /* Espace entre le texte de la réservation et l'icône de suppression */
+}
+
+@media (max-width: 768px) {
+	.container {
+		padding-top: 20px; /* Espace réduit au-dessus du contenu principal sur mobile */
+	}
+
+	.card {
+		margin-top: 10px; /* Espace réduit au-dessus de la carte sur mobile */
+	}
+}

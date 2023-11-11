@@ -135,7 +135,7 @@ router.get('/professionals', async (req, res) => {
 
 //récupérer les infos du services en fonction de l'ID du service
 
-/*router.get('/:serviceId', async (req, res) => {
+router.get('/reservation/:serviceId', async (req, res) => {
 	try {
 		const client = getClientsCollection();
 		const serviceId = req.params.serviceId;
@@ -146,7 +146,6 @@ router.get('/professionals', async (req, res) => {
        WHERE service_id = $1`,
 			[serviceId]
 		);
-		console.log('id service:', serviceId);
 
 		if (service.rows.length === 0) {
 			return res.status(404).json({ message: 'Service non trouvé' });
@@ -164,6 +163,30 @@ router.get('/professionals', async (req, res) => {
 				e.message
 		);
 	}
-});*/
+});
+
+router.get('/search-services', async (req, res) => {
+	try {
+		const searchTerm = req.query.q; // q est le paramètre de recherche dans l'URL
+		const client = getClientsCollection();
+
+		const services = await client.query(
+			`SELECT services.service_id, services.service_name, services.service_description, services.service_price, services.duration, 
+            professionals.email, professionals.phone, professionals.company_name, professionals.company_address 
+            FROM services 
+            INNER JOIN professionals 
+            ON services.professional_id = professionals.professional_id
+            WHERE LOWER(services.service_name) ILIKE $1`,
+			[`%${searchTerm.toLowerCase()}%`]
+		);
+
+		return res.json(services.rows);
+	} catch (e) {
+		console.error('Erreur lors de la recherche de services :', e.stack);
+		res.status(500).json(
+			'Erreur lors de la recherche de services : ' + e.message
+		);
+	}
+});
 
 module.exports = router;

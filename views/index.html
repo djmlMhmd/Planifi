@@ -1,15 +1,59 @@
 <html>
 	<head>
-		<meta charset="utf-8" />
 		<title>Planifi</title>
+		<meta charset="utf-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1, shrink-to-fit=no"
+		/>
 		<link href="/css/home.css" rel="stylesheet" type="text/css" />
+		<script src="/public/js/user-auth.js"></script>
+		<link href="/css/nav.css" rel="stylesheet" type="text/css" />
 	</head>
 	<body>
+		<nav>
+			<div class="logo">
+				<span>PLANIFI</span>
+			</div>
+			<ul class="nav-links">
+				<li><a href="/">Home</a></li>
+				<li><a href="/navigation">Services</a></li>
+				<li><a href="/contact">Contact Us</a></li>
+				<li>
+					<div class="dropdown">
+						<button class="dropbtn">Profil</button>
+						<div class="dropdown-content">
+							<a href="#" class="nav-link" id="profile-link"
+								>>Voir Profil</a
+							>
+							<a id="logout-button">Déconnexion</a>
+						</div>
+					</div>
+				</li>
+			</ul>
+			<div class="hamburger">
+				<div class="line1"></div>
+				<div class="line2"></div>
+				<div class="line3"></div>
+			</div>
+		</nav>
 		<div class="header">
 			<div class="inner-header flex">
 				<h1>PLANIFI</h1>
 			</div>
-
+			<form class="bar" id="search-bar" oninput="searchServices()">
+				<input
+					type="search"
+					name="search"
+					pattern=".*\S.*"
+					required
+					autocomplete="off"
+				/>
+				<button class="search-btn" type="button">
+					<span>Search</span>
+				</button>
+				<ul id="search-results" style="display: none"></ul>
+			</form>
 			<div>
 				<svg
 					class="waves"
@@ -54,8 +98,113 @@
 				</svg>
 			</div>
 		</div>
-		<div class="content flex">
-			<p>Add footer here</p>
+
+		<div class="round-cards-container flex-center">
+			<a href="connexion" class="round-card-link">
+				<div class="card-border">
+					<div class="round-card" id="login-card"></div>
+				</div>
+			</a>
+			<a href="inscription" class="round-card-link">
+				<div class="card-border">
+					<div class="round-card" id="signup-card"></div>
+				</div>
+			</a>
 		</div>
+
+		<div class="content flex">
+			<p></p>
+		</div>
+		<script>
+			function searchServices() {
+				const searchTerm = document
+					.querySelector('input[name="search"]')
+					.value.trim();
+				const searchResultsContainer =
+					document.getElementById('search-results');
+
+				if (searchTerm.length > 0) {
+					fetch(
+						`/search-services?q=${encodeURIComponent(searchTerm)}`
+					)
+						.then((response) => response.json())
+						.then((services) => {
+							// Effacez les résultats de la recherche précédente
+							searchResultsContainer.innerHTML = '';
+
+							// Affichez les résultats de la recherche dans le conteneur
+							services.forEach((service) => {
+								const listItem = document.createElement('li');
+								listItem.textContent = service.service_name;
+								searchResultsContainer.appendChild(listItem);
+							});
+
+							// Affichez le conteneur des résultats de la recherche
+							searchResultsContainer.style.display = 'block';
+						})
+						.catch((error) => {
+							console.error(
+								'Erreur lors de la recherche de services:',
+								error
+							);
+						});
+				} else {
+					// Si la recherche est vide, masquez le conteneur des résultats de la recherche
+					searchResultsContainer.style.display = 'none';
+				}
+			}
+		</script>
+		<script>
+			document.addEventListener('DOMContentLoaded', () => {
+				// Utilisez la fonction checkUserLoggedIn pour déterminer si l'utilisateur est connecté.
+				const isLoggedIn = getCookie('clientID') ? true : false;
+
+				// Sélectionnez les éléments à montrer/cacher
+				const roundCardsContainer = document.querySelector(
+					'.round-cards-container'
+				);
+				const profileLink = document.getElementById('profile-link');
+				const logoutButton = document.getElementById('logout-button');
+				const searchBar = document.getElementById('search-bar');
+
+				// Si l'utilisateur est connecté
+				if (isLoggedIn) {
+					// Cache les ronds de connexion et d'inscription
+					if (roundCardsContainer) {
+						roundCardsContainer.style.display = 'none';
+						searchBar.style.display = 'block';
+					}
+
+					// Affiche le lien du profil avec l'ID client récupéré du cookie
+					const clientID = getCookie('clientID');
+					profileLink.href = `/profil/${clientID}`;
+					profileLink.textContent = 'Voir Profil';
+					profileLink.style.display = 'block';
+
+					// Gérer le clic sur le bouton de déconnexion
+					logoutButton.addEventListener('click', () => {
+						deleteCookie('clientID'); // Supprime le cookie de connexion
+						window.location.href = '/connexion'; // Redirige vers la page de connexion
+					});
+
+					// Changez le texte du bouton de profil pour afficher "Profil"
+					const dropbtn = document.querySelector('.dropbtn');
+					dropbtn.textContent = 'Profil';
+
+					// Affiche la barre de navigation
+					const navbar = document.querySelector('nav');
+					navbar.style.display = 'flex';
+				} else {
+					// Cache la barre de navigation si l'utilisateur n'est pas connecté
+					const navbar = document.querySelector('nav');
+					navbar.style.display = 'none';
+
+					// Affiche les ronds de connexion et d'inscription
+					if (roundCardsContainer) {
+						roundCardsContainer.style.display = 'flex';
+					}
+				}
+			});
+		</script>
 	</body>
 </html>

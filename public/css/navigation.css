@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css?family=Lato:300,400');
+
+body,
+html {
+	margin: 0;
+	height: 100%;
+	font-family: 'Lato', sans-serif;
+	background: linear-gradient(
+		to right,
+		#414345,
+		#232526
+	); /* Arrière-plan avec gradient */
+	color: white; /* Texte blanc par défaut */
+}
+
+.container {
+	padding-top: 100px; /* Espace au-dessus du contenu principal */
+	margin-left: 50px;
+}
+
+h1 {
+	font-weight: 300;
+	letter-spacing: 2px;
+	margin-bottom: 20px; /* Espace après le titre principal */
+	margin-top: 20px;
+}
+
+h2 {
+	font-weight: 300;
+	letter-spacing: 2px;
+	margin-bottom: 20px; /* Espace après le titre principal */
+	margin-top: 50px;
+}
+
+a {
+	color: #00bfff; /* Couleur des liens */
+}
+
+@media (max-width: 768px) {
+	.container {
+		padding-top: 20px; /* Espace réduit au-dessus du contenu principal sur mobile */
+	}
+
+	.card {
+		margin-top: 10px; /* Espace réduit au-dessus de la carte sur mobile */
+	}
+}
+
+#professionals-list {
+	list-style-type: none; /* Enlève les puces de la liste */
+	padding: 0; /* Enlève le padding par défaut */
+	margin: 0; /* Enlève la marge par défaut */
+}
+
+#professionals-list li {
+	background-color: #232526; /* Couleur de fond pour les bannières */
+	color: white; /* Couleur de texte */
+	padding: 20px; /* Espacement interne */
+	margin-bottom: 10px; /* Espacement entre les bannières */
+	transition: transform 0.3s ease; /* Animation de transition pour le zoom */
+	cursor: pointer; /* Change le curseur en main */
+	border: 1px solid #414345; /* Bordure pour chaque bannière */
+	font-size: 1.5em; /* Taille de la police */
+}
+
+#professionals-list li:hover {
+	transform: scale(1.05); /* Zoom légèrement lors du survol */
+}

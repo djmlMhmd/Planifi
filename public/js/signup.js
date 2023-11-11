@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				const result = await response.json();
 				console.log('Inscription réussie:', result);
 				// Redirigez l'utilisateur ou affichez un message de confirmation
-				window.location.href = 'http://localhost:3000/connexion';
+				window.location.href = '/connexion';
 			} else {
 				const errorData = await response.json();
 				console.error("Erreur lors de l'inscription:", errorData);

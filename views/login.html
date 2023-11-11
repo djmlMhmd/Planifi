@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>Planifi/login</title>
 		<meta charset="utf-8" />
+		<title>Planifi - Login</title>
 		<meta
 			name="viewport"
 			content="width=device-width, initial-scale=1, shrink-to-fit=no"
@@ -15,85 +15,90 @@
 			rel="stylesheet"
 			href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css"
 		/>
-		<link rel="stylesheet" href="" />
+		<link href="/css/login.css" rel="stylesheet" type="text/css" />
 	</head>
 	<body>
-		<div class="section">
-			<div class="container">
-				<div class="row full-height justify-content-center">
-					<div class="col-12 text-center align-self-center py-5">
-						<div class="section pb-5 pt-5 pt-sm-2 text-center">
-							<h6 class="mb-0 pb-3">
-								<a href="inscription">Sign Up</a>
-							</h6>
-							<input
-								class="checkbox"
-								type="checkbox"
-								id="reg-log"
-								name="reg-log"
-							/>
-							<label for="reg-log"></label>
-							<div class="card-3d-wrap mx-auto">
-								<div class="card-3d-wrapper">
-									<div class="card-front">
-										<div class="center-wrap">
-											<div class="section text-center">
-												<h4 class="mb-4 pb-3">
-													Log In
-												</h4>
-												<form id="login-form">
-													<div class="form-group">
-														<input
-															type="email"
-															class="form-style"
-															name="email"
-															id="email"
-															placeholder="Email"
-														/>
-														<i
-															class="input-icon uil uil-at"
-														></i>
-													</div>
-													<div
-														class="form-group mt-2"
-													>
-														<input
-															type="password"
-															class="form-style"
-															name="password"
-															id="password"
-															placeholder="Password"
-														/>
-														<i
-															class="input-icon uil uil-lock-alt"
-														></i>
-													</div>
-													<button
-														type="submit"
-														class="btn mt-4"
-													>
-														Login
-													</button>
-												</form>
-												<p
-													class="mb-0 mt-4 text-center"
-												>
-													<a href="" class="link"
-														>Forgot your
-														password?</a
-													>
-												</p>
-											</div>
-										</div>
-									</div>
+		<div class="header flex-center">
+			<!-- SVG pour les vagues -->
+			<svg
+				class="waves"
+				xmlns="http://www.w3.org/2000/svg"
+				xmlns:xlink="http://www.w3.org/1999/xlink"
+				viewBox="0 24 150 28"
+				preserveAspectRatio="none"
+				shape-rendering="auto"
+			>
+				<defs>
+					<path
+						id="gentle-wave"
+						d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z"
+					/>
+				</defs>
+				<g class="parallax">
+					<use
+						xlink:href="#gentle-wave"
+						x="48"
+						y="0"
+						fill="rgba(255,255,255,0.7)"
+					/>
+					<use
+						xlink:href="#gentle-wave"
+						x="48"
+						y="3"
+						fill="rgba(255,255,255,0.5)"
+					/>
+					<use
+						xlink:href="#gentle-wave"
+						x="48"
+						y="5"
+						fill="rgba(255,255,255,0.3)"
+					/>
+					<use xlink:href="#gentle-wave" x="48" y="7" fill="#fff" />
+				</g>
+			</svg>
+			<!-- Boîte de connexion -->
+			<div class="container my-auto">
+				<div class="row justify-content-center">
+					<div class="col-md-6 col-sm-8">
+						<div class="card px-5 py-4">
+							<form id="login-form">
+								<h4>Log In</h4>
+								<div class="form-group">
+									<input
+										type="email"
+										class="form-control"
+										name="email"
+										id="email"
+										placeholder="Email"
+										required
+									/>
+									<i class="uil uil-at input-icon"></i>
 								</div>
-							</div>
+								<div class="form-group">
+									<input
+										type="password"
+										class="form-control"
+										name="password"
+										id="password"
+										placeholder="Password"
+										required
+									/>
+									<i class="uil uil-lock-alt input-icon"></i>
+								</div>
+								<button type="submit" class="btn btn-primary">
+									Login
+								</button>
+								<p class="mt-2">
+									<a href="#" class="link"
+										>Forgot your password?</a
+									>
+								</p>
+							</form>
 						</div>
 					</div>
 				</div>
 			</div>
 		</div>
-
 		<script>
 			document
 				.getElementById('login-form')
@@ -115,7 +120,6 @@
 						// Authentication successful, redirect the user to the profile page
 						const userData = await response.json();
 						if (userData.users_id) {
-							console.log('id client:', userData.users_id);
 							window.location.href = `/profil/${userData.users_id}`;
 						} else if (userData.professional_id) {
 							window.location.href = `/profil/${userData.professional_id}`;
