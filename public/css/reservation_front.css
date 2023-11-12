@@ -1,6 +1,6 @@
 .selected-hour {
 	background-color: #007bff; /* Couleur de fond bleue */
-	color: #fff; /* Texte en blanc */
+	color: #000000; /* Texte en blanc */
 }
 
 .modal {
@@ -15,12 +15,15 @@
 }
 
 .modal-content {
-	background-color: #fff;
+	background-color: #000000;
 	margin: auto;
-	margin-top: 10%;
+	margin-top: 10%; /* Ajuster la position verticale de la fenêtre modale */
 	padding: 20px;
-	border: 1px solid #888;
-	width: 100px;
+	width: 70%; /* Ajuster la largeur de la fenêtre modale */
+	border-radius: 10px;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+	text-align: center;
+	position: relative;
 }
 
 .close-modal {
@@ -31,17 +34,178 @@
 	cursor: pointer;
 }
 
-.profile-button {
+@import url('https://fonts.googleapis.com/css?family=Lato:300,400');
+
+body,
+html {
+	margin: 0;
+	height: 100%;
+	font-family: 'Lato', sans-serif;
+	background: linear-gradient(
+		to right,
+		#414345,
+		#232526
+	); /* Arrière-plan avec gradient */
+	color: rgb(2, 2, 2); /* Texte blanc par défaut */
+}
+
+.container {
+	padding-top: 100px; /* Espace au-dessus du contenu principal */
+	margin-left: 50px;
+	color: rgb(37, 34, 34);
+}
+
+h1 {
+	font-weight: 300;
+	letter-spacing: 2px;
+	margin-bottom: 20px; /* Espace après le titre principal */
+	margin-top: 20px;
+}
+
+a {
+	color: #00bfff; /* Couleur des liens */
+}
+
+@media (max-width: 768px) {
+	.container {
+		padding-top: 20px; /* Espace réduit au-dessus du contenu principal sur mobile */
+	}
+
+	.card {
+		margin-top: 10px; /* Espace réduit au-dessus de la carte sur mobile */
+	}
+}
+
+/* Styles pour le calendrier */
+.fc-content {
+	border-radius: 10px; /* Bordures arrondies */
+}
+
+.fc-day,
+.fc-day-top,
+.fc-day-header {
+	border-radius: 50%; /* Cases rondes */
+}
+
+/* Style pour la mise en évidence de la case cliquée */
+.selected-date {
+	background-color: #2196f3; /* Couleur bleue (à personnaliser) */
+	border-radius: 50%; /* Bordure arrondie pour la case sélectionnée */
+	color: white;
+}
+
+/* Style pour le message dans la fenêtre modale */
+#modal-message {
+	font-size: 1.2rem;
+}
+
+/* Style pour les heures affichées */
+.selected-hour {
+	background-color: #007bff;
+	color: white;
+	border-radius: 50px;
+	padding: 5px 10px;
+	font-size: 1rem;
+	margin-right: 10px; /* Ajouter un espacement entre les heures */
+}
+
+/* Ajouter un style pour les icônes */
+i.fa {
+	font-size: 24px;
+	color: #007bff;
+	margin-right: 5px; /* Espacement entre l'icône et le texte */
+}
+
+/* Style pour le message de confirmation de réservation */
+#message {
+	text-align: center;
+	margin-top: 20px;
+	font-size: 1.2rem;
+}
+
+/* Style pour le bouton "Afficher les heures" */
+#show-hours-button {
+	background-color: #007bff;
+	color: white;
+	border: none;
+	border-radius: 10px;
+	padding: 10px 20px;
+	font-size: 1rem;
+	cursor: pointer;
+}
+
+/* Style pour le bouton "Réserver" */
+#reserve-button,
+#cancel-button {
+	background-color: #478802;
+	color: white;
+	border: none;
+	border-radius: 10px;
+	padding: 10px 20px;
+	font-size: 1rem;
+	cursor: pointer;
+	margin-top: 20px; /* Ajouter un espacement entre le bouton "Réserver" et les heures */
+}
+
+#cancel-button {
+	background-color: rgb(168, 2, 2);
+}
+
+/* Style pour le champ de date */
+#date {
+	border-radius: 10px;
+	padding: 10px;
+	font-size: 1rem;
+}
+
+/* Style pour le message de confirmation de réservation */
+#message {
+	text-align: center;
+	margin-top: 20px;
+	font-size: 1.2rem;
+}
+
+#hours-table {
 	display: flex;
-	justify-content: center;
-	align-items: center;
-	width: 100px; /* Largeur du bouton rond */
-	height: 100px; /* Hauteur du bouton rond */
-	border-radius: 50%; /* Bordure arrondie pour créer un bouton rond */
-	color: #fff; /* Couleur du texte (icône de profil) */
-	font-size: 24px; /* Taille de la police de l'icône de profil */
-	cursor: pointer; /* Curseur de type main pour indiquer que c'est cliquable */
-	position: absolute;
-	top: 20px; /* Position verticale du bouton (ajustez selon vos besoins) */
-	right: 20px; /* Position horizontale du bouton (ajustez selon vos besoins) */
+	flex-wrap: wrap;
+}
+
+#hours-table button {
+	background-color: #007bff;
+	color: white;
+	border: none;
+	border-radius: 10px;
+	padding: 10px 20px;
+	font-size: 1rem;
+	cursor: pointer;
+	margin: 5px; /* Espacement entre les boutons d'heure */
+}
+
+.choixDate {
+	margin-top: 60px;
+	color: rgb(0, 182, 210);
+	font-variant: small-caps;
+	font-size: large;
+}
+
+.reservation-summary {
+	background: linear-gradient(
+		to bottom,
+		#ffffff,
+		#f0f0f0
+	); /* Dégradé blanc à gris */
+	padding: 20px;
+	border-radius: 10px;
+	margin-top: 20px;
+	text-transform: uppercase; /* Convertir le texte en majuscules */
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+	width: 500px;
+}
+
+p {
+	font-size: large;
+}
+
+.resume {
+	font-weight: bolder;
 }

@@ -1,0 +1,146 @@
+@import url('https://fonts.googleapis.com/css?family=Lato:300,400');
+
+body,
+html {
+	margin: 0;
+	height: 100%;
+	font-family: 'Lato', sans-serif;
+	background: linear-gradient(
+		to right,
+		#414345,
+		#232526
+	); /* Arrière-plan avec gradient */
+	color: white; /* Texte blanc par défaut */
+}
+
+button {
+	background-color: #007bff; /* Bleu Bootstrap par défaut */
+	color: white; /* Texte blanc pour une meilleure lisibilité */
+	padding: 10px 20px; /* Agrandissement du bouton */
+	border: none; /* Pas de bordure */
+	cursor: pointer; /* Style de curseur pour indiquer qu'il est cliquable */
+	font-size: 1rem; /* Taille de la police standard */
+	border-radius: 10px; /* Arrondir les coins */
+	outline: none; /* Pas de contour lors de la sélection */
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Ombre portée pour un effet de profondeur */
+	transition: background-color 0.2s; /* Transition en douceur pour le survol */
+}
+
+.service-info {
+	color: rgb(8, 165, 218); /* Couleur orange */
+}
+
+.container {
+	padding-top: 100px; /* Espace au-dessus du contenu principal */
+	margin-left: 50px;
+}
+
+#services-list li {
+	margin-bottom: 20px; /* Espacement entre les services */
+}
+
+.service-name {
+	font-size: 24px; /* Taille de police plus grande */
+	font-weight: bold; /* Police en gras */
+	font-family: Arial, sans-serif; /* Police différente, ajustez-la selon vos préférences */
+	margin-bottom: 10px; /* Espace sous le nom du service */
+}
+
+.service-card {
+	background-color: #141414;
+	padding: 20px;
+	margin-bottom: 60px;
+	border: 1px solid #ccc;
+	border-radius: 5px;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+	width: 500px;
+	overflow: hidden; /* Masquer le débordement du contenu supplémentaire */
+	position: relative; /* Position relative pour l'élément parent */
+}
+
+.service-card .additional-info {
+	display: none; /* Masquer les informations supplémentaires par défaut */
+}
+
+.service-card:hover .additional-info {
+	display: block; /* Afficher les informations supplémentaires lors du survol */
+}
+
+.service-card:hover button {
+	display: block; /* Afficher le bouton Réserver lors du survol */
+}
+
+.service-info {
+	color: rgb(8, 165, 218); /* Couleur orange */
+}
+
+/* Style pour le bouton Réserver (masqué par défaut) */
+.service-card button {
+	background-color: #007bff;
+	color: white;
+	padding: 10px 20px;
+	border: none;
+	cursor: pointer;
+	font-size: 1rem;
+	border-radius: 10px;
+	outline: none;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+	transition: background-color 0.2s;
+	display: none; /* Masquer le bouton par défaut */
+	position: absolute; /* Position absolue pour l'élément enfant */
+	bottom: 10px; /* Espacement par rapport au bas de la carte */
+	right: 10px; /* Espacement par rapport à la droite de la carte */
+}
+
+h1 {
+	font-weight: 300;
+	letter-spacing: 2px;
+	margin-bottom: 20px; /* Espace après le titre principal */
+	margin-top: 20px;
+}
+
+#cancel-button {
+	background-color: rgb(168, 2, 2);
+}
+
+h2 {
+	font-weight: 300;
+	letter-spacing: 2px;
+	margin-bottom: 20px; /* Espace après le titre principal */
+	margin-top: 50px;
+}
+
+a {
+	color: #00bfff; /* Couleur des liens */
+}
+
+@media (max-width: 768px) {
+	.container {
+		padding-top: 20px; /* Espace réduit au-dessus du contenu principal sur mobile */
+	}
+
+	.card {
+		margin-top: 10px; /* Espace réduit au-dessus de la carte sur mobile */
+	}
+}
+
+#professionals-list {
+	list-style-type: none; /* Enlève les puces de la liste */
+	padding: 0; /* Enlève le padding par défaut */
+	margin: 0; /* Enlève la marge par défaut */
+}
+
+#professionals-list li {
+	background-color: #232526; /* Couleur de fond pour les bannières */
+	color: white; /* Couleur de texte */
+	padding: 20px; /* Espacement interne */
+	margin-bottom: 10px; /* Espacement entre les bannières */
+	transition: transform 0.3s ease; /* Animation de transition pour le zoom */
+	cursor: pointer; /* Change le curseur en main */
+	border: 1px solid #414345; /* Bordure pour chaque bannière */
+	font-size: 1.5em; /* Taille de la police */
+}
+
+#professionals-list li:hover {
+	transform: scale(1.05); /* Zoom légèrement lors du survol */
+}

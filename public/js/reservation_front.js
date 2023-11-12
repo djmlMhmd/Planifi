@@ -15,17 +15,40 @@ document.addEventListener('DOMContentLoaded', function () {
 	const reserveButton = document.getElementById('reserve-button');
 	const messageDiv = document.getElementById('message');
 	let selectedTime = ''; // Stocke l'heure sélectionnée
+	let hoursVisible = false;
 
 	fetch(`/reservation/${serviceId}`, { method: 'GET' })
 		.then((response) => response.json())
 		.then((service) => {
 			const serviceInfoDiv = document.getElementById('service-info');
-			serviceInfoDiv.innerHTML = `
-                <strong>Service: </strong>${service.service_name}<br>
-                <strong>Description: </strong>${service.service_description}<br>
-                <strong>Prix: </strong>${service.service_price} €<br>
-                <strong>Durée: </strong>${service.duration.hours} heures<br>
+
+			const duration = service.duration;
+			let durationString = '';
+
+			if (duration.hours > 0) {
+				durationString += `${duration.hours} heure${
+					duration.hours > 1 ? 's' : ''
+				}`;
+			}
+
+			if (duration.minutes > 0) {
+				if (durationString.length > 0) {
+					durationString += ' ';
+				}
+				durationString += `${duration.minutes} minute${
+					duration.minutes > 1 ? 's' : ''
+				}`;
+			}
+			const reservationSummaryDiv = document.createElement('div');
+			reservationSummaryDiv.classList.add('reservation-summary');
+			reservationSummaryDiv.innerHTML = `
+			<p class="resume"> Résumé de la réservation <p>
+			<strong>Service: </strong>${service.service_name}<br>
+			<strong>Description: </strong>${service.service_description}<br>
+			<strong>Prix: </strong>${service.service_price} €<br>
+			<strong>Durée: </strong>${durationString}<br>
             `;
+			serviceInfoDiv.appendChild(reservationSummaryDiv);
 		})
 		.catch((error) => {
 			console.error(
@@ -36,6 +59,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	showHoursButton.addEventListener('click', function () {
 		hoursTable.innerHTML = ''; // Efface le tableau précédent
+		if (!hoursVisible) {
+			// Si les heures ne sont pas visibles, les afficher
+			hoursTable.style.display = 'block';
+			hoursVisible = true;
+		} else {
+			// Si les heures sont visibles, les cacher
+			hoursTable.style.display = 'none';
+			hoursVisible = false;
+		}
 
 		// Effectue la requête pour récupérer les heures réservées ici
 		fetch('/reservedHours', { method: 'GET' })
@@ -114,6 +146,12 @@ document.addEventListener('DOMContentLoaded', function () {
 		if (event.target === modal) {
 			modal.style.display = 'none';
 		}
+	});
+
+	const cancelButton = document.getElementById('cancel-button');
+
+	cancelButton.addEventListener('click', function () {
+		window.history.back(); // Revenir à la page précédente
 	});
 
 	// clic sur le bouton "Réserver"

@@ -152,6 +152,7 @@ router.get('/reservation/:serviceId', async (req, res) => {
 		}
 
 		const serviceInfo = service.rows[0];
+		res.cookie('selectedServiceID', serviceId, { maxAge: 3600000 });
 		res.json(serviceInfo);
 	} catch (e) {
 		console.error(

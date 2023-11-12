@@ -78,9 +78,10 @@ router.get('/reservations', async (req, res) => {
                 SELECT
                     reservations.*,
                     services.service_name,
+                    services.duration AS service_duration, -- Ajoutez cette ligne pour récupérer la durée du service
                     CONCAT(users."firstName", ' ', users."lastName") AS user_name,
                     CONCAT(professionals."firstName", ' ', professionals."lastName") AS professional_name,
-					reservations.day_of_week
+                    reservations.day_of_week
                 FROM
                     reservations
                 JOIN
@@ -103,23 +104,32 @@ router.get('/reservations', async (req, res) => {
 				.json({ message: 'Aucune réservation trouvée' });
 		}
 
-		const reservations = result.rows.map((reservation) => ({
-			title: reservation.user_name + ' - ' + reservation.service_name,
-			start: moment(
+		const reservations = result.rows.map((reservation) => {
+			const serviceDuration = moment.duration(
+				reservation.service_duration
+			);
+			const durationString = `${serviceDuration.hours()}h${serviceDuration.minutes()}m`;
+			const start = moment(
 				reservation.day_of_week + 'T' + reservation.start_time,
 				'DD-MM-YYYYTHH:mm:ss'
-			).format('YYYY-MM-DDTHH:mm:ss'),
+			).format('YYYY-MM-DDTHH:mm:ss');
+			const end = moment(start)
+				.add(reservation.service_duration, 'minutes')
+				.format('YYYY-MM-DDTHH:mm:ss');
 
-			end: moment(reservation.end_time, 'HH:mm:ss').format(
-				'YYYY-MM-DDTHH:mm:ss'
-			),
-			extendedProps: {
-				reservation: {
-					service_id: reservation.service_name,
-					professional_name: reservation.professional_name,
+			return {
+				title: reservation.user_name,
+				start: start,
+				end: end,
+				extendedProps: {
+					reservation: {
+						service_id: reservation.service_name,
+						professional_name: reservation.professional_name,
+						service_duration: durationString,
+					},
 				},
-			},
-		}));
+			};
+		});
 		console.log('start:', reservations);
 
 		res.json(reservations);
@@ -133,6 +143,7 @@ router.get('/reservations', async (req, res) => {
 		);
 	}
 });
+
 router.get('/reservations/client', async (req, res) => {
 	const clientID = req.session.clientID;
 
@@ -165,13 +176,12 @@ router.get('/reservations/client', async (req, res) => {
 
 		if (result.rows.length > 0) {
 			const reservations = result.rows.map((reservation) => ({
-				reservation_id: reservation.reservation_id, // Ajoutez ceci
+				reservation_id: reservation.reservation_id,
 				title: reservation.professional_name,
 				service_name: reservation.service_name,
 				start: moment(reservation.start_time, 'HH:mm:ss').format(
 					'DD/MM/YY HH:mm'
 				),
-				// Assurez-vous que 'end_time' est récupéré et formaté correctement si nécessaire
 			}));
 
 			res.json(reservations);

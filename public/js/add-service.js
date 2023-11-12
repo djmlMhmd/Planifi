@@ -37,6 +37,7 @@ addServiceButton.addEventListener('click', () => {
 	// Crée un formulaire pour ajouter un service
 	const serviceForm = document.createElement('form');
 	serviceForm.innerHTML = `
+	
         <h3>Ajouter un service</h3>
         <label for="service_name">Nom du service:</label><br>
         <input type="text" id="service_name" name="service_name" required>

@@ -6,6 +6,7 @@
 		<title>Réservation</title>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 		<script src="/public/js/user-auth.js"></script>
+
 		<link rel="stylesheet" href="/css/reservation_front.css" />
 		<link
 			rel="stylesheet"
@@ -18,23 +19,22 @@
 		/>
 	</head>
 	<body>
-		<div class="profile-button">
-			<a href="./profil-client.html">
-				<i class="fas fa-user-circle"></i>
-				<!-- Icône de profil -->
-			</a>
+		<div class="container">
+			<h1>Réservez un rendez-vous</h1>
+
+			<div id="service-info"></div>
+
+			<label for="date" class="choixDate">Choisissez une date :</label
+			><br />
+			<input type="date" id="date" />
+
+			<button id="show-hours-button">Afficher les heures</button>
+
+			<div id="hours-table"></div>
+
+			<button id="reserve-button">Réserver</button>
+			<button id="cancel-button">Annuler</button>
 		</div>
-		<h1>Réservez un rendez-vous</h1>
-		<div id="service-info"></div>
-
-		<label for="date">Choisissez une date :</label>
-		<input type="date" id="date" />
-
-		<button id="show-hours-button">Afficher les heures</button>
-
-		<div id="hours-table"></div>
-
-		<button id="reserve-button">Réserver</button>
 
 		<div id="message"></div>
 		<div id="myModal" class="modal">

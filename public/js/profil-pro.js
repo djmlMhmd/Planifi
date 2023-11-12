@@ -81,16 +81,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
 				// Browse and display services
 				data.forEach((service) => {
+					const duration = service.duration;
+					let durationString = '';
+
+					if (duration.hours > 0) {
+						durationString += `${duration.hours} heure${
+							duration.hours > 1 ? 's' : ''
+						}`;
+					}
+
+					if (duration.minutes > 0) {
+						if (durationString.length > 0) {
+							durationString += ' ';
+						}
+						durationString += `${duration.minutes} minute${
+							duration.minutes > 1 ? 's' : ''
+						}`;
+					}
+
 					const serviceElement = document.createElement('div');
 					serviceElement.innerHTML = `
-                        <h3>${service.service_name}</h3>
-                        <p>${service.service_description}</p>
-                        <p>Prix: ${service.service_price} EUR</p>
-                        <p>Durée: ${service.duration.hours} heures</p>
-                        <button class="delete-service-button" data-service-id="${service.service_id}">Supprimer</button>
-					
-
-                    `;
+                    <h3>${service.service_name}</h3>
+                    <p>${service.service_description}</p>
+                    <p>Prix: ${service.service_price} EUR</p>
+                    <p>Durée: ${durationString}</p>
+                    <button class="delete-service-button" data-service-id="${service.service_id}">Supprimer</button>
+                `;
 
 					professionalServicesDiv.appendChild(serviceElement);
 				});

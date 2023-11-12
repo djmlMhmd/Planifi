@@ -11,7 +11,7 @@
 }
 
 .modal {
-	background: #fff;
+	background: #3b3b3b;
 	padding: 20px;
 	border-radius: 5px;
 	box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
@@ -37,9 +37,8 @@
 }
 
 .profile-image {
-	width: 150px;
-	height: 150px;
-	border-radius: 50%; /* Pour créer une forme de cercle */
+	width: 100%;
+	height: 200px;
 	overflow: hidden; /* Masquer les parties de l'image en dehors du cercle */
 }
 
@@ -85,4 +84,218 @@
 
 #file-input {
 	display: none;
+}
+
+@import url('https://fonts.googleapis.com/css?family=Lato:300,400');
+
+body,
+html {
+	margin: 0;
+	height: 100%;
+	font-family: 'Lato', sans-serif;
+	background: linear-gradient(
+		to right,
+		#414345,
+		#232526
+	); /* Arrière-plan avec gradient */
+	color: white; /* Texte blanc par défaut */
+}
+
+.container {
+	padding-top: 50px; /* Espace au-dessus du contenu principal */
+	margin-left: 50px;
+}
+
+h1 {
+	font-weight: 300;
+	letter-spacing: 2px;
+	margin-bottom: 20px; /* Espace après le titre principal */
+	margin-top: 50px;
+}
+
+h2 {
+	font-weight: 300;
+	letter-spacing: 2px;
+	margin-bottom: 20px; /* Espace après le titre principal */
+	margin-top: 50px;
+}
+
+a {
+	color: #00bfff; /* Couleur des liens */
+}
+
+@media (max-width: 768px) {
+	.container {
+		padding-top: 20px; /* Espace réduit au-dessus du contenu principal sur mobile */
+	}
+
+	.card {
+		margin-top: 10px; /* Espace réduit au-dessus de la carte sur mobile */
+	}
+}
+
+h3 {
+	margin-top: 20px;
+	font-weight: bolder;
+}
+
+#calendar-button,
+#add-service-button {
+	background-color: #007bff;
+	color: white;
+	padding: 10px 20px;
+	border: none;
+	cursor: pointer;
+	font-size: 1rem;
+	border-radius: 10px;
+	outline: none;
+	margin-top: 40px;
+}
+
+/* Ajoutez ces styles CSS pour personnaliser le formulaire */
+#add-service-form {
+	display: none;
+	justify-content: center;
+	align-items: center;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.5);
+	z-index: 1000; /* Assurez-vous que le formulaire s'affiche au-dessus du reste du contenu */
+}
+
+.modal {
+	background: #fff;
+	padding: 20px;
+	border-radius: 5px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+	position: relative;
+	text-align: center;
+}
+
+.close {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	font-size: 24px;
+	cursor: pointer;
+}
+
+/* Styles pour les champs de formulaire */
+label {
+	display: block;
+	margin-top: 10px;
+	font-weight: bold;
+}
+
+input[type='text'],
+textarea,
+input[type='number'] {
+	width: 100%;
+	padding: 10px;
+	margin-top: 5px;
+	border: 1px solid #ccc;
+	border-radius: 5px;
+}
+
+/* Style du bouton Ajouter */
+button[type='submit'] {
+	background-color: #007bff;
+	color: white;
+	padding: 10px 20px;
+	border: none;
+	cursor: pointer;
+	font-size: 1rem;
+	border-radius: 5px;
+	margin-top: 20px;
+}
+
+/* Styles pour la fenêtre modale de succès */
+.modal-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.5);
+	z-index: 1000;
+}
+
+.modal {
+	background: #fff;
+	padding: 20px;
+	border-radius: 5px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+	position: relative;
+	text-align: center;
+}
+
+.close {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	font-size: 24px;
+	cursor: pointer;
+	align-items: center;
+}
+
+/* Styles pour le formulaire d'ajout de service */
+form {
+	margin-top: 10%;
+	background: #1f1e1e;
+	padding: 50px;
+	border-radius: 5px;
+	text-align: center;
+	width: 300px;
+}
+
+h3 {
+	font-size: 1.5rem;
+	margin-bottom: 20px;
+}
+
+label {
+	display: block;
+	margin-top: 10px;
+	font-weight: bold;
+}
+
+input[type='text'],
+textarea,
+input[type='number'],
+select {
+	width: 100%;
+	padding: 10px;
+	margin-top: 5px;
+	border: 1px solid #ccc;
+	border-radius: 5px;
+}
+
+button {
+	background-color: #007bff;
+	color: white;
+	padding: 10px 20px;
+	border: none;
+	cursor: pointer;
+	font-size: 1rem;
+	border-radius: 5px;
+	margin-top: 20px;
+}
+
+#service_name,
+#service_description,
+#service_price,
+#duration {
+	color: #232526;
+}
+
+#delete-service-button {
+	background-color: rgb(158, 2, 2);
+	width: 150px;
+	height: 50px;
 }

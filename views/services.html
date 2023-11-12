@@ -4,37 +4,44 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Liste des Services</title>
-		<style>
-			.modal {
-				display: none;
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				background-color: rgba(0, 0, 0, 0.7);
-				z-index: 1;
-			}
 
-			.modal-content {
-				background-color: #fff;
-				position: absolute;
-				top: 50%;
-				left: 50%;
-				transform: translate(-50%, -50%);
-				padding: 20px;
-				border: 1px solid #ccc;
-			}
-			.calendar-container {
-				width: 150%;
-				height: 100%;
-			}
-		</style>
+		<link href="/css/nav.css" rel="stylesheet" type="text/css" />
+		<link href="/css/services.css" rel="stylesheet" type="text/css" />
 		<script src="/public/js/user-auth.js"></script>
 	</head>
 	<body>
-		<h1>Liste des Services</h1>
-		<ul id="services-list"></ul>
+		<nav>
+			<div class="logo">
+				<span>PLANIFI</span>
+			</div>
+			<ul class="nav-links">
+				<li><a href="/">Home</a></li>
+				<li><a href="/navigation">Services</a></li>
+				<li><a href="/contact">Contact Us</a></li>
+				<li>
+					<div class="dropdown">
+						<button class="dropbtn">Profil</button>
+						<div class="dropdown-content">
+							<a href="#" class="nav-link" id="profile-link"
+								>>Voir Profil</a
+							>
+							<a id="logout-button">Déconnexion</a>
+						</div>
+					</div>
+				</li>
+			</ul>
+			<div class="hamburger">
+				<div class="line1"></div>
+				<div class="line2"></div>
+				<div class="line3"></div>
+			</div>
+		</nav>
+		<div class="container">
+			<button id="cancel-button">Retour</button>
+
+			<h1>Liste des Services</h1>
+			<ul id="services-list"></ul>
+		</div>
 
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -61,23 +68,44 @@
 							const servicesList =
 								document.getElementById('services-list');
 							services.forEach((service) => {
-								const listItem = document.createElement('li');
-								const durationHours = service.duration.hours;
-								listItem.innerHTML = `
-                            <strong>Service: </strong>${service.service_name}<br>
-                            <strong>Description: </strong>${service.service_description}<br>
-                            <strong>Prix: </strong>${service.service_price} €<br>
-                            <strong>Durée: </strong>${durationHours} heures<br>
-                            <strong>Professionnel: </strong>${service.email}<br>
-                            <strong>Téléphone: </strong>${service.phone}<br>
-                            <strong>Entreprise: </strong>${service.company_name}<br>
-                            <strong>Adresse: </strong>${service.company_address}<br><br>
-                            <button onclick="reserveService(${service.service_id}, '${professionalId}')">Réserver</button>
+								const card = document.createElement('div');
+								card.classList.add('service-card'); // Ajoutez une classe pour les cartes
 
-                        `;
+								const duration = service.duration;
+								let durationString = '';
 
-								servicesList.appendChild(listItem);
+								if (duration.hours > 0) {
+									durationString += `${duration.hours} heure${
+										duration.hours > 1 ? 's' : ''
+									}`;
+								}
+
+								if (duration.minutes > 0) {
+									if (durationString.length > 0) {
+										durationString += ' ';
+									}
+									durationString += `${
+										duration.minutes
+									} minute${duration.minutes > 1 ? 's' : ''}`;
+								}
+								card.innerHTML = `
+								<strong class="service-info service-name">Service: </strong>${service.service_name}<br>
+								<div class="additional-info">
+       <strong class="service-info">Description: </strong>${service.service_description}<br>
+        <strong class="service-info">Prix: </strong>${service.service_price} €<br>
+       <strong class="service-info">Durée: </strong>${durationString}<br>
+        <strong class="service-info">Professionnel: </strong>${service.email}<br>
+        <strong class="service-info">Téléphone: </strong>${service.phone}<br>
+        <strong class="service-info">Entreprise: </strong>${service.company_name}<br>
+        <strong class="service-info">Adresse: </strong>${service.company_address}<br><br>
+        <button onclick="reserveService(${service.service_id}, '${professionalId}')">Réserver</button><br>
+		</div>
+
+    `;
+
+								servicesList.appendChild(card);
 							});
+
 							console.log(services);
 						})
 						.catch((error) => {
@@ -93,6 +121,40 @@
 			}
 			// Appeler la fonction pour obtenir la liste des services lors du chargement de la page
 			document.addEventListener('DOMContentLoaded', getServices);
+		</script>
+
+		<script>
+			const clientID = getCookie('clientID');
+			const profileLink = document.getElementById('profile-link');
+			profileLink.href = `/profil/${clientID}`;
+			profileLink.textContent = 'Voir Profil';
+			profileLink.style.display = 'block';
+
+			document
+				.getElementById('logout-button')
+				.addEventListener('click', () => {
+					fetch('/deconnexion/client', { method: 'POST' })
+						.then((response) => {
+							if (response.ok) {
+								// Redirect the user to the login page after logging out
+								window.location.href = '/connexion';
+							} else {
+								console.error('Échec de la déconnexion');
+							}
+						})
+						.catch((error) => {
+							console.error(
+								'Erreur lors de la déconnexion:',
+								error
+							);
+						});
+				});
+
+			const cancelButton = document.getElementById('cancel-button');
+
+			cancelButton.addEventListener('click', function () {
+				window.history.back(); // Revenir à la page précédente
+			});
 		</script>
 	</body>
 </html>

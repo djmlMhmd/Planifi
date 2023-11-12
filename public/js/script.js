@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
 				extraParams: {
 					custom_param: 'value',
 				},
-				color: 'red', // Couleur de l'événement
+				color: '#007bff', // Couleur de l'événement
 				textColor: 'white', // Couleur du texte de l'événement
 				//display: 'background', // Affichage de l'événement
 			},
@@ -75,6 +75,8 @@ document.addEventListener('DOMContentLoaded', function () {
 			var client = info.event.title;
 			var professinal =
 				info.event.extendedProps.reservation.professional_name;
+			var service_duration =
+				info.event.extendedProps.reservation.service_duration;
 
 			$('#eventModalTitle').text("Détails de l'événement");
 			$('#eventModalContent').html(
@@ -83,7 +85,9 @@ document.addEventListener('DOMContentLoaded', function () {
 					'<br> Service: ' +
 					service +
 					'<br>Professionnel: ' +
-					professinal
+					professinal +
+					'<br>Durée du service: ' +
+					service_duration
 			);
 			$('#eventModal').modal('show');
 		},

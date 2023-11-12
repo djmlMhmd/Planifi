@@ -1,0 +1,118 @@
+@import url('https://fonts.googleapis.com/css?family=Lato:300,400');
+
+.container {
+	position: relative;
+	display: inline-block;
+}
+
+#file-input {
+	display: none;
+}
+
+body,
+html {
+	margin: 0;
+	height: 100%;
+	font-family: 'Lato', sans-serif;
+	background: linear-gradient(
+		to right,
+		#414345,
+		#232526
+	); /* Arrière-plan avec gradient */
+	color: white; /* Texte blanc par défaut */
+}
+
+.container {
+	padding-top: 50px; /* Espace au-dessus du contenu principal */
+	margin-left: 50px;
+}
+
+h1 {
+	font-weight: 300;
+	letter-spacing: 2px;
+	margin-bottom: 20px; /* Espace après le titre principal */
+	margin-top: 50px;
+}
+
+h2 {
+	font-weight: 300;
+	letter-spacing: 2px;
+	margin-bottom: 20px; /* Espace après le titre principal */
+	margin-top: 50px;
+}
+
+a {
+	color: #00bfff; /* Couleur des liens */
+}
+
+@media (max-width: 768px) {
+	.container {
+		padding-top: 20px; /* Espace réduit au-dessus du contenu principal sur mobile */
+	}
+
+	.card {
+		margin-top: 10px; /* Espace réduit au-dessus de la carte sur mobile */
+	}
+}
+
+input[type='text'],
+textarea,
+input[type='number'] {
+	width: 100%;
+	padding: 10px;
+	margin-top: 5px;
+	border: 1px solid #ccc;
+	border-radius: 5px;
+}
+
+button {
+	background-color: #007bff;
+	color: white;
+	padding: 10px 20px;
+	border: none;
+	cursor: pointer;
+	font-size: 1rem;
+	border-radius: 5px;
+	margin-top: 20px;
+}
+
+#calendar {
+	max-width: 1000px; /* Défini la largeur maximale souhaitée */
+	margin: 0 auto; /* Centre le calendrier horizontalement */
+}
+
+#back {
+	background-color: rgb(166, 3, 3);
+	padding: 6px;
+	margin-top: 0px;
+	margin-bottom: 0px;
+}
+
+/* Style pour la fenêtre modale */
+#eventModal {
+	font-family: Arial, sans-serif;
+}
+
+/* Style pour le titre de la fenêtre modale */
+#eventModalTitle {
+	font-size: 18px;
+	font-weight: bold;
+	margin-bottom: 10px;
+	color: #232526;
+}
+
+/* Style pour le contenu de la fenêtre modale */
+#eventModalContent {
+	font-size: 16px;
+	line-height: 1.5;
+}
+
+/* Style pour les lignes de texte dans le contenu de la fenêtre modale */
+#eventModalContent p {
+	margin-bottom: 5px;
+}
+
+.modal-body {
+	background-color: rgb(255, 255, 255);
+	color: #232526;
+}
