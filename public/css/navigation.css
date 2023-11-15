@@ -66,3 +66,7 @@ a {
 #professionals-list li:hover {
 	transform: scale(1.05); /* Zoom légèrement lors du survol */
 }
+
+.dropdown-content {
+	color: #232526;
+}

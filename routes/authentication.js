@@ -48,7 +48,7 @@ router.post('/inscription', async (req, res) => {
 
 		const result = await client.query(insertQuery, values);
 
-		// Vérifiez si des lignes ont été insérées
+		// Vérifie si des lignes ont été insérées
 		if (result.rowCount > 0) {
 			console.log(`${reqValue} inscrit avec succès:`, result.rows[0]);
 			res.json({

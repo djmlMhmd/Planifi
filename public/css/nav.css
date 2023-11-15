@@ -116,6 +116,7 @@ nav {
 	min-width: 160px;
 	box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
 	z-index: 1;
+	color: #131418;
 }
 
 .dropdown-content a {
@@ -127,6 +128,7 @@ nav {
 
 .dropdown-content a:hover {
 	background-color: #f1f1f1;
+	color: #131418;
 }
 
 .dropdown:hover .dropdown-content {
@@ -134,7 +136,7 @@ nav {
 }
 
 .dropdown:hover .dropbtn {
-	background-color: #e2e2e2;
+	background-color: #cdcdcd;
 }
 
 /*Styling Hamburger Icon*/

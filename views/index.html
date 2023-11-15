@@ -115,7 +115,6 @@
 				);
 				const profileLink = document.getElementById('profile-link');
 				const logoutButton = document.getElementById('logout-button');
-				const searchBar = document.getElementById('search-bar');
 
 				// Si l'utilisateur est connecté
 				if (isLoggedIn) {
@@ -129,7 +128,6 @@
 					profileLink.href = `/profil/${clientID}`;
 					profileLink.textContent = 'Voir Profil';
 					profileLink.style.display = 'block';
-					searchBar.style.display = 'block';
 
 					// Gérer le clic sur le bouton de déconnexion
 					logoutButton.addEventListener('click', () => {
@@ -140,14 +138,6 @@
 					// Changez le texte du bouton de profil pour afficher "Profil"
 					const dropbtn = document.querySelector('.dropbtn');
 					dropbtn.textContent = 'Profil';
-
-					// Affiche la barre de navigation
-					const navbar = document.querySelector('nav');
-					navbar.style.display = 'flex';
-				} else {
-					// Cache la barre de navigation si l'utilisateur n'est pas connecté
-					const navbar = document.querySelector('nav');
-					navbar.style.display = 'none';
 
 					// Affiche les ronds de connexion et d'inscription
 					if (roundCardsContainer) {
