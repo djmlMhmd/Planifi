@@ -14,7 +14,7 @@ Planifi est une application web moderne conçue pour faciliter la gestion des re
 
 -   **Backend** : Node.js, Express
 -   **Frontend** : EJS pour le rendu côté serveur
--   **Base de données** : MongoDB avec Mongoose pour la modélisation des données, PostgreSQL
+-   **Base de données** : PostgreSQL
 -   **Authentification** : Gestion des sessions avec express-session, sécurisation des mots de passe avec bcrypt
 -   **Communication en temps réel** : Socket.io
 -   **Déploiement** : Docker compose pour faciliter le déploiement et la mise à l'échelle
