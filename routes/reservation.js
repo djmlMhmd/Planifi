@@ -10,13 +10,13 @@ router.post('/reservation', async (req, res) => {
 	const { professional_id, users_id, service_id } = req.body;
 
 	const start_time = req.body.start_time;
-	const selectedDate = req.body.day_of_week; // Assurez-vous que le champ dans le formulaire correspond à "selected_date"
+	const selectedDate = req.body.day_of_week;
 
-	const day_of_week = moment(selectedDate, 'DD-MM-YYYY').format('DD-MM-YYYY'); // Convertir en nom de jour
+	const day_of_week = moment(selectedDate, 'DD-MM-YYYY').format('DD-MM-YYYY');
 
 	const client = getClientsCollection();
 
-	// Récupérer la durée du service depuis la table des services
+	// Récupére la durée du service depuis la table des services
 	const service = await client.query(
 		'SELECT duration FROM services WHERE service_id = $1',
 		[service_id]
@@ -28,14 +28,14 @@ router.post('/reservation', async (req, res) => {
 
 	const duration = service.rows[0].duration; // Durée du service enregistrée dans la table
 
-	// Calculer l'heure de fin en utilisant une simple chaîne de caractères
+	// Calcule l'heure de fin en utilisant une simple chaîne de caractères
 	const startDateTime = start_time;
 	const end_time = moment(start_time, 'HH:mm')
 		.clone()
 		.add(duration)
 		.format('HH:mm:ss');
 
-	// Vérifier si le temps de début est valide
+	// Vérifie si le temps de début est valide
 	if (
 		moment(start_time, 'HH:mm').isBefore('08:00', 'HH:mm') ||
 		moment(start_time, 'HH:mm').isAfter('21:00', 'HH:mm')
@@ -43,7 +43,7 @@ router.post('/reservation', async (req, res) => {
 		return res.status(400).json({ message: 'Heure de début non valide' });
 	}
 
-	// Vérifier si le créneau horaire est déjà réservé
+	// Vérifie si le créneau horaire est déjà réservé
 	const existingReservation = await client.query(
 		'SELECT * FROM reservations WHERE professional_id = $1 AND start_time = $2 AND service_id = $3 AND day_of_week = $4',
 		[professional_id, start_time, service_id, day_of_week]
