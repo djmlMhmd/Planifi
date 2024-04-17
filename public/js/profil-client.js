@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
 	const clientProfileDiv = document.getElementById('client-profile');
 	const reservationsListDiv = document.getElementById('reservations-list');
-	const navigationLink = document.getElementById('navigation-link');
+
 	loadClientReservations();
 
 	const urlParams = new URLSearchParams(window.location.search);

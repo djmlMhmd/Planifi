@@ -46,6 +46,8 @@
         </div>
     </nav>
 
+
+
 		<div class="container">
 			<h1>Profil du Client</h1>
 			<div class="rounded border border-4 border-dark p-3 w-50"></div>
@@ -61,6 +63,19 @@
 			
 		</div>
 		</div>
+
+
+		<!--boite messages -->
+		<div class="dropdown-divider" class="mt-4 mb-4"></div>
+<h2>Envoyer un Message</h2>
+<div id="message-form">
+    <input type="text" id="message-subject" placeholder="Objet du message" required/>
+    <textarea id="message-body" placeholder="Votre message ici" required></textarea>
+    <select id="service-select">
+        <!-- Les options seront chargées dynamiquement -->
+    </select>
+    <button id="send-message">Envoyer</button>
+</div>
 
 		<script src="/public/js/profil-client.js"></script>
 		<script>

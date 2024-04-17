@@ -227,6 +227,92 @@ const createTableDefaultAvailability = async () => {
 	}
 };
 
+const createTableMessages = async () => {
+	try {
+		const checkTableQuery = `
+      SELECT to_regclass('public.messages') as table_exists;
+    `;
+
+		const result = await client.query(checkTableQuery);
+		if (result.rows[0].table_exists === null) {
+			const createTableQuery = `
+        CREATE TABLE messages (
+          message_id SERIAL PRIMARY KEY,
+          sender_id INT,
+          receiver_id INT,
+          subject VARCHAR(255),
+          message_body TEXT,
+          service_id INT,
+          sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT FK_sender_id FOREIGN KEY (sender_id)
+            REFERENCES users(users_id),
+          CONSTRAINT FK_receiver_id FOREIGN KEY (receiver_id)
+            REFERENCES professionals(professional_id),
+          CONSTRAINT FK_service_id FOREIGN KEY (service_id)
+            REFERENCES services(service_id)
+        );
+      `;
+
+			await client.query(createTableQuery);
+			console.log('Table messages créée avec succès');
+		} else {
+			console.log('La table messages existe déjà.');
+		}
+	} catch (e) {
+		console.error(
+			'Erreur lors de la création de la table messages',
+			e.stack
+		);
+	}
+};
+
+const saveMessage = async ({
+	sender_id,
+	receiver_id,
+	subject,
+	message_body,
+	service_id,
+}) => {
+	try {
+		const insertQuery = `
+      INSERT INTO messages (sender_id, receiver_id, subject, message_body, service_id, sent_at)
+      VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *;
+    `;
+		const result = await client.query(insertQuery, [
+			sender_id,
+			receiver_id,
+			subject,
+			message_body,
+			service_id,
+		]);
+		console.log('Message enregistré avec succès:', result.rows[0]);
+		return result.rows[0];
+	} catch (e) {
+		console.error("Erreur lors de l'enregistrement du message:", e.stack);
+		throw e; // Rethrow l'erreur pour le gestionnaire d'erreurs supérieur
+	}
+};
+
+const getMessagesForProfessional = async (receiver_id) => {
+	try {
+		const selectQuery = `
+      SELECT m.*, u.firstName, u.lastName FROM messages m
+      JOIN users u ON m.sender_id = u.users_id
+      WHERE receiver_id = $1
+      ORDER BY sent_at DESC;
+    `;
+		const result = await client.query(selectQuery, [receiver_id]);
+		console.log(
+			`Messages récupérés pour le professionnel ${receiver_id}:`,
+			result.rows
+		);
+		return result.rows;
+	} catch (e) {
+		console.error('Erreur lors de la récupération des messages:', e.stack);
+		throw e; // Rethrow l'erreur pour le gestionnaire d'erreurs supérieur
+	}
+};
+
 const getClientsCollection = () => {
 	return client;
 };
@@ -239,5 +325,8 @@ module.exports = {
 	createTableReservation,
 	createTableAvailability,
 	createTableDefaultAvailability,
+	createTableMessages,
+	saveMessage,
+	getMessagesForProfessional,
 	getClientsCollection,
 };

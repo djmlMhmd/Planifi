@@ -12,18 +12,9 @@ const {
 	getClientsCollection,
 	createTableReservation,
 	createTableAvailability,
+	createTableMessages,
 	createTableDefaultAvailability,
 } = require('./db/database');
-
-getClientsCollection();
-connectToDatabase();
-createTableUser();
-createTableProfessional();
-createTableService();
-createTableAvailability();
-createTableReservation();
-createTableDefaultAvailability();
-
 const { dbConnexion, getDatabase } = require('./db/database');
 const path = require('path');
 const app = express();
@@ -37,8 +28,37 @@ const availability = require('./routes/availability');
 const reservation = require('./routes/reservation');
 const jwt = require('jsonwebtoken');
 const secretKey = process.env.SECRET_KEY;
-
 const EventEmitter = require('events');
+const indexRoutes = require('./routes/index');
+const serviceRouter = require('./routes/services');
+
+// message en temps réel
+const http = require('http');
+const socketIo = require('socket.io');
+const server = http.createServer(app);
+const io = socketIo(server);
+
+// Gestion des connexions WebSocket
+io.on('connection', (socket) => {
+	console.log("Un utilisateur s'est connecté");
+
+	// Réception d'un message d'un client et transmission au professionnel
+	socket.on('send_message', (message) => {
+		// utilise socket.to pour envoyer le message à un socket/pro spécifique
+		// Sauvegarde le message dans votre base de données ici
+		console.log(message);
+	});
+});
+
+getClientsCollection();
+connectToDatabase();
+createTableUser();
+createTableProfessional();
+createTableService();
+createTableAvailability();
+createTableReservation();
+createTableDefaultAvailability();
+createTableMessages();
 
 // Increase the listener limit for an EventEmitter object
 const bus = new EventEmitter();
@@ -46,6 +66,7 @@ bus.setMaxListeners(30);
 
 bus.on('monEvenement', () => {});
 
+app.use('/service', serviceRouter);
 app.use(
 	session({
 		secret: secretKey,
@@ -55,13 +76,13 @@ app.use(
 );
 
 app.use(express.static('public'));
-
 app.use('/profile-images', express.static('img'));
 app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'views')));
 app.use(express.json());
 app.use(cookieParser());
+app.use('/', indexRoutes);
 app.use(disconnect);
 app.use(routes);
 app.use(profilRoutes);
@@ -71,53 +92,6 @@ app.use(reservation);
 app.use('/api', require('./routes/reservation'));
 app.use(deleteReservation);
 app.use(express.urlencoded({ extended: true }));
-
-// Définissez la route pour la page "À propos"
-app.get('/', (req, res) => {
-	res.sendFile(path.join(__dirname, 'views', 'home.html'));
-});
-app.get('/services', (req, res) => {
-	res.sendFile(path.join(__dirname, 'views', 'services.html'));
-});
-
-app.get('/disponibilite/', (req, res) => {
-	res.sendFile(path.join(__dirname, 'views', 'availability.html'));
-});
-
-app.get('/inscription/', (req, res) => {
-	res.sendFile(path.join(__dirname, 'views', 'signup.html'));
-});
-
-app.get('/connexion/', (req, res) => {
-	res.sendFile(path.join(__dirname, 'views', 'login.html'));
-});
-
-app.get('/profil/:id', (req, res) => {
-	// Checks whether it is a customer or a connected professional
-	if (req.session.clientID) {
-		// If it's a customer, return the customer profile
-		res.sendFile(path.join(__dirname, 'views', 'profil-client.html'));
-	} else if (req.session.professionalID) {
-		// If it's a professional, return the professional's profile
-		res.sendFile(path.join(__dirname, 'views', 'profil-pro.html'));
-	} else {
-		// If no one is logged in, return an error message or redirect to the login page
-		res.status(401).send('Authentification requise');
-	}
-});
-
-const serviceRouter = require('./routes/services');
-app.use('/service', serviceRouter);
-app.get('/reservation', (req, res) => {
-	res.sendFile(path.join(__dirname, 'views', 'reservations.html'));
-});
-
-app.get('/navigation', (req, res) => {
-	res.sendFile(path.join(__dirname, 'views', 'navigation.html'));
-});
-app.get('/test', (req, res) => {
-	res.sendFile(path.join(__dirname, 'test', 'test.html'));
-});
 
 // dbConnexion();
 

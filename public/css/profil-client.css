@@ -74,3 +74,28 @@ a {
 		margin-top: 10px; /* Espace réduit au-dessus de la carte sur mobile */
 	}
 }
+
+#message-form input,
+#message-form textarea,
+#message-form select {
+	display: block;
+	width: 90%;
+	padding: 10px;
+	margin: 10px auto;
+	border-radius: 5px;
+}
+
+#send-message {
+	display: block;
+	width: 95%;
+	padding: 10px;
+	margin: 20px auto;
+	background-color: #00bfff;
+	color: white;
+	border: none;
+	cursor: pointer;
+}
+
+#send-message:hover {
+	background-color: #009fda;
+}
