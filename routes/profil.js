@@ -2,14 +2,11 @@ const express = require('express');
 const { Router } = require('express');
 const router = Router();
 const { getClientsCollection } = require('../db/database');
-const session = require('express-session');
 router.use(express.json());
-//const path = require('path');
-const {getAuth} = require("firebase-admin/auth");
 const {auth} = require("../config/firebase");
-const {getStorage} = require("firebase-admin/storage");
 const {uploadSingle} = require("../middleware/multer");
 const UUID  = require("uuid-v4")
+
 
 // PROFESSIONAL PROFILE
 
@@ -102,16 +99,16 @@ router.put('/profil/:id/update-profil-picture', uploadSingle, async (req, res) =
 	try {
 		//TODO: rajouter un chemin spécifique pour la sauvegarde dans firebase
 		// mise en ligne de la photo de profil de l'utilisateur
-		const bucket = auth.storage().bucket();
+		let bucket = auth.storage().bucket();
 		const metadata = {
 			metadata: {
-				firebaseStorageDownloadTokens: uuid
+				firebaseStorageDownloadTokens: uuid,
 			},
 			contentType: req.file.mimetype,
-			cacheControl: "public, max-age=31536000"
+			cacheControl: "public, max-age=31536000",
 		}
 
-		const blob = bucket.file(file.originalname)
+		const blob = bucket.file(`images/profile-picture/${file.originalname}`)
 		const blobStream = blob.createWriteStream({
 			metadata: metadata,
 			gzip: true
@@ -134,7 +131,7 @@ router.put('/profil/:id/update-profil-picture', uploadSingle, async (req, res) =
 		})
 		blobStream.end(req.file.buffer)
 
-		//console.log(imageUrl)
+		console.log(imageUrl)
 
 		// ajouter la sauvegarde dans la base de données pour l'utilisateur concerné
 		return
