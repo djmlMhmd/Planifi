@@ -3,6 +3,7 @@ const { Router } = require('express');
 const router = Router();
 const { getClientsCollection } = require('../db/database');
 const availabilityValidation = require('../validation/validation');
+const {requiredAuth} = require("../middleware/authMiddleware");
 
 router.use(express.json());
 
@@ -10,7 +11,7 @@ router.use(express.json());
 
 // Route to define availability times
 
-router.post('/availability', async (req, res) => {
+router.post('/availability', requiredAuth, async (req, res) => {
 	const { professional_id, day_of_week, start_time, end_time } = req.body;
 
 	try {
@@ -63,7 +64,7 @@ router.post('/availability', async (req, res) => {
 // Route to display the availability of a professional
 
 // Route pour obtenir les disponibilités d'un professionnel
-router.get('/availability/:professionalId/:dayOfWeek', async (req, res) => {
+router.get('/availability/:professionalId/:dayOfWeek', requiredAuth, async (req, res) => {
 	try {
 		const client = getClientsCollection();
 		const { professionalId, dayOfWeek } = req.params;

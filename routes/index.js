@@ -1,16 +1,17 @@
 const express = require('express');
 const path = require('path');
+const {requiredAuth} = require("../middleware/authMiddleware");
 const router = express.Router();
 
 // Définissez la route pour la page "À propos"
 router.get('/', (req, res) => {
 	res.sendFile(path.join(__dirname, '..', 'views', 'home.html'));
 });
-router.get('/services', (req, res) => {
+router.get('/services', requiredAuth, (req, res) => {
 	res.sendFile(path.join(__dirname, '..', 'views', 'services.html'));
 });
 
-router.get('/disponibilite/', (req, res) => {
+router.get('/disponibilite/', requiredAuth, (req, res) => {
 	res.sendFile(path.join(__dirname, '..', 'views', 'availability.html'));
 });
 
@@ -22,7 +23,7 @@ router.get('/connexion/', (req, res) => {
 	res.sendFile(path.join(__dirname, '..', 'views', 'login.html'));
 });
 
-router.get('/profil/:id', (req, res) => {
+router.get('/profil/:id', requiredAuth, (req, res) => {
 	// Checks whether it is a customer or a connected professional
 	if (req.session.clientID) {
 		'..',
@@ -39,11 +40,11 @@ router.get('/profil/:id', (req, res) => {
 	}
 });
 
-router.get('/reservation', (req, res) => {
+router.get('/reservation', requiredAuth, (req, res) => {
 	res.sendFile(path.join(__dirname, '..', 'views', 'reservations.html'));
 });
 
-router.get('/navigation', (req, res) => {
+router.get('/navigation', requiredAuth, (req, res) => {
 	res.sendFile(path.join(__dirname, '..', 'views', 'navigation.html'));
 });
 router.get('/test', (req, res) => {

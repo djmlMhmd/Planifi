@@ -3,17 +3,21 @@ const { Router } = require('express');
 const router = Router();
 const userValidation = require('../validation/validation');
 const { getClientsCollection } = require('../db/database');
+const {requiredAuth} = require("../middleware/authMiddleware");
+const {decodeJWT} = require("../utils/auth.utils");
 
 router.use(express.json());
 
 // SERVICE CREATE
 
-router.post('/service/create', async (req, res) => {
+router.post('/service/create', requiredAuth, async (req, res) => {
 	const { service_name, service_description, service_price, duration } =
 		req.body;
 	console.log('Données reçues du formulaire :', req.body);
 	const durationText = duration;
 	const professional_id = req.session.professionalID;
+
+	const { id, statut } = decodeJWT(req.cookies.jwt)
 	//console.log('id pro:', professional_id);
 	try {
 		const client = getClientsCollection();
@@ -25,7 +29,7 @@ router.post('/service/create', async (req, res) => {
 				service_description,
 				service_price,
 				durationText,
-				professional_id,
+				id,
 			]
 		);
 		console.log('Service créé avec succès.');
@@ -40,7 +44,7 @@ router.post('/service/create', async (req, res) => {
 
 // SHOW SERVICE
 
-router.get('/service', async (req, res) => {
+router.get('/service', requiredAuth, async (req, res) => {
 	try {
 		const client = getClientsCollection();
 		const services = await client.query(
@@ -63,7 +67,7 @@ router.get('/service', async (req, res) => {
 });
 
 // route afficher service clients
-router.get('/liste-services/:professionalId', async (req, res) => {
+router.get('/liste-services/:professionalId', requiredAuth, async (req, res) => {
 	try {
 		const client = getClientsCollection();
 		const professionalId = req.params.professionalId;
@@ -89,11 +93,12 @@ router.get('/liste-services/:professionalId', async (req, res) => {
 });
 
 // Nouvelle route pour afficher les services d'une entreprise spécifique
-router.get('/services/:professionalId', async (req, res) => {
+router.get('/services/:professionalId', requiredAuth, async (req, res) => {
 	try {
 		const client = getClientsCollection();
 		const professionalID = req.session.professionalID;
 		console.log('id pro:', professionalID);
+		const { id, statut } = decodeJWT(req.cookies.jwt)
 
 		const services = await client.query(
 			`SELECT services.service_id, services.service_name, services.service_description, services.service_price, services.duration, 
@@ -102,7 +107,7 @@ router.get('/services/:professionalId', async (req, res) => {
             INNER JOIN professionals 
             ON services.professional_id = professionals.professional_id
             WHERE professionals.professional_id = $1`,
-			[professionalID]
+			[id]
 		);
 
 		return res.json(services.rows);
@@ -115,7 +120,7 @@ router.get('/services/:professionalId', async (req, res) => {
 });
 
 // Route pour obtenir la liste des professionnels avec leurs ID
-router.get('/professionals', async (req, res) => {
+router.get('/professionals', requiredAuth, async (req, res) => {
 	try {
 		const client = getClientsCollection();
 		const professionals = await client.query(
@@ -135,7 +140,7 @@ router.get('/professionals', async (req, res) => {
 
 //récupérer les infos du services en fonction de l'ID du service
 
-router.get('/reservation/:serviceId', async (req, res) => {
+router.get('/reservation/:serviceId', requiredAuth, async (req, res) => {
 	try {
 		const client = getClientsCollection();
 		const serviceId = req.params.serviceId;
@@ -166,7 +171,7 @@ router.get('/reservation/:serviceId', async (req, res) => {
 	}
 });
 
-router.get('/search-services', async (req, res) => {
+router.get('/search-services', requiredAuth, async (req, res) => {
 	try {
 		const searchTerm = req.query.q; // q est le paramètre de recherche dans l'URL
 		const client = getClientsCollection();

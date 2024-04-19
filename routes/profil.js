@@ -5,20 +5,23 @@ const { getClientsCollection } = require('../db/database');
 const session = require('express-session');
 router.use(express.json());
 const path = require('path');
+const {requiredAuth} = require("../middleware/authMiddleware");
+const {decodeJWT} = require("../utils/auth.utils");
 
 // PROFESSIONAL PROFILE
 
-router.get('/profil/professionnel/:id', async (req, res) => {
+router.get('/profil/professionnel/:id', requiredAuth, async (req, res) => {
 	const professionnelId = req.session.professionalID;
 
-	if (!professionnelId) {
+	const { id, statut } = decodeJWT(req.cookies.jwt)
+	if (!id) {
 		return res.status(401).json({ message: 'Authentification requise' });
 	}
 	try {
 		const client = getClientsCollection();
 		const query = {
 			text: 'SELECT * FROM professionals WHERE professional_id = $1',
-			values: [professionnelId],
+			values: [id],
 		};
 
 		const result = await client.query(query);
@@ -44,20 +47,26 @@ router.get('/profil/professionnel/:id', async (req, res) => {
 
 // CLIENT PROFILE
 
-router.get('/profil/client/:id', async (req, res) => {
+router.get('/profil/client/:id', requiredAuth, async (req, res) => {
 	// Retrieves the client ID from the session or cookie
 	const clientID = req.session.clientID;
 
-	if (!clientID) {
+	/**
+	 * en principe si on a passé le middleware "requiredAuth"
+	 * on est forcément authentifié et donc le cookie "JWT" existe
+ 	 */
+	const { id, statut } = decodeJWT(req.cookies.jwt)
+
+	if (!id) {
 		return res.status(401).json({ message: 'Authentification requise' });
 	}
-	req.session.clientID = clientID;
+	req.session.clientID = id;
 
 	try {
 		const client = getClientsCollection();
 		const query = {
 			text: 'SELECT * FROM users WHERE users_id = $1',
-			values: [clientID],
+			values: [id],
 		};
 
 		const result = await client.query(query);

@@ -5,6 +5,7 @@ const router = Router();
 const { userValidation } = require('../validation/validation');
 const { getClientsCollection } = require('../db/database');
 const bcrypt = require('bcrypt');
+const {createToken, EXPIRES_IN} = require("../utils/auth.utils");
 const saltRounds = 10;
 
 router.use(express.json());
@@ -51,6 +52,8 @@ router.post('/inscription', async (req, res) => {
 		// Vérifie si des lignes ont été insérées
 		if (result.rowCount > 0) {
 			console.log(`${reqValue} inscrit avec succès:`, result.rows[0]);
+			const token = createToken(result.rows[0].id, reqValue)
+			res.cookie('jwt', token, {httpOnly: true, maxAge: EXPIRES_IN * 1000})
 			res.json({
 				success: true,
 				redirectUrl: 'http://localhost:3000/connexion',
@@ -99,6 +102,8 @@ router.post('/connexion', async (req, res) => {
 				req.session.clientID = clientID;
 				console.log('Authentification réussie');
 				console.log('clientID dans la session :', req.session.clientID);
+				const token = createToken(clientID, 'client')
+				res.cookie('jwt', token, {httpOnly: true, maxAge: EXPIRES_IN * 1000})
 				res.redirect(`/profil/client/${clientID}`);
 			} else {
 				console.log(
@@ -124,6 +129,8 @@ router.post('/connexion', async (req, res) => {
 					'professionalID dans la session :',
 					req.session.professionalID
 				);
+				const token = createToken(professionalID, 'professional')
+				res.cookie('jwt', token, {httpOnly: true, maxAge: EXPIRES_IN * 1000})
 				res.redirect(`/profil/professionnel/${professionalID}`);
 			} else {
 				console.log(

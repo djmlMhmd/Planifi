@@ -2,12 +2,14 @@ const express = require('express');
 const { Router } = require('express');
 const moment = require('moment');
 const { getClientsCollection } = require('../db/database');
+const {requiredAuth} = require("../middleware/authMiddleware");
+const {decodeJWT} = require("../utils/auth.utils");
 
 const router = Router();
 router.use(express.json());
 
 // Côté serveur
-router.delete('/supprimer-reservation/:reservationId', async (req, res) => {
+router.delete('/supprimer-reservation/:reservationId', requiredAuth, async (req, res) => {
 	try {
 		const clientID = req.session.clientID;
 		const reservationId = req.params.reservationId;
@@ -54,10 +56,12 @@ router.delete('/supprimer-reservation/:reservationId', async (req, res) => {
 	}
 });
 
-router.delete('/services/delete/:serviceId', async (req, res) => {
+router.delete('/services/delete/:serviceId', requiredAuth, async (req, res) => {
 	try {
 		const serviceId = req.params.serviceId;
 		const professionalId = req.session.professionalID;
+
+		const { id, statut } = decodeJWT(req.cookies.jwt)
 
 		const client = getClientsCollection();
 
@@ -74,7 +78,7 @@ router.delete('/services/delete/:serviceId', async (req, res) => {
 		}
 
 		// Vérifiez si le professional_id du service correspond à professionalId de la session
-		if (service.professional_id !== professionalId) {
+		if (service.professional_id !== id) {
 			return res.status(403).json({
 				message: "Vous n'êtes pas autorisé à supprimer ce service",
 			});
