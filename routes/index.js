@@ -24,13 +24,13 @@ router.get('/connexion/', (req, res) => {
 
 router.get('/profil/:id', (req, res) => {
 	// Checks whether it is a customer or a connected professional
-	if (req.session.clientID) {
+	if (req.cookies.clientID) {
 		'..',
 			// If it's a customer, return the customer profile
 			res.sendFile(
 				path.join(__dirname, '..', 'views', 'profil-client.html')
 			);
-	} else if (req.session.professionalID) {
+	} else if (req.cookies.professionalID) {
 		// If it's a professional, return the professional's profile
 		res.sendFile(path.join(__dirname, '..', 'views', 'profil-pro.html'));
 	} else {

@@ -69,7 +69,7 @@ router.post('/reservation', async (req, res) => {
 });
 
 router.get('/reservations', async (req, res) => {
-	const professionalId = req.session.professionalID;
+	const professionalId = req.cookies.professionalID;
 
 	try {
 		const client = getClientsCollection();
@@ -145,7 +145,7 @@ router.get('/reservations', async (req, res) => {
 });
 
 router.get('/reservations/client', async (req, res) => {
-	const clientID = req.session.clientID;
+	const clientID = req.cookies.clientID;
 
 	if (!clientID) {
 		return res.status(401).json({ message: 'Authentification requise' });

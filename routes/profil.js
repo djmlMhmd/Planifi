@@ -11,7 +11,7 @@ const UUID  = require("uuid-v4")
 // PROFESSIONAL PROFILE
 
 router.get('/profil/professionnel/:id', async (req, res) => {
-	const professionnelId = req.session.professionalID;
+	const professionnelId = req.cookies.professionalID;
 
 	if (!professionnelId) {
 		return res.status(401).json({ message: 'Authentification requise' });
@@ -48,12 +48,12 @@ router.get('/profil/professionnel/:id', async (req, res) => {
 
 router.get('/profil/client/:id', async (req, res) => {
 	// Retrieves the client ID from the session or cookie
-	const clientID = req.session.clientID;
+	const clientID = req.cookies.clientID;
 
 	if (!clientID) {
 		return res.status(401).json({ message: 'Authentification requise' });
 	}
-	req.session.clientID = clientID;
+	//req.cookies.clientID = clientID;
 
 	try {
 		const client = getClientsCollection();
@@ -83,21 +83,21 @@ router.get('/profil/client/:id', async (req, res) => {
 
 router.put('/profil/:id/update-profil-picture', uploadSingle, async (req, res) => {
 	// Retrieves the client ID from the session or cookie
-	const clientID = req.session.clientID;
+	const userID = req.cookies.clientID;
 	const file = req.file
 	const uuid = UUID();
-	let downLoadPath = "https://firebasestorage.googleapis.com/v0/b/planifi-1f28d.appspot.com/o/";
+	let downLoadPath = "https://firebasestorage.googleapis.com/v0/b/planifi-1f28d.appspot.com/o";
 	let imageUrl = ""
-	if (!clientID) {
+	const dateActuelle = new Date()
+	if (!userID) {
 		return res.status(401).json({ message: 'Authentification requise' });
 	}
 	if (!file) {
 		return res.status(400).json({ message: 'Aucun fichier upload' });
 	}
-	req.session.clientID = clientID;
+	//req.session.clientID = userID;
 
 	try {
-		//TODO: rajouter un chemin spécifique pour la sauvegarde dans firebase
 		// mise en ligne de la photo de profil de l'utilisateur
 		let bucket = auth.storage().bucket();
 		const metadata = {
@@ -107,50 +107,60 @@ router.put('/profil/:id/update-profil-picture', uploadSingle, async (req, res) =
 			contentType: req.file.mimetype,
 			cacheControl: "public, max-age=31536000",
 		}
+		/**
+		 * on utilise "dateActuelle.getTime()" dans la construction du nom de l'image
+		 * afin que si 2 utilisateurs upload des images ayant le même nom
+		 * cela n'écrase pas l'image de l'autre
+		 * .getTime() => renvoie le temps actuelle en millisecondes donc est unique
+		 */
+		imageUrl = `${downLoadPath}/${encodeURIComponent(`images/profile-picture/${dateActuelle.getTime()} - ${file.originalname}`)}?alt=media&token=${uuid}`
 
-		const blob = bucket.file(`images/profile-picture/${file.originalname}`)
+		const blob = bucket.file(`images/profile-picture/${dateActuelle.getTime()} - ${file.originalname}`)
 		const blobStream = blob.createWriteStream({
 			metadata: metadata,
 			gzip: true
 		})
 
 		blobStream.on("error", err => {
+			console.log(`erreur lors de l'upload de l'image ${imageUrl} de l'utilisateur ${userID}`)
 			console.log(err)
-			return res.status(500).json({ error: "Impossible d'upload la photo"})
-			//return
 		})
 
 		blobStream.on("finish", () => {
-			//const imageUrl = `https://storage/googleapis.com/${bucket.name}/${blob.name}`
-			imageUrl = downLoadPath +
-				encodeURIComponent(file.originalname) +
-				"?alt=media&token=" +
-				uuid;
-			return res.status(201).json({imageUrl})
-
+			console.log(`upload de l'image ${imageUrl} de l'utilisateur ${userID} a bien été effectuée`)
 		})
+
 		blobStream.end(req.file.buffer)
 
-		console.log(imageUrl)
-
-		// ajouter la sauvegarde dans la base de données pour l'utilisateur concerné
-		return
 		const client = getClientsCollection();
-		const query = {
-			text: 'SELECT * FROM users WHERE users_id = $1',
-			values: [clientID],
+		const queryUpdateProfilPicture = {
+			text: 'UPDATE users SET profile_picture = $1 WHERE users_id = $2',
+			values: [imageUrl, userID],
 		};
 
-		const result = await client.query(query);
+		const resultUpdateProfilPicture = await client.query(queryUpdateProfilPicture);
 
-		if (result.rows.length === 0) {
+		if (resultUpdateProfilPicture.rowCount === 0) {
 			return res
 				.status(404)
-				.json({ message: 'Profil non trouvé' });
+				.json({ message: "Erreur lors de la mise à jour de la photo de profil de l'utilisateur"});
 		}
 
-		const { password, creation_date, ...clientProfile } = result.rows[0];
-		res.json(clientProfile);
+		const queryGetUser = {
+			text: 'SELECT * FROM users WHERE users_id = $1',
+			values: [userID],
+		};
+
+		const resultGetUser = await client.query(queryGetUser);
+
+		if (resultGetUser.rows.length === 0) {
+			return res
+				.status(404)
+				.json({ message: 'Profil client non trouvé' });
+		}
+
+		const { password, creation_date, ...clientProfile } = resultGetUser.rows[0];
+		 res.status(201).json(clientProfile);
 	} catch (e) {
 		console.error(
 			'Erreur lors de la récupération du profil:',
