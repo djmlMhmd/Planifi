@@ -15,6 +15,13 @@ router.post('/inscription', async (req, res) => {
 	const reqValue = req.query['user_type'];
 	const { error } = userValidation(body);
 
+	// Validatin initale des mots de passe
+	if (body.password !== body.confirmPassword) {
+		return res
+			.status(400)
+			.json({ message: 'Les mots de passe ne correspondent pas' });
+	}
+
 	if (error) {
 		return res.status(400).json(error.details[0].message);
 	}
@@ -53,7 +60,7 @@ router.post('/inscription', async (req, res) => {
 			console.log(`${reqValue} inscrit avec succès:`, result.rows[0]);
 			res.json({
 				success: true,
-				redirectUrl: 'http://localhost:3000/connexion',
+				redirectUrl: '/connexion',
 			});
 		} else {
 			res.status(400).json({
