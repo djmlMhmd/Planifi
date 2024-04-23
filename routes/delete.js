@@ -7,6 +7,7 @@ const router = Router();
 router.use(express.json());
 
 // Côté serveur
+// SUPPRIMER RÉSERVATION
 router.delete('/supprimer-reservation/:reservationId', async (req, res) => {
 	try {
 		const clientID = req.session.clientID;
@@ -15,32 +16,48 @@ router.delete('/supprimer-reservation/:reservationId', async (req, res) => {
 		console.log('Client ID:', req.session.clientID);
 		console.log('Reservation ID:', req.params.reservationId);
 
+		if (!reservationId) {
+			return res
+				.status(400)
+				.json({ message: 'Identifiant de réservation invalide.' });
+		}
+
 		// Récupérez le serviceId en interrogeant la base de données à partir de l'ID de réservation.
 		const client = getClientsCollection();
-		const queryForServiceId = {
-			text: 'SELECT service_id FROM reservations WHERE reservation_id = $1',
-			values: [reservationId],
-		};
+		const queryForServiceId = `
+			SELECT service_id, users_id FROM reservations 
+			WHERE reservation_id = $1;
+		`;
 
-		const service = await client.query(queryForServiceId);
+		const service = await client.query(queryForServiceId, [reservationId]);
 		if (service.rowCount === 0) {
 			return res.status(404).json('Réservation introuvable.');
 		}
-		const serviceId = service.rows[0].service_id;
 
-		// Continuez avec la suppression si le serviceId correspond
-		const queryForDelete = {
-			text: 'DELETE FROM reservations WHERE reservation_id = $1 AND service_id = $2 AND users_id = $3',
-			values: [reservationId, serviceId, clientID],
-		};
+		const { service_id: serviceId, users_id: userId } = service.rows[0];
+		if (userId !== clientID) {
+			return res.status(403).json({
+				message:
+					"Vous n'êtes pas autorisé à supprimer cette réservation.",
+			});
+		}
 
-		const result = await client.query(queryForDelete);
+		// Continuer avec la suppression si le serviceId correspond
+		const queryForDelete = `DELETE FROM reservations 
+			WHERE reservation_id = $1 AND service_id = $2 AND users_id = $3;
+		`;
+
+		const result = await client.query(queryForDelete, [
+			reservationId,
+			serviceId,
+			clientID,
+		]);
 
 		if (result.rowCount === 1) {
 			res.status(204).end(); // La réservation a été supprimée avec succès
 		} else {
 			res.status(403).json(
-				"Vous n'êtes pas autorisé à supprimer cette réservation."
+				'Échec de la suppression de la réservation, veuillez réessayer.'
 			);
 		}
 	} catch (error) {
@@ -48,12 +65,11 @@ router.delete('/supprimer-reservation/:reservationId', async (req, res) => {
 			'Erreur lors de la suppression de la réservation:',
 			error
 		);
-		res.status(500).json(
-			'Erreur lors de la suppression de la réservation : ' + error.message
-		);
+		res.status(500).json({ message: 'Erreur interne du serveur.' });
 	}
 });
 
+// SUPPRIMER SERVICE
 router.delete('/services/delete/:serviceId', async (req, res) => {
 	try {
 		const serviceId = req.params.serviceId;

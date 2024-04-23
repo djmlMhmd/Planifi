@@ -15,6 +15,7 @@ const {
 	createTableMessages,
 	createTableDefaultAvailability,
 } = require('./db/database');
+
 const { dbConnexion, getDatabase } = require('./db/database');
 const path = require('path');
 const app = express();

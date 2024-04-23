@@ -8,12 +8,9 @@ router.use(express.json());
 
 router.post('/reservation', async (req, res) => {
 	const { professional_id, users_id, service_id } = req.body;
-
 	const start_time = req.body.start_time;
 	const selectedDate = req.body.day_of_week;
-
 	const day_of_week = moment(selectedDate, 'DD-MM-YYYY').format('DD-MM-YYYY');
-
 	const client = getClientsCollection();
 
 	// Récupére la durée du service depuis la table des services
@@ -29,18 +26,42 @@ router.post('/reservation', async (req, res) => {
 	const duration = service.rows[0].duration; // Durée du service enregistrée dans la table
 
 	// Calcule l'heure de fin en utilisant une simple chaîne de caractères
-	const startDateTime = start_time;
-	const end_time = moment(start_time, 'HH:mm')
+	const startTime = moment(start_time, 'HH:mm');
+	const endTime = startTime
 		.clone()
-		.add(duration)
+		.add(duration, 'minutes')
 		.format('HH:mm:ss');
 
 	// Vérifie si le temps de début est valide
 	if (
-		moment(start_time, 'HH:mm').isBefore('08:00', 'HH:mm') ||
-		moment(start_time, 'HH:mm').isAfter('21:00', 'HH:mm')
+		startTime.isBefore(moment('08:00', 'HH:mm')) ||
+		startTime.isAfter(moment('21:00', 'HH:mm'))
 	) {
 		return res.status(400).json({ message: 'Heure de début non valide' });
+	}
+
+	// Vérifie si le créneau horaire chevauche une réservation existante
+	const overlapCheckQuery = `
+		SELECT * FROM reservations
+		WHERE professional_id = $1 AND day_of_week = $2
+		AND NOT (
+			start_time >= $4 OR
+			end_time <= $3
+		);
+	`;
+
+	const overlapCheckResult = await client.query(overlapCheckQuery, [
+		professional_id,
+		day_of_week,
+		startTime.format('HH:mm:ss'),
+		endTime,
+	]);
+
+	if (overlapCheckResult.rows.length > 0) {
+		return res.status(400).json({
+			message:
+				'Le créneau horaire choisi chevauche une réservation existante.',
+		});
 	}
 
 	// Vérifie si le créneau horaire est déjà réservé
@@ -52,12 +73,6 @@ router.post('/reservation', async (req, res) => {
 	if (existingReservation.rows.length > 0) {
 		return res.status(400).json({ message: 'Plage horaire déjà réservée' });
 	}
-
-	// Marquer le créneau horaire comme non disponible
-	await client.query(
-		'UPDATE default_availability SET is_available = false WHERE professional_id = $1 AND day_of_week = $2 AND start_time <= $3 AND end_time >= $4',
-		[professional_id, day_of_week, start_time, end_time]
-	);
 
 	// Faire la réservation
 	await client.query(
