@@ -13,7 +13,7 @@ const {
 	createTableReservation,
 	createTableAvailability,
 	createTableMessages,
-	createTableDefaultAvailability,
+	/*createTableDefaultAvailability,*/
 } = require('./db/database');
 
 const { dbConnexion, getDatabase } = require('./db/database');
@@ -58,7 +58,7 @@ createTableProfessional();
 createTableService();
 createTableAvailability();
 createTableReservation();
-createTableDefaultAvailability();
+//createTableDefaultAvailability();
 createTableMessages();
 
 // Increase the listener limit for an EventEmitter object

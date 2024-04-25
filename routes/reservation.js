@@ -2,7 +2,6 @@ const express = require('express');
 const { Router } = require('express');
 const moment = require('moment');
 const { getClientsCollection } = require('../db/database');
-
 const router = Router();
 router.use(express.json());
 
@@ -13,7 +12,7 @@ router.post('/reservation', async (req, res) => {
 	const day_of_week = moment(selectedDate, 'DD-MM-YYYY').format('DD-MM-YYYY');
 	const client = getClientsCollection();
 
-	// Récupére la durée du service depuis la table des services
+	// Récupère la durée du service depuis la table des services
 	const service = await client.query(
 		'SELECT duration FROM services WHERE service_id = $1',
 		[service_id]
@@ -24,8 +23,6 @@ router.post('/reservation', async (req, res) => {
 	}
 
 	const duration = service.rows[0].duration; // Durée du service enregistrée dans la table
-
-	// Calcule l'heure de fin en utilisant une simple chaîne de caractères
 	const startTime = moment(start_time, 'HH:mm');
 	const endTime = startTime
 		.clone()
@@ -42,13 +39,10 @@ router.post('/reservation', async (req, res) => {
 
 	// Vérifie si le créneau horaire chevauche une réservation existante
 	const overlapCheckQuery = `
-		SELECT * FROM reservations
-		WHERE professional_id = $1 AND day_of_week = $2
-		AND NOT (
-			start_time >= $4 OR
-			end_time <= $3
-		);
-	`;
+        SELECT * FROM reservations
+        WHERE professional_id = $1 AND day_of_week = $2
+        AND NOT (start_time >= $4 OR end_time <= $3);
+    `;
 
 	const overlapCheckResult = await client.query(overlapCheckQuery, [
 		professional_id,
@@ -59,25 +53,21 @@ router.post('/reservation', async (req, res) => {
 
 	if (overlapCheckResult.rows.length > 0) {
 		return res.status(400).json({
-			message:
-				'Le créneau horaire choisi chevauche une réservation existante.',
+			message: 'Plage horaire déjà réservée.',
 		});
-	}
-
-	// Vérifie si le créneau horaire est déjà réservé
-	const existingReservation = await client.query(
-		'SELECT * FROM reservations WHERE professional_id = $1 AND start_time = $2 AND service_id = $3 AND day_of_week = $4',
-		[professional_id, start_time, service_id, day_of_week]
-	);
-
-	if (existingReservation.rows.length > 0) {
-		return res.status(400).json({ message: 'Plage horaire déjà réservée' });
 	}
 
 	// Faire la réservation
 	await client.query(
-		'INSERT INTO reservations (professional_id, start_time, users_id, service_id, day_of_week) VALUES ($1, $2, $3, $4, $5)',
-		[professional_id, start_time, users_id, service_id, day_of_week]
+		'INSERT INTO reservations (professional_id, start_time, end_time, users_id, service_id, day_of_week) VALUES ($1, $2, $3, $4, $5, $6)',
+		[
+			professional_id,
+			start_time,
+			endTime,
+			users_id,
+			service_id,
+			day_of_week,
+		]
 	);
 
 	return res.status(201).json({ message: 'Réservation créée avec succès' });

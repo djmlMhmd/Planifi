@@ -156,8 +156,9 @@ const createTableAvailability = async () => {
 
 const createTableReservation = async () => {
 	try {
+		const client = getClientsCollection();
 		const checkTableQuery = `
-            SELECT to_regclass('reservations') as table_exists;
+            SELECT to_regclass('public.reservations') as table_exists;
         `;
 
 		const result = await client.query(checkTableQuery);
@@ -166,35 +167,34 @@ const createTableReservation = async () => {
                 CREATE TABLE reservations (
                     reservation_id SERIAL PRIMARY KEY,
                     professional_id INT,
-                    CONSTRAINT FK_professional_id FOREIGN KEY(professional_id)
-                    REFERENCES professionals(professional_id),
+                    CONSTRAINT FK_professional_id FOREIGN KEY (professional_id)
+                        REFERENCES professionals(professional_id),
                     users_id INT,
                     CONSTRAINT FK_users_id FOREIGN KEY (users_id)
-                    REFERENCES users(users_id),
+                        REFERENCES users(users_id),
                     day_of_week VARCHAR(10) NOT NULL,
                     start_time TIME NOT NULL,
+                    end_time TIME NOT NULL,
                     service_id INT,
                     CONSTRAINT FK_service_id FOREIGN KEY (service_id)
-                    REFERENCES services(service_id),
-                    default_availability_id INT,
-                    CONSTRAINT FK_default_availability_id FOREIGN KEY (default_availability_id)
-                    REFERENCES default_availability(default_availability_id)
+                        REFERENCES services(service_id)
                 );
             `;
 
 			await client.query(createTableQuery);
-			console.log('La table reservation a été mise à jour avec succès.');
+			console.log('La table reservation a été créée avec succès.');
 		} else {
 			console.log('La table reservation existe déjà.');
 		}
 	} catch (e) {
 		console.error(
-			'Erreur lors de la création/mise à jour de la table reservation',
+			'Erreur lors de la création/mise à jour de la table reservations',
 			e.stack
 		);
 	}
 };
 
+/*
 const createTableDefaultAvailability = async () => {
 	try {
 		const checkTableQuery = `
@@ -225,7 +225,7 @@ const createTableDefaultAvailability = async () => {
 			e.stack
 		);
 	}
-};
+};*/
 
 const createTableMessages = async () => {
 	try {
@@ -324,7 +324,7 @@ module.exports = {
 	createTableService,
 	createTableReservation,
 	createTableAvailability,
-	createTableDefaultAvailability,
+	/*createTableDefaultAvailability,*/
 	createTableMessages,
 	saveMessage,
 	getMessagesForProfessional,
