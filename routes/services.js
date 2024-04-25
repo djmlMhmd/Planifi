@@ -88,32 +88,6 @@ router.get('/liste-services/:professionalId', async (req, res) => {
 	}
 });
 
-// Nouvelle route pour afficher les services d'une entreprise spécifique
-router.get('/services/:professionalId', async (req, res) => {
-	try {
-		const client = getClientsCollection();
-		const professionalID = req.session.professionalID;
-		console.log('id pro:', professionalID);
-
-		const services = await client.query(
-			`SELECT services.service_id, services.service_name, services.service_description, services.service_price, services.duration, 
-            professionals.email, professionals.phone, professionals.company_name, professionals.company_address 
-            FROM services 
-            INNER JOIN professionals 
-            ON services.professional_id = professionals.professional_id
-            WHERE professionals.professional_id = $1`,
-			[professionalID]
-		);
-
-		return res.json(services.rows);
-	} catch (e) {
-		console.error('Erreur lors de la récupération des services :', e.stack);
-		res.status(500).json(
-			'Erreur lors de la récupération des services :' + e.message
-		);
-	}
-});
-
 // Route pour obtenir la liste des professionnels avec leurs ID
 router.get('/professionals', async (req, res) => {
 	try {
