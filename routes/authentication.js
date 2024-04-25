@@ -35,10 +35,13 @@ router.post('/inscription/utilisateur', async (req, res) => {
 			hash,
 			body.email,
 			body.phone,
+			body.country,
+			body.city,
+			body.address,
 		];
 
-		const insertQuery = `INSERT INTO users("firstName", "lastName", password, email, phone)
-       VALUES($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING RETURNING *`;
+		const insertQuery = `INSERT INTO users("firstName", "lastName", password, email, phone, country, city, address)
+       VALUES($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT DO NOTHING RETURNING *`;
 
 		const result = await client.query(insertQuery, values);
 
@@ -91,10 +94,13 @@ router.post('/inscription/professionnel', async (req, res) => {
 			body.phone,
 			body.company_name,
 			body.company_address,
+			body.country,
+			body.city,
+			body.address,
 		];
 
-		const insertQuery = `INSERT INTO professionals("firstName", "lastName", password, email, phone, company_name, company_address)
-            VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING RETURNING *`;
+		const insertQuery = `INSERT INTO professionals("firstName", "lastName", password, email, phone, company_name, company_address, country, city, address)
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT DO NOTHING RETURNING *`;
 
 		const result = await client.query(insertQuery, values);
 

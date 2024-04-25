@@ -37,6 +37,9 @@ const createTableUser = async () => {
 		  "lastName" VARCHAR(100),
           password VARCHAR(100),
           email VARCHAR(100) UNIQUE NOT NULL,
+		  country VARCHAR(100),
+		  city VARCHAR(100),
+		  address VARCHAR(100),
 		  phone VARCHAR(20),
 		  creation_date DATE NOT NULL DEFAULT CURRENT_DATE 
         );
@@ -70,6 +73,9 @@ const createTableProfessional = async () => {
           "lastName" VARCHAR(100),
           password VARCHAR(100),
           email VARCHAR(100) UNIQUE NOT NULL,
+		  country VARCHAR(100),
+		  city VARCHAR(100),
+		  address VARCHAR(100),
           phone VARCHAR(20),
           company_name VARCHAR(100),
           company_address VARCHAR(300),
