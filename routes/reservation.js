@@ -2,6 +2,7 @@ const express = require('express');
 const { Router } = require('express');
 const moment = require('moment');
 const { getClientsCollection } = require('../db/database');
+const {warnLogger, errorLogger, logLogger, verboseLogger} = require("../config/winston/winston.config");
 
 const router = Router();
 router.use(express.json());
@@ -23,6 +24,7 @@ router.post('/reservation', async (req, res) => {
 	);
 
 	if (service.rows.length === 0) {
+		warnLogger(`Service non valide: ${service_id}`, 'reservation.js [POST] /reservation')
 		return res.status(400).json({ message: 'Service non valide' });
 	}
 
@@ -40,6 +42,7 @@ router.post('/reservation', async (req, res) => {
 		moment(start_time, 'HH:mm').isBefore('08:00', 'HH:mm') ||
 		moment(start_time, 'HH:mm').isAfter('21:00', 'HH:mm')
 	) {
+		warnLogger(`Heure de début non valide: ${service_id}, heure: ${start_time}`, 'reservation.js [POST] /reservation')
 		return res.status(400).json({ message: 'Heure de début non valide' });
 	}
 
@@ -50,6 +53,7 @@ router.post('/reservation', async (req, res) => {
 	);
 
 	if (existingReservation.rows.length > 0) {
+		errorLogger(`Plage horaire déjà réservée: pro: ${professional_id}, heure début: ${start_time}, service id: ${service_id}, jour de la semaine: ${day_of_week}`, 'reservation.js [POST] /reservation')
 		return res.status(400).json({ message: 'Plage horaire déjà réservée' });
 	}
 
@@ -64,7 +68,7 @@ router.post('/reservation', async (req, res) => {
 		'INSERT INTO reservations (professional_id, start_time, users_id, service_id, day_of_week) VALUES ($1, $2, $3, $4, $5)',
 		[professional_id, start_time, users_id, service_id, day_of_week]
 	);
-
+	logLogger(`Réservation créée avec succès: pro${professional_id}, heure début: ${start_time}, service id: ${service_id}, jour de la semaine: ${day_of_week}, user: ${users_id}`, 'reservation.js [POST] /reservation')
 	return res.status(201).json({ message: 'Réservation créée avec succès' });
 });
 
@@ -99,6 +103,7 @@ router.get('/reservations', async (req, res) => {
 		const result = await client.query(query);
 
 		if (result.rows.length === 0) {
+			warnLogger(`Aucune réservation trouvée: pro: ${professionalId}`, 'reservation.js [GET] /reservations')
 			return res
 				.status(404)
 				.json({ message: 'Aucune réservation trouvée' });
@@ -131,13 +136,14 @@ router.get('/reservations', async (req, res) => {
 			};
 		});
 		console.log('start:', reservations);
-
+		verboseLogger(`Reservations  trouvées: ${JSON.stringify(reservations)}`, 'reservation.js [GET] /reservations')
 		res.json(reservations);
 	} catch (e) {
 		console.error(
 			'Erreur lors de la récupération des réservations :',
 			e.stack
 		);
+		errorLogger(`Erreur lors de la récupération des réservations : ${e.stack}`, 'reservation.js [GET] /reservations')
 		res.status(500).json(
 			'Erreur lors de la récupération des réservations : ' + e.message
 		);
@@ -148,6 +154,7 @@ router.get('/reservations/client', async (req, res) => {
 	const clientID = req.session.clientID;
 
 	if (!clientID) {
+		warnLogger('Authentification requise', 'reservation.js [GET] /reservations/client')
 		return res.status(401).json({ message: 'Authentification requise' });
 	}
 
@@ -183,9 +190,10 @@ router.get('/reservations/client', async (req, res) => {
 					'DD/MM/YY HH:mm'
 				),
 			}));
-
+			verboseLogger(`Reservations client ${clientID} trouvées`, 'reservation.js [GET] /reservations/client')
 			res.json(reservations);
 		} else {
+			verboseLogger(`Aucune réservation trouvée ${clientID}`, 'reservation.js [GET] /reservations/client')
 			res.json({ message: 'Aucune réservation trouvée' });
 		}
 	} catch (e) {
@@ -193,6 +201,7 @@ router.get('/reservations/client', async (req, res) => {
 			'Erreur lors de la récupération des réservations du client:',
 			e.stack
 		);
+		errorLogger(`Erreur lors de la récupération des réservations : ${JSON.stringify(e.message)}`, 'reservation.js [GET] /reservations/client')
 		res.status(500).json(
 			'Erreur lors de la récupération des réservations : ' + e.message
 		);
@@ -211,13 +220,14 @@ router.get('/reservedHours', async (req, res) => {
 		const client = getClientsCollection();
 		const result = await client.query(query, [selectedDate]);
 		const reservedHours = result.rows.map((row) => row.start_time);
-
+		verboseLogger(`Récupération des heures réservées sur la date: ${JSON.stringify(selectedDate)}`, 'reservation.js [GET] /reservedHours')
 		res.json(reservedHours);
 	} catch (error) {
 		console.error(
 			'Erreur lors de la récupération des heures réservées',
 			error
 		);
+		errorLogger(`Erreur lors de la récupération des heures réservées: ${JSON.stringify(error)}`, 'reservation.js [GET] /reservedHours')
 		res.status(500).json({
 			error: 'Erreur lors de la récupération des heures réservées',
 		});
