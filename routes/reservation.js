@@ -104,11 +104,8 @@ router.get('/reservations', async (req, res) => {
 		const result = await client.query(query);
 
 		if (result.rows.length === 0) {
-			return res
-				.status(404)
-				.json({ message: 'Aucune réservation trouvée' });
+			return res.status(204).send(); // Aucune réservation trouvée, retourne 204 No Content
 		}
-
 		const reservations = result.rows.map((reservation) => {
 			const serviceDuration = moment.duration(
 				reservation.service_duration
