@@ -32,24 +32,7 @@ const secretKey = process.env.SECRET_KEY;
 const EventEmitter = require('events');
 const indexRoutes = require('./routes/index');
 const serviceRouter = require('./routes/services');
-
-// message en temps réel
-const http = require('http');
-const socketIo = require('socket.io');
-const server = http.createServer(app);
-const io = socketIo(server);
-
-// Gestion des connexions WebSocket
-io.on('connection', (socket) => {
-	console.log("Un utilisateur s'est connecté");
-
-	// Réception d'un message d'un client et transmission au professionnel
-	socket.on('send_message', (message) => {
-		// utilise socket.to pour envoyer le message à un socket/pro spécifique
-		// Sauvegarde le message dans votre base de données ici
-		console.log(message);
-	});
-});
+const messagesRoutes = require('./messagerie/message');
 
 getClientsCollection();
 connectToDatabase();
@@ -93,7 +76,7 @@ app.use(reservation);
 app.use('/api', require('./routes/reservation'));
 app.use(deleteReservation);
 app.use(express.urlencoded({ extended: true }));
-
+app.use('/', messagesRoutes);
 // dbConnexion();
 
 // permet de lancer serveur web
