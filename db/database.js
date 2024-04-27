@@ -277,6 +277,36 @@ const createTableMessages = async () => {
 	}
 };
 
+const createTablePreferencePro = async () => {
+	try {
+		const checkTableQuery = `
+      		SELECT to_regclass('public.preference_pro') as table_exists;`;
+		const createTableQuery = `
+			CREATE TABLE preference_pro (
+			  preference_id SERIAL PRIMARY KEY,
+			  show_mobile BOOLEAN DEFAULT TRUE,
+			  show_adress BOOLEAN DEFAULT TRUE,
+			  pro_id INT,
+			  CONSTRAINT FK_sender_id FOREIGN KEY (pro_id)
+				  REFERENCES professionals(professional_id)
+			);`;
+
+		const result = await client.query(checkTableQuery);
+		if (result.rows[0].table_exists === null) {
+			await client.query(createTableQuery);
+			logLogger('Table [PREFERENCE_PRO] créée avec succès', 'createTablePreferencePro')
+		} else {
+			verboseLogger('La table [PREFERENCE_PRO] existe déjà.', 'createTablePreferencePro')
+		}
+	} catch (e) {
+		console.error(
+			'Erreur lors de la création/verification de la table',
+			e.stack
+		);
+		errorLogger('Erreur lors de la création/verification de la table [PREFERENCE_PRO]:' + e.stack, 'createTablePreferencePro')
+	}
+};
+
 const saveMessage = async ({
 	sender_id,
 	receiver_id,
@@ -342,4 +372,5 @@ module.exports = {
 	saveMessage,
 	getMessagesForProfessional,
 	getClientsCollection,
+	createTablePreferencePro
 };

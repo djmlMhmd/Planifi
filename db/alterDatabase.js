@@ -4,15 +4,15 @@ const alterInTables = () => {
     try {
         /** pas la meilleure des facons avec l'imbrication mais ca fonctionne */
         checkIfTableExist('users')
-            .then(async (resultTableExists) => {
+            .then((resultTableExists) => {
                 if (resultTableExists.exists) {
                     checkIfColumnExistInTable(resultTableExists.tableName, 'est_verifie')
-                        .then((resultColumnExists) =>{
-                            if(!resultColumnExists.exists) {
+                        .then((resultColumnExists) => {
+                            if (!resultColumnExists.exists) {
                                 /* Créer la colonne ici*/
                                 addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'BOOLEAN')
                                     .then(columnAddResult => {
-                                        if(columnAddResult) {
+                                        if (columnAddResult) {
                                             console.log(`La colonne 'est_verifie' a bien été ajouté dans la table 'USERS`)
                                         }
                                     })
@@ -21,8 +21,7 @@ const alterInTables = () => {
                 }
             })
             .catch(e => console.log(e))
-    }
-    catch (e) {
+    } catch (e) {
         console.log(e)
     }
 }
