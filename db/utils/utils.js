@@ -1,14 +1,32 @@
 const { getClientsCollection } = require('../database');
+
+/**
+ * fonction qui vérifie si une table existe
+ *
+ * @param tableName nom de la table à vérifier
+ */
+const checkIfTableExist = async (tableName) => {
+    const commandCheckTableExists = `SELECT EXISTS(SELECT 1
+                                                   FROM information_schema.tables
+                                                   WHERE table_name = '${tableName}');`
+    try {
+        const client = getClientsCollection();
+        const resultTableExists = await client.query(commandCheckTableExists);
+        return {exists: resultTableExists.rows[0].exists, tableName}
+    } catch (e) {
+        console.log(`Erreur lors de l'existence dans la table ${tableName}:` + JSON.stringify(e))
+    }
+}
+
 /**
  * fonction qui vérifie si une colonne existe dans la table fournie en paramètre
+ * On omet la vérification de l'existence de la table car
+ * on estime que la vérification a été faite auparavant
  *
  * @param tableName nom de la table à vérifier
  * @param columnName nom de la colonne à vérifier la présence dans la table
  */
-const checkIfExistTable = async (tableName, columnName) => {
-    const commandCheckTableExists = `SELECT EXISTS(SELECT 1
-                                                   FROM information_schema.tables
-                                                   WHERE table_name = '${tableName}');`
+const checkIfColumnExistInTable = async (tableName, columnName) => {
 
     const commandCheckColumnExists = `SELECT EXISTS (SELECT 1
                                                      FROM information_schema.columns
@@ -16,15 +34,8 @@ const checkIfExistTable = async (tableName, columnName) => {
                                                        AND column_name = '${columnName}')`
     try {
         const client = getClientsCollection();
-
-        const resultTableExists = await client.query(commandCheckTableExists);
-        const tableExists = resultTableExists.rows[0].exists
-        if (tableExists) {
-            const resultColumnExists = await client.query(commandCheckColumnExists);
-            return resultColumnExists.rows[0].exists
-        }
-        console.log(`[Erreur]: la table ${tableName} n'existe pas`)
-        return false
+        const resultColumnExists = await client.query(commandCheckColumnExists);
+        return {exists: resultColumnExists.rows[0].exists, tableName, columnName}
     } catch (e) {
         console.log(`Erreur lors de la vérification de la présence de la colonne ${columnName} dans la table ${tableName}:` + JSON.stringify(e))
     }
@@ -32,8 +43,8 @@ const checkIfExistTable = async (tableName, columnName) => {
 
 /**
  * fonction qui ajoute une colonne dans une table SQL
- * On omet la vérification de l'existence de la table car
- * on pense que la vérification a été faite auparavant
+ * On omet la vérification de l'existence de la table et de la colonne car
+ * on estime que la vérification a été faite auparavant
  *
  * la fonction fait bien évidemment qu'un ajout simple d'une colonne dans une table
  * s'il y a des constraintes sur la colonne avec d'autres tables, il faudra utiliser la fonction
@@ -62,7 +73,7 @@ const addColumInTable = async (tableName, columnName, columnType, isNotNull = fa
 /**
  * execute une commande SQL personnalisée
  *
- * @param query
+ * @param query requete SQL exemple: 'SELECT * FROM users'
  * @returns {Promise<boolean>}
  */
 const executeCustomQuery = async (query) => {
@@ -78,8 +89,8 @@ const executeCustomQuery = async (query) => {
 
 /**
  * fonction qui supprime une colonne dans une table SQL
- * On omet la vérification de l'existence de la table car
- * on pense que la vérification a été faite auparavant
+ * On omet la vérification de l'existence de la table et de la colonne car
+ * on estime que la vérification a été faite auparavant
  *
  * @param tableName nom de la table ou on va supprimer @columnName
  * @param columnName nom de la colonne à supprimer dans la table
@@ -100,8 +111,8 @@ const deleteColumInTable = async (tableName, columnName) => {
 
 /**
  * fonction qui modifie le nom d'une dans une table SQL
- * On omet la vérification de l'existence de la table car
- * on pense que la vérification a été faite auparavant
+ * On omet la vérification de l'existence de la table et de la colonne car
+ * on estime que la vérification a été faite auparavant
  *
  * @param tableName nom de la table ou on va supprimer @columnName
  * @param columnName nom de la colonne à supprimer dans la table
@@ -121,4 +132,4 @@ const renameColumInTable = async (tableName, columnName, newName) => {
 }
 
 
-module.exports = { checkIfExistTable, addColumInTable, executeCustomQuery, deleteColumInTable, renameColumInTable}
+module.exports = { checkIfColumnExistInTable, addColumInTable, executeCustomQuery, deleteColumInTable, renameColumInTable, checkIfTableExist}

@@ -1,11 +1,16 @@
-const {checkIfExistTable, addColumInTable} = require("./utils/utils");
+const { checkIfTableExist, checkIfColumnExistInTable} = require("./utils/utils");
 
 const deleteInTables = () => {
     try {
-        checkIfExistTable('users', 'is_verifie')
-            .then((result) =>{
-                if(!result) {
-                    /* supprimer les colonnes ici*/
+        checkIfTableExist('users')
+            .then(async (resultTableExists) => {
+                if (resultTableExists.exists) {
+                    /* supprimer les colonnes voulues de la table 'USERS' ici*/
+                    checkIfColumnExistInTable(resultTableExists.tableName, 'est_verifie')
+                        .then((resultColumnExists) => {
+                            if (resultColumnExists.exists) {
+                            }
+                        })
                 }
             })
             .catch(e => console.log(e))

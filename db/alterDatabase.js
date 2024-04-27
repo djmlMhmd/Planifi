@@ -1,19 +1,23 @@
-const {checkIfExistTable, addColumInTable} =  require("./utils/utils")
+const {checkIfColumnExistInTable, addColumInTable, checkIfTableExist} =  require("./utils/utils")
 
 const alterInTables = () => {
     try {
-        checkIfExistTable('users', 'is_verifie')
-            .then((result) =>{
-                if(!result) {
-                    /* Créer la colonne ici*/
-                    addColumInTable('users', 'is_verifie', 'BOOLEAN')
-                        .then(columnAddResult => {
-                            if(columnAddResult) {
-                                console.log(`La colonne 'is_verifie' a bien été ajouté dans la table 'USERS`)
+        /** pas la meilleure des facons avec l'imbrication mais ca fonctionne */
+        checkIfTableExist('users')
+            .then(async (resultTableExists) => {
+                if (resultTableExists.exists) {
+                    checkIfColumnExistInTable(resultTableExists.tableName, 'est_verifie')
+                        .then((resultColumnExists) =>{
+                            if(!resultColumnExists.exists) {
+                                /* Créer la colonne ici*/
+                                addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'BOOLEAN')
+                                    .then(columnAddResult => {
+                                        if(columnAddResult) {
+                                            console.log(`La colonne 'est_verifie' a bien été ajouté dans la table 'USERS`)
+                                        }
+                                    })
                             }
                         })
-                        .catch(e => console.log(e))
-                    console.log(result)
                 }
             })
             .catch(e => console.log(e))
@@ -24,4 +28,4 @@ const alterInTables = () => {
 }
 
 
-module.exports = { alterTables}
+module.exports = { alterInTables }
