@@ -4,7 +4,7 @@ const { getClientsCollection } = require('../db/database');
 const {requiredAuth} = require("../middleware/authMiddleware");
 const {decodeJWT} = require("../utils/auth.utils");
 const {warnLogger, logLogger, errorLogger} = require("../config/winston/winston.config");
-const {sendInternalServerError, sendUnauthrorized, sendNoContent} = require("../utils/error_message.utils");
+const {sendInternalServerError, sendUnauthrorized, sendSuccessWithNoContent} = require("../utils/error_message.utils");
 
 const router = Router();
 router.use(express.json());
@@ -40,7 +40,7 @@ router.delete('/supprimer-reservation/:reservationId', requiredAuth, async (req,
 
 		if (result.rowCount === 1) {
 			logLogger(`La réservation a été supprimée avec succès:${reservationId}, service id: ${serviceId}, client id:${clientID}`, 'delete.js [DELETE] /supprimer-reservation/:reservationId')
-			sendNoContent(res)
+			sendSuccessWithNoContent(res)
 		} else {
 			errorLogger(`Vous n'êtes pas autorisé à supprimer cette réservation:${reservationId}, service id: ${serviceId}, client id:${clientID}`, 'delete.js [DELETE] /supprimer-reservation/:reservationId')
 			sendUnauthrorized(res, "Vous n'êtes pas autorisé à supprimer cette réservation.")
