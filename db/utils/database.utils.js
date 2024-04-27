@@ -61,7 +61,7 @@ const checkIfColumnExistInTable = async (tableName, columnName) => {
  */
 const addColumInTable = async (tableName, columnName, columnType, isNotNull = false, defaultValue = '') => {
     const command = `ALTER TABLE ${tableName} 
-                            ADD COLUMN ${columnName} ${columnType} ${isNotNull ? 'NOT NULL': ''} ${defaultValue ===! '' ? `DEFAULT ${defaultValue}`: defaultValue};`
+                            ADD COLUMN ${columnName} ${columnType} ${isNotNull ? 'NOT NULL': ''} ${defaultValue !== '' ? `DEFAULT ${defaultValue}`: defaultValue};`
     try {
         const client = getClientsCollection();
         await client.query(command);
