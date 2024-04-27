@@ -6,6 +6,7 @@ const { userValidation } = require('../validation/validation');
 const { getClientsCollection } = require('../db/database');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
+const {logLogger, errorLogger, warnLogger, verboseLogger} = require('../config/winston/winston.config')
 
 router.use(express.json());
 
@@ -16,6 +17,7 @@ router.post('/inscription', async (req, res) => {
 	const { error } = userValidation(body);
 
 	if (error) {
+		errorLogger('Erreur lors de la validation des données de\'utilisateur ' + JSON.stringify(body) + ': error', 'authentification.js /inscription')
 		return res.status(400).json(error.details[0].message);
 	}
 
@@ -51,11 +53,13 @@ router.post('/inscription', async (req, res) => {
 		// Vérifie si des lignes ont été insérées
 		if (result.rowCount > 0) {
 			console.log(`${reqValue} inscrit avec succès:`, result.rows[0]);
+			logLogger(`${reqValue} inscrit avec succès:` + JSON.stringify(result.rows[0]) , 'authentification.js /inscription')
 			res.json({
 				success: true,
 				redirectUrl: 'http://localhost:3000/connexion',
 			});
 		} else {
+			errorLogger('Le compte existe déjà ou une autre erreur est survenue.', 'authentification.js /inscription')
 			res.status(400).json({
 				success: false,
 				message:
@@ -64,6 +68,7 @@ router.post('/inscription', async (req, res) => {
 		}
 	} catch (e) {
 		console.error("Erreur lors de l'inscription :", e.stack);
+		errorLogger('Erreur lors de l\'inscription :' + e.stack, 'authentification.js /inscription')
 		res.status(500).json(
 			"Erreur serveur lors de l'inscription. " + e.message
 		);
@@ -99,11 +104,14 @@ router.post('/connexion', async (req, res) => {
 				req.session.clientID = clientID;
 				console.log('Authentification réussie');
 				console.log('clientID dans la session :', req.session.clientID);
+				logLogger('Authentification réussie' , 'authentification.js /connexion')
+				logLogger(`clientID dans la session :', ${req.session.clientID}`, 'authentification.js /connexion')
 				res.redirect(`/profil/client/${clientID}`);
 			} else {
 				console.log(
 					"Échec de l'authentification: mot de passe incorrect"
 				);
+				errorLogger("Échec de l'authentification: mot de passe incorrect", 'authentification.js /connexion')
 				res.status(401).json({
 					message: "Échec de l'authentification",
 				});
@@ -124,21 +132,26 @@ router.post('/connexion', async (req, res) => {
 					'professionalID dans la session :',
 					req.session.professionalID
 				);
+				logLogger('Authentification réussie en tant que professionnel', 'authentification.js /connexion')
+				logLogger(`professionalID dans la session :', ${req.session.professionalID}`, 'authentification.js /connexion')
 				res.redirect(`/profil/professionnel/${professionalID}`);
 			} else {
 				console.log(
 					"Échec de l'authentification en tant que professionnel : mot de passe incorrect"
 				);
+				errorLogger("Échec de l'authentification en tant que professionnel : mot de passe incorrect", 'authentification.js /connexion')
 				res.status(401).json({
 					message: "Échec de l'authentification",
 				});
 			}
 		} else {
 			console.log("Échec de l'authentification : e-mail non trouvé");
+			errorLogger("Échec de l'authentification : e-mail non trouvé", 'authentification.js /connexion')
 			res.status(401).json({ message: "Échec de l'authentification" });
 		}
 	} catch (e) {
 		console.error("Erreur lors de l'authentification : ", e.stack);
+		errorLogger("Erreur lors de l'authentification : " + e.stack, 'authentification.js /connexion')
 		res.status(500).json({
 			message: "Erreur serveur lors de l'authentification.",
 		});

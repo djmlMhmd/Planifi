@@ -2,6 +2,7 @@ const express = require('express');
 const { Router } = require('express');
 const moment = require('moment');
 const { getClientsCollection } = require('../db/database');
+const {warnLogger, logLogger, errorLogger} = require("../config/winston/winston.config");
 
 const router = Router();
 router.use(express.json());
@@ -24,6 +25,7 @@ router.delete('/supprimer-reservation/:reservationId', async (req, res) => {
 
 		const service = await client.query(queryForServiceId);
 		if (service.rowCount === 0) {
+			warnLogger(`Réservation introuvable.:${reservationId}`, 'delete.js [DELETE] /supprimer-reservation/:reservationId')
 			return res.status(404).json('Réservation introuvable.');
 		}
 		const serviceId = service.rows[0].service_id;
@@ -37,8 +39,10 @@ router.delete('/supprimer-reservation/:reservationId', async (req, res) => {
 		const result = await client.query(queryForDelete);
 
 		if (result.rowCount === 1) {
+			logLogger(`La réservation a été supprimée avec succès:${reservationId}, service id: ${serviceId}, client id:${clientID}`, 'delete.js [DELETE] /supprimer-reservation/:reservationId')
 			res.status(204).end(); // La réservation a été supprimée avec succès
 		} else {
+			errorLogger(`Vous n'êtes pas autorisé à supprimer cette réservation:${reservationId}, service id: ${serviceId}, client id:${clientID}`, 'delete.js [DELETE] /supprimer-reservation/:reservationId')
 			res.status(403).json(
 				"Vous n'êtes pas autorisé à supprimer cette réservation."
 			);
@@ -48,6 +52,7 @@ router.delete('/supprimer-reservation/:reservationId', async (req, res) => {
 			'Erreur lors de la suppression de la réservation:',
 			error
 		);
+		errorLogger(`Erreur lors de la suppression de la réservation:` + JSON.stringify(error), 'delete.js [DELETE] /supprimer-reservation/:reservationId')
 		res.status(500).json(
 			'Erreur lors de la suppression de la réservation : ' + error.message
 		);
@@ -70,11 +75,13 @@ router.delete('/services/delete/:serviceId', async (req, res) => {
 		const service = serviceQuery.rows[0];
 
 		if (!service) {
+			warnLogger(`Service non trouvé: ${JSON.stringify(service)}`, 'delete.js [DELETE] /services/delete/:serviceId')
 			return res.status(404).json({ message: 'Service non trouvé' });
 		}
 
 		// Vérifiez si le professional_id du service correspond à professionalId de la session
 		if (service.professional_id !== professionalId) {
+			warnLogger(`Vous n'êtes pas autorisé à supprimer ce service: personne voulant supprimer: ${professionalId}, personne pouvant supprimer: ${service.professional_id}`, 'delete.js [DELETE] /services/delete/:serviceId')
 			return res.status(403).json({
 				message: "Vous n'êtes pas autorisé à supprimer ce service",
 			});
@@ -84,10 +91,11 @@ router.delete('/services/delete/:serviceId', async (req, res) => {
 		await client.query('DELETE FROM services WHERE service_id = $1', [
 			serviceId,
 		]);
-
+		logLogger(`Service supprimé avec succès : ${serviceId}` , 'delete.js [DELETE] /services/delete/:serviceId')
 		return res.json({ message: 'Service supprimé avec succès' });
 	} catch (e) {
 		console.error('Erreur lors de la suppression du service :', e.stack);
+		errorLogger(`Erreur lors de la suppression du service :` + JSON.stringify(e), 'delete.js [DELETE] /services/delete/:serviceId')
 		res.status(500).json(
 			'Erreur lors de la suppression du service :' + e.message
 		);
