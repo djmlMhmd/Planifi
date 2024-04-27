@@ -20,6 +20,17 @@ router.post('/reservation', requiredAuth, async (req, res) => {
 
 	const client = getClientsCollection();
 
+	// Vérifie si le créneau horaire est déjà réservé
+	const existingReservation = await client.query(
+		'SELECT * FROM reservations WHERE professional_id = $1 AND start_time = $2 AND service_id = $3 AND day_of_week = $4',
+		[professional_id, start_time, service_id, day_of_week]
+	);
+
+	if (existingReservation.rows.length > 0) {
+		errorLogger(`Plage horaire déjà réservée: pro: ${professional_id}, heure début: ${start_time}, service id: ${service_id}, jour de la semaine: ${day_of_week}`, 'reservation.js [POST] /reservation')
+		return sendBadRequest(res,  'Plage horaire déjà réservée' )
+	}
+
 	// Récupére la durée du service depuis la table des services
 	const service = await client.query(
 		'SELECT duration FROM services WHERE service_id = $1',
@@ -47,17 +58,6 @@ router.post('/reservation', requiredAuth, async (req, res) => {
 	) {
 		warnLogger(`Heure de début non valide: ${service_id}, heure: ${start_time}`, 'reservation.js [POST] /reservation')
 		sendBadRequest(res,  'Heure de début non valide')
-	}
-
-	// Vérifie si le créneau horaire est déjà réservé
-	const existingReservation = await client.query(
-		'SELECT * FROM reservations WHERE professional_id = $1 AND start_time = $2 AND service_id = $3 AND day_of_week = $4',
-		[professional_id, start_time, service_id, day_of_week]
-	);
-
-	if (existingReservation.rows.length > 0) {
-		errorLogger(`Plage horaire déjà réservée: pro: ${professional_id}, heure début: ${start_time}, service id: ${service_id}, jour de la semaine: ${day_of_week}`, 'reservation.js [POST] /reservation')
-		return sendBadRequest(res,  'Plage horaire déjà réservée' )
 	}
 
 	// Marquer le créneau horaire comme non disponible
