@@ -1,4 +1,5 @@
 const { Client } = require('pg');
+const {logLogger, errorLogger, warnLogger, verboseLogger} = require('../config/winston/winston.config')
 require('dotenv').config();
 
 const client = new Client({
@@ -13,11 +14,13 @@ const connectToDatabase = async () => {
 	try {
 		await client.connect();
 		console.log('Connecté avec succès à la base de données PostgreSQL');
+		logLogger('Connecté avec succès à la base de données PostgreSQL', 'connectToDatabase')
 	} catch (e) {
 		console.error(
 			'Erreur lors de la connexion à la base de données PostgreSQL',
 			e.stack
 		);
+		errorLogger('Erreur lors de la connexion à la base de données PostgreSQL:' + e.stack, 'connectToDatabase' )
 	}
 };
 
@@ -44,14 +47,17 @@ const createTableUser = async () => {
 
 			await client.query(createTableQuery);
 			console.log('Table users créée avec succès');
+			logLogger('Table [USERS] créée avec succès', 'createTableUser')
 		} else {
 			console.log('La table users existe déjà.');
+			verboseLogger('La table [USERS] existe déjà.', 'createTableUser')
 		}
 	} catch (e) {
 		console.error(
 			'Erreur lors de la création/verification de la table',
 			e.stack
 		);
+		errorLogger('Erreur lors de la création/verification de la table [USERS]:' + e.stack, 'createTableUser')
 	}
 };
 
@@ -79,14 +85,17 @@ const createTableProfessional = async () => {
 
 			await client.query(createTableQuery);
 			console.log('Table professionals créée avec succès');
+			logLogger('Table [professionals] créée avec succès', 'createTableProfessional')
 		} else {
 			console.log('La table professionals existe déjà.');
+			verboseLogger('La table [professionals] existe déjà.', 'createTableProfessional')
 		}
 	} catch (e) {
 		console.error(
 			'Erreur lors de la création/verification de la table des professionnels',
 			e.stack
 		);
+		errorLogger('Erreur lors de la création/verification de la table [professionnels]:' + e.stack, 'createTableProfessional')
 	}
 };
 
@@ -113,11 +122,14 @@ const createTableService = async () => {
 
 			await client.query(createTableQuery);
 			console.log('Table créée avec succès');
+			logLogger('Table [SERVICE] créée avec succès', 'createTableService')
 		} else {
 			console.log('Le service existe déjà.');
+			verboseLogger('La table [SERVICE] existe déjà.', 'createTableService')
 		}
 	} catch (e) {
 		console.error('Erreur lors de la création du service', e.stack);
+		errorLogger('Erreur lors de la création/verification de la table [SERVICE]:' + e.stack, 'createTableService')
 	}
 };
 
@@ -143,14 +155,17 @@ const createTableAvailability = async () => {
 
 			await client.query(createTableQuery);
 			console.log('Table availability créée avec succès');
+			logLogger('Table [availability] créée avec succès', 'createTableAvailability')
 		} else {
 			console.log('La table availability existe déjà.');
+			verboseLogger('La table [availability] existe déjà.', 'createTableAvailability')
 		}
 	} catch (e) {
 		console.error(
 			'Erreur lors de la création/verification de la table availability',
 			e.stack
 		);
+		errorLogger('Erreur lors de la création/verification de la table [availability]:' + e.stack, 'createTableAvailability')
 	}
 };
 
@@ -184,14 +199,17 @@ const createTableReservation = async () => {
 
 			await client.query(createTableQuery);
 			console.log('La table reservation a été mise à jour avec succès.');
+			logLogger('Table [reservation] créée avec succès', 'createTableReservation')
 		} else {
 			console.log('La table reservation existe déjà.');
+			verboseLogger('La table [reservation] existe déjà.', 'createTableReservation')
 		}
 	} catch (e) {
 		console.error(
 			'Erreur lors de la création/mise à jour de la table reservation',
 			e.stack
 		);
+		errorLogger('Erreur lors de la création/verification de la table [reservation]:' + e.stack, 'createTableReservation')
 	}
 };
 
@@ -216,14 +234,17 @@ const createTableDefaultAvailability = async () => {
 
 			await client.query(createTableQuery);
 			console.log('Table de disponibilité par défaut créée avec succès');
+			logLogger('Table [default_availability] créée avec succès', 'createTableDefaultAvailability')
 		} else {
 			console.log('La table de disponibilité par défaut existe déjà.');
+			verboseLogger('La table [default_availability] existe déjà.', 'createTableDefaultAvailability')
 		}
 	} catch (e) {
 		console.error(
 			'Erreur lors de la création de la table de disponibilité par défaut',
 			e.stack
 		);
+		errorLogger('Erreur lors de la création/verification de la table [default_availability]:' + e.stack, 'createTableDefaultAvailability')
 	}
 };
 
@@ -255,14 +276,17 @@ const createTableMessages = async () => {
 
 			await client.query(createTableQuery);
 			console.log('Table messages créée avec succès');
+			logLogger('Table [MESSAGES] créée avec succès', 'createTableMessages')
 		} else {
 			console.log('La table messages existe déjà.');
+			verboseLogger('La table [MESSAGES] existe déjà.', 'createTableMessages')
 		}
 	} catch (e) {
 		console.error(
 			'Erreur lors de la création de la table messages',
 			e.stack
 		);
+		errorLogger('Erreur lors de la création/verification de la table [MESSAGES]:' + e.stack, 'createTableMessages')
 	}
 };
 
@@ -286,9 +310,11 @@ const saveMessage = async ({
 			service_id,
 		]);
 		console.log('Message enregistré avec succès:', result.rows[0]);
+		verboseLogger('Message enregistré avec succès:' + JSON.stringify(result.rows[0]), 'saveMessage')
 		return result.rows[0];
 	} catch (e) {
 		console.error("Erreur lors de l'enregistrement du message:", e.stack);
+		errorLogger('Erreur lors de l\'enregistrement du message:' + e.stack, 'saveMessage')
 		throw e; // Rethrow l'erreur pour le gestionnaire d'erreurs supérieur
 	}
 };
@@ -306,9 +332,11 @@ const getMessagesForProfessional = async (receiver_id) => {
 			`Messages récupérés pour le professionnel ${receiver_id}:`,
 			result.rows
 		);
+		verboseLogger(`Messages récupérés pour le professionnel ${receiver_id}:`, 'getMessagesForProfessional')
 		return result.rows;
 	} catch (e) {
 		console.error('Erreur lors de la récupération des messages:', e.stack);
+		errorLogger('Erreur lors de la récupération des messages:' + e.stack, 'getMessagesForProfessional')
 		throw e; // Rethrow l'erreur pour le gestionnaire d'erreurs supérieur
 	}
 };
