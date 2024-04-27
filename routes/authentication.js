@@ -5,6 +5,7 @@ const router = Router();
 const { userValidation } = require('../validation/validation');
 const { getClientsCollection } = require('../db/database');
 const bcrypt = require('bcrypt');
+const {createToken, EXPIRES_IN} = require("../utils/auth.utils");
 const saltRounds = 10;
 const {logLogger, errorLogger, warnLogger, verboseLogger} = require('../config/winston/winston.config')
 
@@ -54,6 +55,8 @@ router.post('/inscription', async (req, res) => {
 		if (result.rowCount > 0) {
 			console.log(`${reqValue} inscrit avec succès:`, result.rows[0]);
 			logLogger(`${reqValue} inscrit avec succès:` + JSON.stringify(result.rows[0]) , 'authentification.js /inscription')
+			const token = createToken(result.rows[0].id, reqValue)
+			res.cookie('jwt', token, {httpOnly: true, maxAge: EXPIRES_IN * 1000})
 			res.json({
 				success: true,
 				redirectUrl: 'http://localhost:3000/connexion',
@@ -115,6 +118,8 @@ router.post('/connexion', async (req, res) => {
 				//req.session.clientID = clientID;
 				console.log('Authentification réussie');
 				console.log('clientID dans la session :', req.session.clientID);
+				const token = createToken(clientID, 'client')
+				res.cookie('jwt', token, {httpOnly: true, maxAge: EXPIRES_IN * 1000})
 				logLogger('Authentification réussie' , 'authentification.js /connexion')
 				logLogger(`clientID dans la session :', ${req.session.clientID}`, 'authentification.js /connexion')
 				res.redirect(`/profil/client/${clientID}`);
@@ -143,6 +148,8 @@ router.post('/connexion', async (req, res) => {
 					'professionalID dans la session :',
 					req.cookies.professionalID
 				);
+				const token = createToken(professionalID, 'professional')
+				res.cookie('jwt', token, {httpOnly: true, maxAge: EXPIRES_IN * 1000})
 				logLogger('Authentification réussie en tant que professionnel', 'authentification.js /connexion')
 				logLogger(`professionalID dans la session :', ${req.session.professionalID}`, 'authentification.js /connexion')
 				res.redirect(`/profil/professionnel/${professionalID}`);

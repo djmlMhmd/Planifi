@@ -2,12 +2,14 @@ const express = require('express');
 const { Router } = require('express');
 const moment = require('moment');
 const { getClientsCollection } = require('../db/database');
+const {requiredAuth} = require("../middleware/authMiddleware");
+const {decodeJWT} = require("../utils/auth.utils");
 const {warnLogger, errorLogger, logLogger, verboseLogger} = require("../config/winston/winston.config");
 
 const router = Router();
 router.use(express.json());
 
-router.post('/reservation', async (req, res) => {
+router.post('/reservation', requiredAuth, async (req, res) => {
 	const { professional_id, users_id, service_id } = req.body;
 
 	const start_time = req.body.start_time;
@@ -72,10 +74,11 @@ router.post('/reservation', async (req, res) => {
 	return res.status(201).json({ message: 'Réservation créée avec succès' });
 });
 
-router.get('/reservations', async (req, res) => {
+router.get('/reservations', requiredAuth, async (req, res) => {
 	const professionalId = req.cookies.professionalID;
 
-	try {
+    const { id, statut } = decodeJWT(req.cookies.jwt)
+    try {
 		const client = getClientsCollection();
 		const query = {
 			text: `
@@ -97,7 +100,7 @@ router.get('/reservations', async (req, res) => {
                 WHERE
                     reservations.professional_id = $1
             `,
-			values: [professionalId],
+			values: [id],
 		};
 
 		const result = await client.query(query);
@@ -150,12 +153,14 @@ router.get('/reservations', async (req, res) => {
 	}
 });
 
-router.get('/reservations/client', async (req, res) => {
+router.get('/reservations/client', requiredAuth, async (req, res) => {
 	const clientID = req.cookies.clientID;
 
-	if (!clientID) {
-		warnLogger('Authentification requise', 'reservation.js [GET] /reservations/client')
-		return res.status(401).json({ message: 'Authentification requise' });
+	const { id, statut } = decodeJWT(req.cookies.jwt)
+	// c'est plus utile
+	if (!id) {
+        warnLogger('Authentification requise', 'reservation.js [GET] /reservations/client')
+        return res.status(401).json({ message: 'Authentification requise' });
 	}
 
 	try {
@@ -176,7 +181,7 @@ router.get('/reservations/client', async (req, res) => {
                 WHERE
                     reservations.users_id = $1
             `,
-			values: [clientID],
+			values: [id],
 		};
 
 		const result = await client.query(query);
@@ -208,7 +213,7 @@ router.get('/reservations/client', async (req, res) => {
 	}
 });
 
-router.get('/reservedHours', async (req, res) => {
+router.get('/reservedHours', requiredAuth, async (req, res) => {
 	try {
 		const selectedDate = req.query.selectedDate;
 		const query = `
