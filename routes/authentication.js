@@ -1,4 +1,3 @@
-const session = require('express-session');
 const express = require('express');
 const { Router } = require('express');
 const router = Router();
@@ -7,7 +6,7 @@ const { getClientsCollection } = require('../db/database');
 const bcrypt = require('bcrypt');
 const {createToken, EXPIRES_IN} = require("../utils/auth.utils");
 const saltRounds = 10;
-const {logLogger, errorLogger, warnLogger, verboseLogger} = require('../config/winston/winston.config')
+const {logLogger, errorLogger} = require('../config/winston/winston.config')
 
 router.use(express.json());
 
@@ -115,13 +114,11 @@ router.post('/connexion', async (req, res) => {
 				 */
 				const maxAge = 3 * 24 * 60 * 60 * 1000;
 				res.cookie('clientID', clientID, { maxAge });
-				//req.session.clientID = clientID;
-				console.log('Authentification réussie');
-				console.log('clientID dans la session :', req.session.clientID);
+
 				const token = createToken(clientID, 'client')
 				res.cookie('jwt', token, {httpOnly: true, maxAge: EXPIRES_IN * 1000})
 				logLogger('Authentification réussie' , 'authentification.js /connexion')
-				logLogger(`clientID dans la session :', ${req.session.clientID}`, 'authentification.js /connexion')
+				logLogger(`clientID dans la session : ${clientID}`, 'authentification.js /connexion')
 				res.redirect(`/profil/client/${clientID}`);
 			} else {
 				console.log(

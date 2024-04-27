@@ -3,7 +3,7 @@ const {extname} = require("node:path");
 
 const uploadMultiple = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 10000000}, /* bytes */
+    limits: { fileSize: 10000000, files: 12}, /* bytes */
     fileFilter: function(req, file, callback){
         checkFileType(file, callback)
     }
@@ -17,7 +17,16 @@ const uploadSingle = multer({
     }
 }).single("image")
 
-
+const ERROR_MESSAGES = {
+    LIMIT_PART_COUNT: 'Too many parts',
+    LIMIT_FILE_SIZE: 'File too large',
+    LIMIT_FILE_COUNT: 'Too many files',
+    LIMIT_FIELD_KEY: 'Field name too long',
+    LIMIT_FIELD_VALUE: 'Field value too long',
+    LIMIT_FIELD_COUNT: 'Too many fields',
+    LIMIT_UNEXPECTED_FILE: 'Unexpected field',
+    MISSING_FIELD_NAME: 'Field name missing'
+}
 
 function checkFileType(file, callback){
     // extensions autorisées
@@ -35,5 +44,7 @@ function checkFileType(file, callback){
 }
 
 module.exports = {
-    uploadMultiple, uploadSingle
+    uploadMultiple,
+    uploadSingle,
+    ERROR_MESSAGES
 }
