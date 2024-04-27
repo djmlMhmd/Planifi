@@ -1,5 +1,5 @@
 const { Client } = require('pg');
-const {logLogger, errorLogger, warnLogger, verboseLogger} = require('../config/winston/winston.config')
+const {logLogger, errorLogger, verboseLogger} = require('../config/winston/winston.config')
 require('dotenv').config();
 
 const client = new Client({
@@ -13,7 +13,6 @@ const client = new Client({
 const connectToDatabase = async () => {
 	try {
 		await client.connect();
-		console.log('Connecté avec succès à la base de données PostgreSQL');
 		logLogger('Connecté avec succès à la base de données PostgreSQL', 'connectToDatabase')
 	} catch (e) {
 		console.error(
@@ -47,10 +46,8 @@ const createTableUser = async () => {
       `;
 
 			await client.query(createTableQuery);
-			console.log('Table users créée avec succès');
 			logLogger('Table [USERS] créée avec succès', 'createTableUser')
 		} else {
-			console.log('La table users existe déjà.');
 			verboseLogger('La table [USERS] existe déjà.', 'createTableUser')
 		}
 	} catch (e) {
@@ -86,10 +83,8 @@ const createTableProfessional = async () => {
       `;
 
 			await client.query(createTableQuery);
-			console.log('Table professionals créée avec succès');
 			logLogger('Table [professionals] créée avec succès', 'createTableProfessional')
 		} else {
-			console.log('La table professionals existe déjà.');
 			verboseLogger('La table [professionals] existe déjà.', 'createTableProfessional')
 		}
 	} catch (e) {
@@ -123,10 +118,8 @@ const createTableService = async () => {
 		  `;
 
 			await client.query(createTableQuery);
-			console.log('Table créée avec succès');
 			logLogger('Table [SERVICE] créée avec succès', 'createTableService')
 		} else {
-			console.log('Le service existe déjà.');
 			verboseLogger('La table [SERVICE] existe déjà.', 'createTableService')
 		}
 	} catch (e) {
@@ -156,10 +149,8 @@ const createTableAvailability = async () => {
             `;
 
 			await client.query(createTableQuery);
-			console.log('Table availability créée avec succès');
 			logLogger('Table [availability] créée avec succès', 'createTableAvailability')
 		} else {
-			console.log('La table availability existe déjà.');
 			verboseLogger('La table [availability] existe déjà.', 'createTableAvailability')
 		}
 	} catch (e) {
@@ -200,10 +191,8 @@ const createTableReservation = async () => {
             `;
 
 			await client.query(createTableQuery);
-			console.log('La table reservation a été mise à jour avec succès.');
 			logLogger('Table [reservation] créée avec succès', 'createTableReservation')
 		} else {
-			console.log('La table reservation existe déjà.');
 			verboseLogger('La table [reservation] existe déjà.', 'createTableReservation')
 		}
 	} catch (e) {
@@ -235,10 +224,8 @@ const createTableDefaultAvailability = async () => {
             `;
 
 			await client.query(createTableQuery);
-			console.log('Table de disponibilité par défaut créée avec succès');
 			logLogger('Table [default_availability] créée avec succès', 'createTableDefaultAvailability')
 		} else {
-			console.log('La table de disponibilité par défaut existe déjà.');
 			verboseLogger('La table [default_availability] existe déjà.', 'createTableDefaultAvailability')
 		}
 	} catch (e) {
@@ -277,10 +264,8 @@ const createTableMessages = async () => {
       `;
 
 			await client.query(createTableQuery);
-			console.log('Table messages créée avec succès');
 			logLogger('Table [MESSAGES] créée avec succès', 'createTableMessages')
 		} else {
-			console.log('La table messages existe déjà.');
 			verboseLogger('La table [MESSAGES] existe déjà.', 'createTableMessages')
 		}
 	} catch (e) {
@@ -311,11 +296,9 @@ const saveMessage = async ({
 			message_body,
 			service_id,
 		]);
-		console.log('Message enregistré avec succès:', result.rows[0]);
 		verboseLogger('Message enregistré avec succès:' + JSON.stringify(result.rows[0]), 'saveMessage')
 		return result.rows[0];
 	} catch (e) {
-		console.error("Erreur lors de l'enregistrement du message:", e.stack);
 		errorLogger('Erreur lors de l\'enregistrement du message:' + e.stack, 'saveMessage')
 		throw e; // Rethrow l'erreur pour le gestionnaire d'erreurs supérieur
 	}
