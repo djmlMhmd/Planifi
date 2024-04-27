@@ -60,7 +60,7 @@
 				<!-- Les réservations du client seront affichées ici -->
 			</div>
 			<div class="dropdown-divider" class="mt-4 mb-4"></div>
-			
+
 		</div>
 		</div>
 
@@ -75,13 +75,18 @@
         <!-- Les options seront chargées dynamiquement -->
     </select>
     <button id="send-message">Envoyer</button>
+
+	<input id="fileupload" type="file" name="fileupload" />
+	<button class="imageUpload" >envoyer image</button>
 </div>
 
 		<script src="/public/js/profil-client.js"></script>
 		<script>
 	const hamburger = document.querySelector(".hamburger");
+	const imageUp = document.querySelector(".imageUpload");
 const navLinks = document.querySelector(".nav-links");
 const links = document.querySelectorAll(".nav-links li");
+const fileToUp = document.querySelector("#fileupload")
 
 hamburger.addEventListener('click', () => {
     // Animer les liens
@@ -93,6 +98,30 @@ hamburger.addEventListener('click', () => {
     // Animation du hamburger
     hamburger.classList.toggle("toggle");
 });
+
+	imageUp.addEventListener('click', () => {
+
+		var formData = new FormData();
+
+		// Ajout de l'image au FormData
+		formData.append('image', fileToUp.files[0]);
+
+		fetch(`/profil/1/update-profil-picture`, {
+			method: 'PUT',
+			body: formData,
+			// Spécification des en-têtes nécessaires pour le téléchargement de fichiers
+		})
+				.then((response) => response.json())
+				.then((service) => {
+
+				})
+				.catch((error) => {
+					console.error(
+							'Erreur lors de la récupération des informations du service :',
+							error
+					);
+				});
+	})
 		</script>
 	</body>
 </html>

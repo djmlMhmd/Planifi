@@ -1,4 +1,3 @@
-const session = require('express-session');
 const express = require('express');
 const { Router } = require('express');
 const {warnLogger, errorLogger} = require("../config/winston/winston.config");
@@ -7,6 +6,8 @@ const router = Router();
 router.use(express.json());
 
 router.post('/deconnexion/client', (req, res) => {
+	res.cookie('clientID', '')
+	res.cookie('professionalID', '')
 	// delete the client session to disconnect the client
 	req.session.destroy((err) => {
 		if (err) {
