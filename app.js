@@ -13,7 +13,7 @@ const {
 	createTableReservation,
 	createTableAvailability,
 	createTableMessages,
-	createTableDefaultAvailability, createTablePreferencePro,
+	createTableDefaultAvailability, createTablePreferencePro, createTableImagesServicesProfessionals,
 } = require('./db/database');
 const { dbConnexion, getDatabase } = require('./db/database');
 const path = require('path');
@@ -61,7 +61,8 @@ connectToDatabase().then(res => {
 	createTableDefaultAvailability();
 	createTableMessages();
 	alterInTables();
-	createTablePreferencePro()
+	createTablePreferencePro();
+	createTableImagesServicesProfessionals()
 })
 // Increase the listener limit for an EventEmitter object
 const bus = new EventEmitter();
