@@ -14,7 +14,7 @@ const checkIfTableExist = async (tableName) => {
         const resultTableExists = await client.query(commandCheckTableExists);
         return {exists: resultTableExists.rows[0].exists, tableName}
     } catch (e) {
-        console.log(`Erreur lors de l'existence dans la table ${tableName}:` + JSON.stringify(e))
+        console.log(`Erreur lors de la verification l'existence dans la table ${tableName}:` + JSON.stringify(e))
     }
 }
 

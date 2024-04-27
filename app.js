@@ -13,7 +13,7 @@ const {
 	createTableReservation,
 	createTableAvailability,
 	createTableMessages,
-	createTableDefaultAvailability,
+	createTableDefaultAvailability, createTablePreferencePro,
 } = require('./db/database');
 const { dbConnexion, getDatabase } = require('./db/database');
 const path = require('path');
@@ -52,15 +52,17 @@ io.on('connection', (socket) => {
 });
 
 getClientsCollection();
-connectToDatabase();
-createTableUser();
-createTableProfessional();
-createTableService();
-createTableAvailability();
-createTableReservation();
-createTableDefaultAvailability();
-createTableMessages();
-alterInTables()
+connectToDatabase().then(res => {
+	createTableUser();
+	createTableProfessional();
+	createTableService();
+	createTableAvailability();
+	createTableReservation();
+	createTableDefaultAvailability();
+	createTableMessages();
+	alterInTables();
+	createTablePreferencePro()
+})
 // Increase the listener limit for an EventEmitter object
 const bus = new EventEmitter();
 bus.setMaxListeners(30);
