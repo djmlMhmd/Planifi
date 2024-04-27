@@ -4,6 +4,8 @@ const router = Router();
 const { getClientsCollection } = require('../db/database');
 router.use(express.json());
 const path = require('path');
+const {requiredAuth} = require("../middleware/authMiddleware");
+const {decodeJWT} = require("../utils/auth.utils");
 const {errorLogger, warnLogger} = require("../config/winston/winston.config");
 const {auth} = require("../config/firebase");
 const {uploadSingle} = require("../middleware/multer");
@@ -12,10 +14,11 @@ const UUID  = require("uuid-v4")
 
 // PROFESSIONAL PROFILE
 
-router.get('/profil/professionnel/:id', async (req, res) => {
+router.get('/profil/professionnel/:id',requiredAuth, async (req, res) => {
 	const professionnelId = req.cookies.professionalID;
 
-	if (!professionnelId) {
+	const { id, statut } = decodeJWT(req.cookies.jwt)
+	if (!id) {
 		warnLogger(`Authentification requise`, 'profil.js [GET] /profil/professionnel/:id')
 		return res.status(401).json({ message: 'Authentification requise' });
 	}
@@ -23,7 +26,7 @@ router.get('/profil/professionnel/:id', async (req, res) => {
 		const client = getClientsCollection();
 		const query = {
 			text: 'SELECT * FROM professionals WHERE professional_id = $1',
-			values: [professionnelId],
+			values: [id],
 		};
 
 		const result = await client.query(query);
@@ -51,12 +54,18 @@ router.get('/profil/professionnel/:id', async (req, res) => {
 
 // CLIENT PROFILE
 
-router.get('/profil/client/:id', async (req, res) => {
+router.get('/profil/client/:id', requiredAuth, async (req, res) => {
 	// Retrieves the client ID from the session or cookie
 	const clientID = req.cookies.clientID;
 
-	if (!clientID) {
-		warnLogger(`Authentification requise`, 'profil.js [GET] /profil/professionnel/:id')
+	/**
+	 * en principe si on a passé le middleware "requiredAuth"
+	 * on est forcément authentifié et donc le cookie "JWT" existe
+ 	 */
+	const { id, statut } = decodeJWT(req.cookies.jwt)
+
+	if (!id) {
+        warnLogger(`Authentification requise`, 'profil.js [GET] /profil/professionnel/:id')
 		return res.status(401).json({ message: 'Authentification requise' });
 	}
 	//req.cookies.clientID = clientID;
@@ -65,7 +74,7 @@ router.get('/profil/client/:id', async (req, res) => {
 		const client = getClientsCollection();
 		const query = {
 			text: 'SELECT * FROM users WHERE users_id = $1',
-			values: [clientID],
+			values: [id],
 		};
 
 		const result = await client.query(query);
