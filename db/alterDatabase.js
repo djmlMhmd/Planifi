@@ -11,7 +11,7 @@ const alterInTables = () => {
                         .then((resultColumnExists) => {
                             if (!resultColumnExists.exists) {
                                 /* Créer la colonne ici*/
-                                addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'BOOLEAN')
+                                addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'BOOLEAN', false, false)
                                     .then(columnAddResult => {
                                         if (columnAddResult) {
                                             logLogger(`La colonne 'est_verifie' a bien été ajouté dans la table 'USERS`, 'alterInTables')
@@ -36,6 +36,18 @@ const alterInTables = () => {
                                     .then(columnAddResult => {
                                         if (columnAddResult) {
                                             logLogger(`La colonne 'banner_profile' a bien été ajouté dans la table 'PROFESSIONALS`, 'alterInTables')
+                                        }
+                                    })
+                            }
+                        })
+                    checkIfColumnExistInTable(resultTableExists.tableName, 'est_verifie')
+                        .then((resultColumnExists) => {
+                            if (!resultColumnExists.exists) {
+                                /* Créer la colonne ici*/
+                                addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'BOOLEAN', false, false)
+                                    .then(columnAddResult => {
+                                        if (columnAddResult) {
+                                            logLogger(`La colonne 'est_verifie' a bien été ajouté dans la table 'PROFESSIONALS`, 'alterInTables')
                                         }
                                     })
                             }

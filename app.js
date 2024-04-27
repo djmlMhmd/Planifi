@@ -34,6 +34,8 @@ const http = require('http');
 const socketIo = require('socket.io');
 const {alterInTables} = require("./db/alterDatabase");
 const {logLogger} = require("./config/winston/winston.config");
+const {sendResetPassword, sendRestart} = require("./mail/send-email");
+const {deleteInTables} = require("./db/deleteDatabase");
 const server = http.createServer(app);
 const io = socketIo(server);
 
@@ -58,6 +60,7 @@ connectToDatabase().then( ()=> {
 	createTableReservation();
 	createTableDefaultAvailability();
 	createTableMessages();
+	//deleteInTables()
 	alterInTables();
 	createTablePreferencePro();
 	createTableImagesServicesProfessionals()
@@ -95,7 +98,7 @@ app.use('/api', require('./routes/reservation'));
 app.use(deleteReservation);
 app.use(express.urlencoded({ extended: true }));
 
-// dbConnexion();
+//sendRestart()
 
 // permet de lancer serveur web
 app.listen(port, () => {
