@@ -7,6 +7,7 @@ const bcrypt = require('bcrypt');
 const {createToken, EXPIRES_IN} = require("../utils/auth.utils");
 const saltRounds = 10;
 const {logLogger, errorLogger} = require('../config/winston/winston.config')
+const {sendInternalServerError, sendError, sendBadRequest} = require("../utils/error_message.utils");
 
 router.use(express.json());
 
@@ -18,7 +19,7 @@ router.post('/inscription', async (req, res) => {
 
 	if (error) {
 		errorLogger('Erreur lors de la validation des données de\'utilisateur ' + JSON.stringify(body) + ': error', 'authentification.js /inscription')
-		return res.status(400).json(error.details[0].message);
+		sendBadRequest(res, error.details[0].message)
 	}
 
 	try {
@@ -52,7 +53,6 @@ router.post('/inscription', async (req, res) => {
 
 		// Vérifie si des lignes ont été insérées
 		if (result.rowCount > 0) {
-			console.log(`${reqValue} inscrit avec succès:`, result.rows[0]);
 			logLogger(`${reqValue} inscrit avec succès:` + JSON.stringify(result.rows[0]) , 'authentification.js /inscription')
 			const token = createToken(result.rows[0].id, reqValue)
 			res.cookie('jwt', token, {httpOnly: true, maxAge: EXPIRES_IN * 1000})
@@ -62,18 +62,11 @@ router.post('/inscription', async (req, res) => {
 			});
 		} else {
 			errorLogger('Le compte existe déjà ou une autre erreur est survenue.', 'authentification.js /inscription')
-			res.status(400).json({
-				success: false,
-				message:
-					'Le compte existe déjà ou une autre erreur est survenue.',
-			});
+			sendBadRequest(res, 'Le compte existe déjà ou une autre erreur est survenue.')
 		}
 	} catch (e) {
-		console.error("Erreur lors de l'inscription :", e.stack);
 		errorLogger('Erreur lors de l\'inscription :' + e.stack, 'authentification.js /inscription')
-		res.status(500).json(
-			"Erreur serveur lors de l'inscription. " + e.message
-		);
+		sendInternalServerError(res, "Erreur serveur lors de l'inscription. " + e.message)
 	}
 });
 
@@ -121,13 +114,8 @@ router.post('/connexion', async (req, res) => {
 				logLogger(`clientID dans la session : ${clientID}`, 'authentification.js /connexion')
 				res.redirect(`/profil/client/${clientID}`);
 			} else {
-				console.log(
-					"Échec de l'authentification: mot de passe incorrect"
-				);
 				errorLogger("Échec de l'authentification: mot de passe incorrect", 'authentification.js /connexion')
-				res.status(401).json({
-					message: "Échec de l'authentification",
-				});
+				sendError(res, "Échec de l'authentification")
 			}
 		} else if (professionalQuery.rows.length === 1) {
 			const professional = professionalQuery.rows[0];
@@ -138,38 +126,22 @@ router.post('/connexion', async (req, res) => {
 			if (match) {
 				const professionalID = professional.professional_id;
 				req.cookies.professionalID = professionalID;
-				console.log(
-					'Authentification réussie en tant que professionnel'
-				);
-				console.log(
-					'professionalID dans la session :',
-					req.cookies.professionalID
-				);
 				const token = createToken(professionalID, 'professional')
 				res.cookie('jwt', token, {httpOnly: true, maxAge: EXPIRES_IN * 1000})
 				logLogger('Authentification réussie en tant que professionnel', 'authentification.js /connexion')
 				logLogger(`professionalID dans la session :', ${req.session.professionalID}`, 'authentification.js /connexion')
 				res.redirect(`/profil/professionnel/${professionalID}`);
 			} else {
-				console.log(
-					"Échec de l'authentification en tant que professionnel : mot de passe incorrect"
-				);
 				errorLogger("Échec de l'authentification en tant que professionnel : mot de passe incorrect", 'authentification.js /connexion')
-				res.status(401).json({
-					message: "Échec de l'authentification",
-				});
+				sendError(res, "Échec de l'authentification")
 			}
 		} else {
-			console.log("Échec de l'authentification : e-mail non trouvé");
 			errorLogger("Échec de l'authentification : e-mail non trouvé", 'authentification.js /connexion')
-			res.status(401).json({ message: "Échec de l'authentification" });
+			sendError(res, "Échec de l'authentification")
 		}
 	} catch (e) {
-		console.error("Erreur lors de l'authentification : ", e.stack);
 		errorLogger("Erreur lors de l'authentification : " + e.stack, 'authentification.js /connexion')
-		res.status(500).json({
-			message: "Erreur serveur lors de l'authentification.",
-		});
+		sendInternalServerError(res, "Erreur serveur lors de l'authentification. " + e.message)
 	}
 });
 module.exports = router;

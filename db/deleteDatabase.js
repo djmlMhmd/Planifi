@@ -1,4 +1,5 @@
 const { checkIfTableExist, checkIfColumnExistInTable} = require("./utils/utils");
+const {errorLogger} = require("../config/winston/winston.config");
 
 const deleteInTables = () => {
     try {
@@ -13,9 +14,9 @@ const deleteInTables = () => {
                         })
                 }
             })
-            .catch(e => console.log(e))
+            .catch(e => errorLogger(e, "checkIfTableExist('users')"))
     }
     catch (e) {
-        console.log(e)
+        errorLogger(e, "deleteInTables")
     }
 }

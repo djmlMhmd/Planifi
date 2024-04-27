@@ -15,10 +15,6 @@ const connectToDatabase = async () => {
 		await client.connect();
 		logLogger('Connecté avec succès à la base de données PostgreSQL', 'connectToDatabase')
 	} catch (e) {
-		console.error(
-			'Erreur lors de la connexion à la base de données PostgreSQL',
-			e.stack
-		);
 		errorLogger('Erreur lors de la connexion à la base de données PostgreSQL:' + e.stack, 'connectToDatabase' )
 	}
 };
@@ -51,10 +47,6 @@ const createTableUser = async () => {
 			verboseLogger('La table [USERS] existe déjà.', 'createTableUser')
 		}
 	} catch (e) {
-		console.error(
-			'Erreur lors de la création/verification de la table',
-			e.stack
-		);
 		errorLogger('Erreur lors de la création/verification de la table [USERS]:' + e.stack, 'createTableUser')
 	}
 };
@@ -88,10 +80,6 @@ const createTableProfessional = async () => {
 			verboseLogger('La table [professionals] existe déjà.', 'createTableProfessional')
 		}
 	} catch (e) {
-		console.error(
-			'Erreur lors de la création/verification de la table des professionnels',
-			e.stack
-		);
 		errorLogger('Erreur lors de la création/verification de la table [professionnels]:' + e.stack, 'createTableProfessional')
 	}
 };
@@ -123,7 +111,6 @@ const createTableService = async () => {
 			verboseLogger('La table [SERVICE] existe déjà.', 'createTableService')
 		}
 	} catch (e) {
-		console.error('Erreur lors de la création du service', e.stack);
 		errorLogger('Erreur lors de la création/verification de la table [SERVICE]:' + e.stack, 'createTableService')
 	}
 };
@@ -154,10 +141,6 @@ const createTableAvailability = async () => {
 			verboseLogger('La table [availability] existe déjà.', 'createTableAvailability')
 		}
 	} catch (e) {
-		console.error(
-			'Erreur lors de la création/verification de la table availability',
-			e.stack
-		);
 		errorLogger('Erreur lors de la création/verification de la table [availability]:' + e.stack, 'createTableAvailability')
 	}
 };
@@ -196,10 +179,6 @@ const createTableReservation = async () => {
 			verboseLogger('La table [reservation] existe déjà.', 'createTableReservation')
 		}
 	} catch (e) {
-		console.error(
-			'Erreur lors de la création/mise à jour de la table reservation',
-			e.stack
-		);
 		errorLogger('Erreur lors de la création/verification de la table [reservation]:' + e.stack, 'createTableReservation')
 	}
 };
@@ -229,10 +208,6 @@ const createTableDefaultAvailability = async () => {
 			verboseLogger('La table [default_availability] existe déjà.', 'createTableDefaultAvailability')
 		}
 	} catch (e) {
-		console.error(
-			'Erreur lors de la création de la table de disponibilité par défaut',
-			e.stack
-		);
 		errorLogger('Erreur lors de la création/verification de la table [default_availability]:' + e.stack, 'createTableDefaultAvailability')
 	}
 };
@@ -269,10 +244,6 @@ const createTableMessages = async () => {
 			verboseLogger('La table [MESSAGES] existe déjà.', 'createTableMessages')
 		}
 	} catch (e) {
-		console.error(
-			'Erreur lors de la création de la table messages',
-			e.stack
-		);
 		errorLogger('Erreur lors de la création/verification de la table [MESSAGES]:' + e.stack, 'createTableMessages')
 	}
 };
@@ -299,10 +270,6 @@ const createTablePreferencePro = async () => {
 			verboseLogger('La table [PREFERENCE_PRO] existe déjà.', 'createTablePreferencePro')
 		}
 	} catch (e) {
-		console.error(
-			'Erreur lors de la création/verification de la table',
-			e.stack
-		);
 		errorLogger('Erreur lors de la création/verification de la table [PREFERENCE_PRO]:' + e.stack, 'createTablePreferencePro')
 	}
 };
@@ -334,10 +301,6 @@ const createTableImagesServicesProfessionals = async () => {
 			verboseLogger('La table [images_services_professionals] existe déjà.', 'createTableImagesServicesProfessionals')
 		}
 	} catch (e) {
-		console.error(
-			'Erreur lors de la création/verification de la table des images_services_professionals',
-			e.stack
-		);
 		errorLogger('Erreur lors de la création/verification de la table [images_services_professionals]:' + e.stack, 'createTableImagesServicesProfessionals')
 	}
 };
@@ -378,14 +341,9 @@ const getMessagesForProfessional = async (receiver_id) => {
       ORDER BY sent_at DESC;
     `;
 		const result = await client.query(selectQuery, [receiver_id]);
-		console.log(
-			`Messages récupérés pour le professionnel ${receiver_id}:`,
-			result.rows
-		);
-		verboseLogger(`Messages récupérés pour le professionnel ${receiver_id}:`, 'getMessagesForProfessional')
+		verboseLogger(`Messages récupérés pour le professionnel ${receiver_id}: ${JSON.stringify(result.rows)}`, 'getMessagesForProfessional')
 		return result.rows;
 	} catch (e) {
-		console.error('Erreur lors de la récupération des messages:', e.stack);
 		errorLogger('Erreur lors de la récupération des messages:' + e.stack, 'getMessagesForProfessional')
 		throw e; // Rethrow l'erreur pour le gestionnaire d'erreurs supérieur
 	}

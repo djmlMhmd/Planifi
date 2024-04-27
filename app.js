@@ -3,7 +3,6 @@ require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
-const router = require('./routes/profil');
 const {
 	connectToDatabase,
 	createTableUser,
@@ -15,7 +14,6 @@ const {
 	createTableMessages,
 	createTableDefaultAvailability, createTablePreferencePro, createTableImagesServicesProfessionals,
 } = require('./db/database');
-const { dbConnexion, getDatabase } = require('./db/database');
 const path = require('path');
 const app = express();
 const port = 3000;
@@ -26,7 +24,6 @@ const deleteReservation = require('./routes/delete');
 const services = require('./routes/services');
 const availability = require('./routes/availability');
 const reservation = require('./routes/reservation');
-const jwt = require('jsonwebtoken');
 const secretKey = process.env.SECRET_KEY;
 const EventEmitter = require('events');
 const indexRoutes = require('./routes/index');
@@ -36,6 +33,7 @@ const serviceRouter = require('./routes/services');
 const http = require('http');
 const socketIo = require('socket.io');
 const {alterInTables} = require("./db/alterDatabase");
+const {logLogger} = require("./config/winston/winston.config");
 const server = http.createServer(app);
 const io = socketIo(server);
 
@@ -52,7 +50,7 @@ io.on('connection', (socket) => {
 });
 
 getClientsCollection();
-connectToDatabase().then(res => {
+connectToDatabase().then( ()=> {
 	createTableUser();
 	createTableProfessional();
 	createTableService();
@@ -101,7 +99,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // permet de lancer serveur web
 app.listen(port, () => {
-	console.log(`App listening port ${port}`);
+	logLogger(`App listening port ${port}`, 'App');
 });
 
 app.use(
