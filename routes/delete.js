@@ -1,6 +1,5 @@
 const express = require('express');
 const { Router } = require('express');
-const moment = require('moment');
 const { getClientsCollection } = require('../db/database');
 const {warnLogger, logLogger, errorLogger} = require("../config/winston/winston.config");
 
@@ -10,10 +9,10 @@ router.use(express.json());
 // Côté serveur
 router.delete('/supprimer-reservation/:reservationId', async (req, res) => {
 	try {
-		const clientID = req.session.clientID;
+		const clientID = req.cookies.clientID;
 		const reservationId = req.params.reservationId;
 
-		console.log('Client ID:', req.session.clientID);
+		console.log('Client ID:', req.cookies.clientID);
 		console.log('Reservation ID:', req.params.reservationId);
 
 		// Récupérez le serviceId en interrogeant la base de données à partir de l'ID de réservation.
@@ -62,7 +61,7 @@ router.delete('/supprimer-reservation/:reservationId', async (req, res) => {
 router.delete('/services/delete/:serviceId', async (req, res) => {
 	try {
 		const serviceId = req.params.serviceId;
-		const professionalId = req.session.professionalID;
+		const professionalId = req.cookies.professionalID;
 
 		const client = getClientsCollection();
 

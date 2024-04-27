@@ -100,8 +100,19 @@ router.post('/connexion', async (req, res) => {
 
 			if (match) {
 				const clientID = connexionResult.rows[0].users_id;
-				res.cookie('clientID', clientID);
-				req.session.clientID = clientID;
+				/**
+				 * correspond à la durée de vie du cookie ici on est sur 3 jours
+				 * 3 => nombres de jours
+				 * 24 => 24h
+				 * 60 => 60 minutes
+				 * 60 => 60 secondes
+				 * 1000 => 1s (millisecondses)
+				 *
+				 * la durée de vie d'un cookie se transmet en millisecondes
+				 */
+				const maxAge = 3 * 24 * 60 * 60 * 1000;
+				res.cookie('clientID', clientID, { maxAge });
+				//req.session.clientID = clientID;
 				console.log('Authentification réussie');
 				console.log('clientID dans la session :', req.session.clientID);
 				logLogger('Authentification réussie' , 'authentification.js /connexion')
@@ -124,13 +135,13 @@ router.post('/connexion', async (req, res) => {
 
 			if (match) {
 				const professionalID = professional.professional_id;
-				req.session.professionalID = professionalID;
+				req.cookies.professionalID = professionalID;
 				console.log(
 					'Authentification réussie en tant que professionnel'
 				);
 				console.log(
 					'professionalID dans la session :',
-					req.session.professionalID
+					req.cookies.professionalID
 				);
 				logLogger('Authentification réussie en tant que professionnel', 'authentification.js /connexion')
 				logLogger(`professionalID dans la session :', ${req.session.professionalID}`, 'authentification.js /connexion')

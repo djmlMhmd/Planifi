@@ -14,7 +14,7 @@ router.post('/service/create', async (req, res) => {
 		req.body;
 	console.log('Données reçues du formulaire :', req.body);
 	const durationText = duration;
-	const professional_id = req.session.professionalID;
+	const professional_id = req.cookies.professionalID;
 	//console.log('id pro:', professional_id);
 	try {
 		const client = getClientsCollection();
@@ -98,7 +98,7 @@ router.get('/liste-services/:professionalId', async (req, res) => {
 router.get('/services/:professionalId', async (req, res) => {
 	try {
 		const client = getClientsCollection();
-		const professionalID = req.session.professionalID;
+		const professionalID = req.cookies.professionalID;
 		console.log('id pro:', professionalID);
 
 		const services = await client.query(
