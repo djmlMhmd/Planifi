@@ -11,7 +11,7 @@ router.use(express.json());
 
 // SERVICE CREATE
 
-router.post('', requiredAuth, async (req, res) => {
+router.post('/service/create', requiredAuth, async (req, res) => {
 	const { service_name, service_description, service_price, duration } =
 		req.body;
 	verboseLogger(`Données reçues du formulaire :${req.body}`, 'services.js [POST] /service/create');
@@ -63,7 +63,7 @@ router.get('/service', requiredAuth, async (req, res) => {
 router.get('/liste-services/:professionalId', requiredAuth, async (req, res) => {
 	try {
 		const client = getClientsCollection();
-		const professionalId = req.params.professionalId;
+		const { professionalId } = req.params;
 		verboseLogger(`id pro:${professionalId}`, 'services.js [GET} /liste-services/:professionalId');
 
 		const services = await client.query(
@@ -76,32 +76,9 @@ router.get('/liste-services/:professionalId', requiredAuth, async (req, res) => 
 			[professionalId]
 		);
 		verboseLogger(`Récuperation de la liste des servives du pro: ${professionalId}`, 'services.js [GET] /liste-services/:professionalId')
-		return res.json(services.rows);
+		return sendSuccess(res, services.rows)
 	} catch (e) {
 		errorLogger(`Erreur lors de la récupération des services pro id: ${professionalId} : ` + e.stack, 'services.js [GET] /liste-services/:professionalId')
-		sendInternalServerError(res, 'Erreur lors de la récupération des services :' + e.message)
-	}
-});
-
-// Nouvelle route pour afficher les services d'une entreprise spécifique
-router.get('/services/:professionalId', requiredAuth, async (req, res) => {
-	try {
-		const client = getClientsCollection();
-		verboseLogger(`id pro:${professionalId}`, 'services.js [GET] /services/:professionalId');
-		const { id } = decodeJWT(req.cookies.jwt)
-
-		const services = await client.query(
-			`SELECT services.service_id, services.service_name, services.service_description, services.service_price, services.duration, 
-            professionals.email, professionals.phone, professionals.company_name, professionals.company_address 
-            FROM services 
-            INNER JOIN professionals 
-            ON services.professional_id = professionals.professional_id
-            WHERE professionals.professional_id = $1`,
-			[id]
-		);
-		return res.json(services.rows);
-	} catch (e) {
-		errorLogger(`'Erreur lors de la récupération des services : ${e.stack}`, 'services.js [GET] /services/:professionalId')
 		sendInternalServerError(res, 'Erreur lors de la récupération des services :' + e.message)
 	}
 });
