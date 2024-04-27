@@ -35,7 +35,7 @@ const sendSuccessfullyCreated = (res, message, status = 201) => {
  * @param message message
  * @param status status de la requete
  */
-const sendNoContent = (res, message = '', status = 204) => {
+const sendSuccessWithNoContent = (res, message = '', status = 204) => {
     res.status(status).json({
         code: status,
         message,
@@ -44,7 +44,7 @@ const sendNoContent = (res, message = '', status = 204) => {
 }
 
 /**
- * Case for token/credentials invalid
+ * Case for bad request
  *
  * @param res objet résultat de la requete
  * @param error message
@@ -126,5 +126,5 @@ module.exports = {
     sendFailure,
     sendInternalServerError,
     sendBadRequest,
-    sendNoContent
+    sendSuccessWithNoContent
 }

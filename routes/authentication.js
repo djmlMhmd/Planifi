@@ -8,6 +8,7 @@ const {createToken, EXPIRES_IN} = require("../utils/auth.utils");
 const saltRounds = 10;
 const {logLogger, errorLogger} = require('../config/winston/winston.config')
 const {sendInternalServerError, sendError, sendBadRequest} = require("../utils/error_message.utils");
+const {constants} = require("../constants/constants");
 
 router.use(express.json());
 
@@ -26,7 +27,7 @@ router.post('/inscription', async (req, res) => {
 		const hash = await bcrypt.hash(body.password, saltRounds);
 		const client = getClientsCollection();
 		const tableName =
-			reqValue === 'professionnel' ? 'professionals' : 'users';
+			reqValue === constants.STATUT_PROFESSIONNEL ? 'professionals' : 'users';
 
 		const values = [
 			body.firstName,
@@ -37,13 +38,13 @@ router.post('/inscription', async (req, res) => {
 		];
 
 		// Pour les professionnels, on ajoute aussi company_name et company_address
-		if (reqValue === 'professionnel') {
+		if (reqValue === constants.STATUT_PROFESSIONNEL) {
 			values.push(body.company_name);
 			values.push(body.company_address);
 		}
 
 		const insertQuery =
-			reqValue === 'professionnel'
+			reqValue === constants.STATUT_PROFESSIONNEL
 				? `INSERT INTO ${tableName}("firstName", "lastName", password, email, phone, company_name, company_address)
        VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING RETURNING *`
 				: `INSERT INTO ${tableName}("firstName", "lastName", password, email, phone)
@@ -108,7 +109,7 @@ router.post('/connexion', async (req, res) => {
 				const maxAge = 3 * 24 * 60 * 60 * 1000;
 				res.cookie('clientID', clientID, { maxAge });
 
-				const token = createToken(clientID, 'client')
+				const token = createToken(clientID, constants.STATUT_CLIENT)
 				res.cookie('jwt', token, {httpOnly: true, maxAge: EXPIRES_IN * 1000})
 				logLogger('Authentification réussie' , 'authentification.js /connexion')
 				logLogger(`clientID dans la session : ${clientID}`, 'authentification.js /connexion')
@@ -126,7 +127,7 @@ router.post('/connexion', async (req, res) => {
 			if (match) {
 				const professionalID = professional.professional_id;
 				req.cookies.professionalID = professionalID;
-				const token = createToken(professionalID, 'professional')
+				const token = createToken(professionalID, constants.STATUT_PROFESSIONNEL)
 				res.cookie('jwt', token, {httpOnly: true, maxAge: EXPIRES_IN * 1000})
 				logLogger('Authentification réussie en tant que professionnel', 'authentification.js /connexion')
 				logLogger(`professionalID dans la session :', ${req.session.professionalID}`, 'authentification.js /connexion')

@@ -1,4 +1,4 @@
-const {checkIfColumnExistInTable, addColumInTable, checkIfTableExist} =  require("./utils/utils")
+const {checkIfColumnExistInTable, addColumInTable, checkIfTableExist} =  require("./utils/database.utils")
 const {logLogger, errorLogger} = require("../config/winston/winston.config");
 
 const alterInTables = () => {

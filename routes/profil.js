@@ -9,7 +9,13 @@ const {errorLogger, warnLogger, logLogger} = require("../config/winston/winston.
 const {auth} = require("../config/firebase");
 const {uploadSingle, uploadMultiple, ERROR_MESSAGES} = require("../middleware/multer");
 const UUID  = require("uuid-v4")
-const {sendInternalServerError, sendError, sendBadRequest, sendSuccessfullyCreated} = require("../utils/error_message.utils");
+const {sendInternalServerError, sendError, sendBadRequest, sendSuccessfullyCreated, sendUnauthrorized, sendSuccess,
+	sendFailure, sendSuccessWithNoContent
+} = require("../utils/error_message.utils");
+const bcrypt = require("bcrypt");
+const {checkIsNumber, convertToNumber} = require("../utils/methods.utils");
+const {constants} = require("../constants/constants");
+const saltRounds = 10;
 
 // PROFESSIONAL PROFILE
 
@@ -32,20 +38,14 @@ router.get('/profil/professionnel/:id',requiredAuth, async (req, res) => {
 
 		if (result.rows.length === 0) {
 			warnLogger(`Profil professionnel non trouvé ${professionnelId}`, 'profil.js [GET] /profil/professionnel/:id')
-			return res
-				.status(404)
-				.json({ message: 'Profil professionnel non trouvé' });
+			return sendError(res, 'Profil professionnel non trouvé')
 		}
 
 		//const professionnel = result.rows[0];
 		const { password, creation_date, ...professionalProfile } =
 			result.rows[0];
-		res.json(professionalProfile);
+		sendSuccess(res, professionalProfile)
 	} catch (e) {
-		console.error(
-			'Erreur lors de la récupération du profil professionnel:',
-			e.stack
-		);
 		errorLogger(`Erreur lors de la récupération du profil professionnel: ${JSON.stringify(e.stack)}`, 'profil.js [GET] /profil/professionnel/:id')
 		sendInternalServerError(res, 'Erreur serveur' )
 	}
@@ -58,13 +58,21 @@ router.get('/profil/client/:id', requiredAuth, async (req, res) => {
 	 * en principe si on a passé le middleware "requiredAuth"
 	 * on est forcément authentifié et donc le cookie "JWT" existe
  	 */
-	const { id } = decodeJWT(req.cookies.jwt)
+	let idReq  = req.params['id'];
+	let { id, statut } = decodeJWT(req.cookies.jwt)
+
+	if (!checkIsNumber(idReq)) {
+		return sendBadRequest(res, "l'id doit etre un entier")
+	}
+
+	if(convertToNumber(idReq) !== id) {
+		return sendUnauthrorized(res, 'Permission non autorisé')
+	}
 
 	if (!id) {
-        warnLogger(`Authentification requise`, 'profil.js [GET] /profil/professionnel/:id')
+        warnLogger(`Authentification requise`, 'profil.js [GET] /profil/client/:id' )
 		return sendError(res, 'Authentification requise')
 	}
-	//req.cookies.clientID = clientID;
 
 	try {
 		const client = getClientsCollection();
@@ -76,25 +84,93 @@ router.get('/profil/client/:id', requiredAuth, async (req, res) => {
 		const result = await client.query(query);
 
 		if (result.rows.length === 0) {
-			warnLogger(`Profil professionnel non trouvé ${professionnelId}`, 'profil.js [GET] /profil/professionnel/:id')
-			return res
-				.status(404)
-				.json({ message: 'Profil client non trouvé' });
+			warnLogger(`Profil client non trouvé ${id}`, 'profil.js [GET] /profil/client/:id')
+			return sendError(res, 'Profil client non trouvé' )
 		}
 
 		const { password, creation_date, ...clientProfile } = result.rows[0];
 		res.json(clientProfile);
 	} catch (e) {
-		console.error(
-			'Erreur lors de la récupération du profil client:',
-			e.stack
-		);
-		errorLogger(`Erreur lors de la récupération du profil client: ${JSON.stringify(e.stack)}`, 'profil.js [GET] /profil/professionnel/:id')
+		errorLogger(`Erreur lors de la récupération du profil client: ${JSON.stringify(e.stack)}`, 'profil.js [GET] /profil/client/:id')
 		sendInternalServerError(res, 'Erreur serveur' )
 	}
 });
 
-router.put('/profil/:id/update-profil-picture', uploadSingle, async (req, res) => {
+router.put('/profil/:id/change-password', requiredAuth, async (req, res) => {
+	let idReq  = req.params['id'];
+	let { id, statut } = decodeJWT(req.cookies.jwt)
+
+	if (!checkIsNumber(idReq)) {
+		warnLogger(`L'utilisateur ${id} a appelé la route avec le paramètre de requete suivant: ${idReq}`, 'profil.js [PUT] /profil/:id/change-password')
+		return sendBadRequest(res, "l'id doit etre un entier")
+	}
+
+	if(convertToNumber(idReq) !== id) {
+		warnLogger(`L'utilisateur ${id} a tenté de modifier le mot de passe de l'utilisateur ${idReq}`, 'profil.js [PUT] /profil/:id/change-password')
+		return sendUnauthrorized(res, 'Permission non autorisé')
+	}
+	/**
+	 * le front se chargera de vérifier que l'ancien mot de passe et le nouveau sont bien différents
+	 * afin d'eviter les traitement inutiles dans le back
+	 */
+	const {previousPassword, newPassword} = req.body
+	if(previousPassword === undefined || newPassword === undefined) {
+		logLogger("Erreur dans les données du body de la requête, l'un des 2 mots de passe n'est pas renseigné", "profil.js [PUT] /profil/:id/change-password")
+		return sendBadRequest(res, 'Erreur dans les données du body')
+	}
+
+	const client = getClientsCollection();
+	let getUserQuery = ''
+	if(statut === constants.STATUT_PROFESSIONNEL) {
+		getUserQuery = await client.query(
+			'SELECT * FROM professionals WHERE professional_id = $1',
+			[id]
+		);
+	}
+	else {
+		getUserQuery = await client.query(
+			'SELECT * FROM users WHERE users_id = $1',
+			[id]
+		);
+	}
+
+	if (getUserQuery.rows.length === 1) {
+		const hashedPassword = getUserQuery.rows[0].password;
+
+		//Compare the password supplied with the hashed password
+		const match = await bcrypt.compare(previousPassword, hashedPassword);
+
+		if (match){
+			const hash = await bcrypt.hash(newPassword, saltRounds);
+			let updatePasswordResult
+			if(statut === constants.STATUT_PROFESSIONNEL) {
+				updatePasswordResult = await client.query(
+					'UPDATE professionals SET password = $1 WHERE professional_id = $2',
+					[ hash, id]
+				);
+			}
+			else {
+				updatePasswordResult = await client.query(
+					'UPDATE users SET password = $1 WHERE users_id = $2',
+					[ hash, id]
+				);
+			}
+
+			if(updatePasswordResult.rowCount === 0){
+				errorLogger(`Echec lors de la mise à jour du mot de passe de l'utilisateur ${getUserQuery.rows[0].email}`, "profil.js [PUT] /profil/:id/change-password")
+				sendFailure(res, 'Echec de la mise à jour du mot de passe')
+			}
+			sendSuccessWithNoContent(res)
+		}
+		else{
+			errorLogger(`L'ancien mot de passe fourni ne correspond pas à celui enregistré en base de l'utilisateur ${getUserQuery.rows[0].email}`, "profil.js [PUT] /profil/:id/change-password")
+			sendBadRequest(res,"L'ancien mot de passe fourni ne correspond pas à celui enregistré en base")
+		}
+	}
+
+})
+
+router.put('/profil/:id/update-profil-picture', requiredAuth, uploadSingle, async (req, res) => {
 	// Retrieves the client ID from the session or cookie
 	const userID = req.cookies.clientID;
 	const file = req.file
@@ -154,9 +230,7 @@ router.put('/profil/:id/update-profil-picture', uploadSingle, async (req, res) =
 		const resultUpdateProfilPicture = await client.query(queryUpdateProfilPicture);
 
 		if (resultUpdateProfilPicture.rowCount === 0) {
-			return res
-				.status(404)
-				.json({ message: "Erreur lors de la mise à jour de la photo de profil de l'utilisateur"});
+			sendError(res, "Erreur lors de la mise à jour de la photo de profil de l'utilisateur")
 		}
 
 		const queryGetUser = {
@@ -167,19 +241,14 @@ router.put('/profil/:id/update-profil-picture', uploadSingle, async (req, res) =
 		const resultGetUser = await client.query(queryGetUser);
 
 		if (resultGetUser.rows.length === 0) {
-			return res
-				.status(404)
-				.json({ message: 'Profil client non trouvé' });
+			sendError(res, 'Profil client non trouvé')
 		}
 
 		const { password, creation_date, ...clientProfile} = resultGetUser.rows[0];
 		return sendSuccessfullyCreated(res, clientProfile )
 
 	} catch (e) {
-		console.error(
-			'Erreur lors de la récupération du profil:',
-			e.stack
-		);
+		errorLogger('Erreur lors de la récupération du profil:' + e.stack, ' profil.js [PUT] /profil/:id/update-profile-picture')
 		sendInternalServerError(res, 'Erreur serveur' )
 	}
 })

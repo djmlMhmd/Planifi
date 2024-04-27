@@ -1,4 +1,4 @@
-const { checkIfTableExist, checkIfColumnExistInTable} = require("./utils/utils");
+const { checkIfTableExist, checkIfColumnExistInTable} = require("./utils/database.utils");
 const {errorLogger} = require("../config/winston/winston.config");
 
 const deleteInTables = () => {
