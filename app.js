@@ -35,6 +35,7 @@ const serviceRouter = require('./routes/services');
 // message en temps réel
 const http = require('http');
 const socketIo = require('socket.io');
+const {alterInTables} = require("./db/alterDatabase");
 const server = http.createServer(app);
 const io = socketIo(server);
 
@@ -59,7 +60,7 @@ createTableAvailability();
 createTableReservation();
 createTableDefaultAvailability();
 createTableMessages();
-
+alterInTables()
 // Increase the listener limit for an EventEmitter object
 const bus = new EventEmitter();
 bus.setMaxListeners(30);
