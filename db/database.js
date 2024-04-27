@@ -307,6 +307,41 @@ const createTablePreferencePro = async () => {
 	}
 };
 
+const createTableImagesServicesProfessionals = async () => {
+	try {
+		const checkTableQuery = `
+      SELECT to_regclass('images_services_professionals') as table_exists;
+    `;
+
+		const result = await client.query(checkTableQuery);
+		if (result.rows[0].table_exists === null) {
+			const createTableQuery = `
+        CREATE TABLE images_services_professionals (
+          image_id SERIAL PRIMARY KEY,
+		  pro_id INT,
+		  service_id INT,
+		  image_URL VARCHAR,
+		  CONSTRAINT FK_sender_id FOREIGN KEY (pro_id)
+			  REFERENCES professionals(professional_id),
+		  CONSTRAINT FK_service_id FOREIGN KEY (service_id)
+			  REFERENCES services(service_id)
+        );
+      `;
+
+			await client.query(createTableQuery);
+			logLogger('Table [images_services_professionals] créée avec succès', 'createTableImagesServicesProfessionals')
+		} else {
+			verboseLogger('La table [images_services_professionals] existe déjà.', 'createTableImagesServicesProfessionals')
+		}
+	} catch (e) {
+		console.error(
+			'Erreur lors de la création/verification de la table des images_services_professionals',
+			e.stack
+		);
+		errorLogger('Erreur lors de la création/verification de la table [images_services_professionals]:' + e.stack, 'createTableImagesServicesProfessionals')
+	}
+};
+
 const saveMessage = async ({
 	sender_id,
 	receiver_id,
@@ -372,5 +407,6 @@ module.exports = {
 	saveMessage,
 	getMessagesForProfessional,
 	getClientsCollection,
-	createTablePreferencePro
+	createTablePreferencePro,
+	createTableImagesServicesProfessionals
 };
