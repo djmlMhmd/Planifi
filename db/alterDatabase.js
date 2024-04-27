@@ -1,4 +1,5 @@
 const {checkIfColumnExistInTable, addColumInTable, checkIfTableExist} =  require("./utils/utils")
+const {logLogger} = require("../config/winston/winston.config");
 
 const alterInTables = () => {
     try {
@@ -13,7 +14,28 @@ const alterInTables = () => {
                                 addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'BOOLEAN')
                                     .then(columnAddResult => {
                                         if (columnAddResult) {
-                                            console.log(`La colonne 'est_verifie' a bien été ajouté dans la table 'USERS`)
+                                            logLogger(`La colonne 'est_verifie' a bien été ajouté dans la table 'USERS`, 'alterInTables')
+                                        }
+                                    })
+                            }
+                        })
+                }
+            })
+            .catch(e => console.log(e))
+        /**
+         * MODIFICATIONS DE LA TABLE PRO
+         */
+        checkIfTableExist('professionals')
+            .then((resultTableExists) => {
+                if (resultTableExists.exists) {
+                    checkIfColumnExistInTable(resultTableExists.tableName, 'banner_profile')
+                        .then((resultColumnExists) => {
+                            if (!resultColumnExists.exists) {
+                                /* Créer la colonne ici*/
+                                addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'VARCHAR')
+                                    .then(columnAddResult => {
+                                        if (columnAddResult) {
+                                            logLogger(`La colonne 'banner_profile' a bien été ajouté dans la table 'PROFESSIONALS`, 'alterInTables')
                                         }
                                     })
                             }
