@@ -1,6 +1,7 @@
 const express = require('express');
 const { Router } = require('express');
-const {warnLogger, errorLogger} = require("../config/winston/winston.config");
+const { errorLogger} = require("../config/winston/winston.config");
+const {sendInternalServerError, sendSuccess} = require("../utils/error_message.utils");
 const router = Router();
 
 router.use(express.json());
@@ -12,12 +13,9 @@ router.post('/deconnexion/client', (req, res) => {
 	req.session.destroy((err) => {
 		if (err) {
 			errorLogger(`Erreur lors de la déconnexion`, 'disconnect.js [POST] /deconnexion/client')
-			console.error('Erreur lors de la déconnexion :', err);
-			return res
-				.status(500)
-				.json({ message: 'Erreur serveur lors de la déconnexion' });
+			return sendInternalServerError(res, 'Erreur serveur lors de la déconnexion')
 		}
-		res.status(200).json({ message: 'Déconnexion réussie' });
+		sendSuccess(res, 'Déconnexion réussie' )
 	});
 });
 

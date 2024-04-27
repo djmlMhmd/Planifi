@@ -1,25 +1,23 @@
 const express = require('express');
 const { Router } = require('express');
 const router = Router();
-const userValidation = require('../validation/validation');
 const { getClientsCollection } = require('../db/database');
 const {requiredAuth} = require("../middleware/authMiddleware");
 const {decodeJWT} = require("../utils/auth.utils");
 const {verboseLogger, errorLogger, warnLogger, logLogger} = require("../config/winston/winston.config");
+const {sendInternalServerError, sendFailure, sendSuccess} = require("../utils/error_message.utils");
 
 router.use(express.json());
 
 // SERVICE CREATE
 
-router.post('/service/create', requiredAuth, async (req, res) => {
+router.post('', requiredAuth, async (req, res) => {
 	const { service_name, service_description, service_price, duration } =
 		req.body;
-	console.log('Données reçues du formulaire :', req.body);
+	verboseLogger(`Données reçues du formulaire :${req.body}`, 'services.js [POST] /service/create');
 	const durationText = duration;
-	const professional_id = req.cookies.professionalID;
 
-    const { id, statut } = decodeJWT(req.cookies.jwt)
-    //console.log('id pro:', professional_id);
+    const { id } = decodeJWT(req.cookies.jwt)
 	try {
 		const client = getClientsCollection();
 		await client.query(
@@ -33,15 +31,11 @@ router.post('/service/create', requiredAuth, async (req, res) => {
 				id,
 			]
 		);
-		console.log('Service créé avec succès.');
 		verboseLogger(`Service créé avec succès: nom: ${service_name}, description: ${service_description}, prix ${service_price}, durée: ${duration}`, 'services.js [POST] /service/create')
-		return res.status(200).json({ message: 'Service créer' });
+		return sendSuccess(res, 'Service créer')
 	} catch (e) {
-		console.error('Erreur lors la création du service :', e.stack);
 		errorLogger(`Erreur lors la création du service : ${ e.stack}`, 'services.js [POST] /service/create')
-		res.status(500).json(
-			'Erreur lors la création du service :' + e.message
-		);
+		sendFailure(res, 'Erreur lors la création du service :' + e.message)
 	}
 });
 
@@ -60,14 +54,8 @@ router.get('/service', requiredAuth, async (req, res) => {
 		verboseLogger(`Recuperation de l'ensemble des services`, 'services.js [GET] /service')
 		return res.json(services.rows);
 	} catch (e) {
-		console.error(
-			'Erreur lors la récupération de la liste des services:',
-			e.stack
-		);
 		errorLogger(`Erreur lors la récupération de la liste des services:` + e.stack, 'services.js [GET] /service')
-		res.status(500).json(
-			'Erreur lors la création de la liste des services :' + e.message
-		);
+		sendInternalServerError(res, 'Erreur lors la création de la liste des services :' + e.message)
 	}
 });
 
@@ -76,7 +64,7 @@ router.get('/liste-services/:professionalId', requiredAuth, async (req, res) => 
 	try {
 		const client = getClientsCollection();
 		const professionalId = req.params.professionalId;
-		console.log('id pro:', professionalId);
+		verboseLogger(`id pro:${professionalId}`, 'services.js [GET} /liste-services/:professionalId');
 
 		const services = await client.query(
 			`SELECT services.service_id, services.service_name, services.service_description, services.service_price, services.duration, 
@@ -90,11 +78,8 @@ router.get('/liste-services/:professionalId', requiredAuth, async (req, res) => 
 		verboseLogger(`Récuperation de la liste des servives du pro: ${professionalId}`, 'services.js [GET] /liste-services/:professionalId')
 		return res.json(services.rows);
 	} catch (e) {
-		console.error('Erreur lors de la récupération des services :', e.stack);
 		errorLogger(`Erreur lors de la récupération des services pro id: ${professionalId} : ` + e.stack, 'services.js [GET] /liste-services/:professionalId')
-		res.status(500).json(
-			'Erreur lors de la récupération des services :' + e.message
-		);
+		sendInternalServerError(res, 'Erreur lors de la récupération des services :' + e.message)
 	}
 });
 
@@ -102,9 +87,8 @@ router.get('/liste-services/:professionalId', requiredAuth, async (req, res) => 
 router.get('/services/:professionalId', requiredAuth, async (req, res) => {
 	try {
 		const client = getClientsCollection();
-		const professionalID = req.cookies.professionalID;
-		console.log('id pro:', professionalID);
-		const { id, statut } = decodeJWT(req.cookies.jwt)
+		verboseLogger(`id pro:${professionalId}`, 'services.js [GET] /services/:professionalId');
+		const { id } = decodeJWT(req.cookies.jwt)
 
 		const services = await client.query(
 			`SELECT services.service_id, services.service_name, services.service_description, services.service_price, services.duration, 
@@ -115,13 +99,10 @@ router.get('/services/:professionalId', requiredAuth, async (req, res) => {
             WHERE professionals.professional_id = $1`,
 			[id]
 		);
-
 		return res.json(services.rows);
 	} catch (e) {
-		console.error('Erreur lors de la récupération des services :', e.stack);
-		res.status(500).json(
-			'Erreur lors de la récupération des services :' + e.message
-		);
+		errorLogger(`'Erreur lors de la récupération des services : ${e.stack}`, 'services.js [GET] /services/:professionalId')
+		sendInternalServerError(res, 'Erreur lors de la récupération des services :' + e.message)
 	}
 });
 
@@ -135,14 +116,8 @@ router.get('/professionals', requiredAuth, async (req, res) => {
 		verboseLogger(`Récuperation de la liste des pro`, 'services.js [GET] /professionals')
 		return res.json(professionals.rows);
 	} catch (e) {
-		console.error(
-			'Erreur lors de la récupération des professionnels :',
-			e.stack
-		);
 		errorLogger(`Erreur lors de la récupération des professionnels: ${e.stack}`, 'services.js [GET] /professionals')
-		res.status(500).json(
-			'Erreur lors de la récupération des professionnels :' + e.message
-		);
+		sendInternalServerError(res, 'Erreur lors de la récupération des professionnels :' + e.message)
 	}
 });
 
@@ -170,15 +145,8 @@ router.get('/reservation/:serviceId', requiredAuth, async (req, res) => {
 		logLogger(`Récupération des infos du service: ${serviceId}`, 'services.js [GET] /reservation/:serviceId')
 		res.json(serviceInfo);
 	} catch (e) {
-		console.error(
-			'Erreur lors de la récupération des informations du service :',
-			e.stack
-		);
 		errorLogger(`Erreur lors de la récupération des informations du service: ${serviceId}: ${e.stack}`, 'services.js [GET] /reservation/:serviceId')
-		res.status(500).json(
-			'Erreur lors de la récupération des informations du service : ' +
-				e.message
-		);
+		sendInternalServerError(res, 'Erreur lors de la récupération des informations du service : ' + e.message)
 	}
 });
 
@@ -199,11 +167,8 @@ router.get('/search-services', requiredAuth, async (req, res) => {
 		verboseLogger(`Récuperation des services ayant un nom ressemblant à : ${searchTerm.toLowerCase()}`, 'services.js [GET] /search-services')
 		return res.json(services.rows);
 	} catch (e) {
-		console.error('Erreur lors de la recherche de services :', e.stack);
 		verboseLogger(`Erreur lors de la recherche de services :: ${e.stack}`, 'services.js [GET] /search-services')
-		res.status(500).json(
-			'Erreur lors de la recherche de services : ' + e.message
-		);
+		sendInternalServerError(res, 'Erreur lors de la recherche de services : ' + e.message)
 	}
 });
 

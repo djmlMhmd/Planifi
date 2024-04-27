@@ -5,10 +5,11 @@ const { getClientsCollection } = require('../db/database');
 router.use(express.json());
 const {requiredAuth} = require("../middleware/authMiddleware");
 const {decodeJWT} = require("../utils/auth.utils");
-const {errorLogger, warnLogger} = require("../config/winston/winston.config");
+const {errorLogger, warnLogger, logLogger} = require("../config/winston/winston.config");
 const {auth} = require("../config/firebase");
 const {uploadSingle, uploadMultiple, ERROR_MESSAGES} = require("../middleware/multer");
 const UUID  = require("uuid-v4")
+const {sendInternalServerError, sendError, sendBadRequest, sendSuccessfullyCreated} = require("../utils/error_message.utils");
 
 // PROFESSIONAL PROFILE
 
@@ -18,7 +19,7 @@ router.get('/profil/professionnel/:id',requiredAuth, async (req, res) => {
 	const { id } = decodeJWT(req.cookies.jwt)
 	if (!id) {
 		warnLogger(`Authentification requise`, 'profil.js [GET] /profil/professionnel/:id')
-		return res.status(401).json({ message: 'Authentification requise' });
+		return sendError(res, 'Authentification requise')
 	}
 	try {
 		const client = getClientsCollection();
@@ -46,7 +47,7 @@ router.get('/profil/professionnel/:id',requiredAuth, async (req, res) => {
 			e.stack
 		);
 		errorLogger(`Erreur lors de la récupération du profil professionnel: ${JSON.stringify(e.stack)}`, 'profil.js [GET] /profil/professionnel/:id')
-		res.status(500).json({ message: 'Erreur serveur' });
+		sendInternalServerError(res, 'Erreur serveur' )
 	}
 });
 
@@ -61,7 +62,7 @@ router.get('/profil/client/:id', requiredAuth, async (req, res) => {
 
 	if (!id) {
         warnLogger(`Authentification requise`, 'profil.js [GET] /profil/professionnel/:id')
-		return res.status(401).json({ message: 'Authentification requise' });
+		return sendError(res, 'Authentification requise')
 	}
 	//req.cookies.clientID = clientID;
 
@@ -89,7 +90,7 @@ router.get('/profil/client/:id', requiredAuth, async (req, res) => {
 			e.stack
 		);
 		errorLogger(`Erreur lors de la récupération du profil client: ${JSON.stringify(e.stack)}`, 'profil.js [GET] /profil/professionnel/:id')
-		res.status(500).json({ message: 'Erreur serveur' });
+		sendInternalServerError(res, 'Erreur serveur' )
 	}
 });
 
@@ -102,10 +103,10 @@ router.put('/profil/:id/update-profil-picture', uploadSingle, async (req, res) =
 	let imageUrl = ""
 	const dateActuelle = new Date()
 	if (!userID) {
-		return res.status(401).json({ message: 'Authentification requise' });
+		return sendError(res, 'Authentification requise')
 	}
 	if (!file) {
-		return res.status(400).json({ message: 'Aucun fichier upload' });
+		sendBadRequest(res, 'Aucun fichier upload')
 	}
 	//req.session.clientID = userID;
 
@@ -134,12 +135,12 @@ router.put('/profil/:id/update-profil-picture', uploadSingle, async (req, res) =
 		})
 
 		blobStream.on("error", err => {
-			console.log(`erreur lors de l'upload de l'image ${imageUrl} de l'utilisateur ${userID}`)
-			console.log(err)
+			errorLogger(`erreur lors de l'upload de l'image ${imageUrl} de l'utilisateur ${userID}`, 'profil.js [POST] /profil/:id/update-profil-picture')
+			errorLogger(err, 'profil.js [POST] /profil/:id/update-profil-picture')
 		})
 
 		blobStream.on("finish", () => {
-			console.log(`upload de l'image ${imageUrl} de l'utilisateur ${userID} a bien été effectuée`)
+			logLogger(`upload de l'image ${imageUrl} de l'utilisateur ${userID} a bien été effectuée`, 'profil.js [POST] /profil/:id/update-profil-picture')
 		})
 
 		blobStream.end(req.file.buffer)
@@ -171,14 +172,15 @@ router.put('/profil/:id/update-profil-picture', uploadSingle, async (req, res) =
 				.json({ message: 'Profil client non trouvé' });
 		}
 
-		const { password, creation_date, ...clientProfile } = resultGetUser.rows[0];
-		 res.status(201).json(clientProfile);
+		const { password, creation_date, ...clientProfile} = resultGetUser.rows[0];
+		return sendSuccessfullyCreated(res, clientProfile )
+
 	} catch (e) {
 		console.error(
 			'Erreur lors de la récupération du profil:',
 			e.stack
 		);
-		res.status(500).json({ message: 'Erreur serveur' });
+		sendInternalServerError(res, 'Erreur serveur' )
 	}
 })
 
@@ -206,11 +208,11 @@ router.put('/profil/:id/upload-service-picture/:serviceId', async (req, res) => 
 
 		const { id } = decodeJWT(req.cookies.jwt)
 		if (!id) {
-			return res.status(401).json({ message: 'Authentification requise' });
+			return sendError(res, 'Authentification requise')
 		}
 
 		if (files.length === 0) {
-			return res.status(400).json({ message: 'Aucun fichier upload' });
+			sendBadRequest(res, 'Aucun fichier upload')
 		}
 		try {
 			let tableauEchecs = []
@@ -241,13 +243,13 @@ router.put('/profil/:id/upload-service-picture/:serviceId', async (req, res) => 
 				})
 
 				blobStream.on("error", err => {
-					console.log(`erreur lors de l'upload de l'image ${imageUrl} de l'utilisateur ${id}`)
+					errorLogger(`erreur lors de l'upload de l'image ${imageUrl} de l'utilisateur ${id}`, 'profil.js [POST] /profil/:id/upload-service-picture/:serviceId')
 					tableauEchecs.push(imageUrl)
-					console.log(err)
+					errorLogger(err, 'profil.js [POST] /profil/:id/upload-service-picture/:serviceId')
 				})
 
 				blobStream.on("finish", () => {
-					console.log(`upload de l'image ${imageUrl} de l'utilisateur ${id} a bien été effectuée`)
+					logLogger(`upload de l'image ${imageUrl} de l'utilisateur ${userID} a bien été effectuée`, 'profil.js [POST] /profil/:id/upload-service-picture/:serviceId')
 				})
 
 				blobStream.end(file.buffer)
@@ -281,13 +283,10 @@ router.put('/profil/:id/upload-service-picture/:serviceId', async (req, res) => 
 			// }
 			//
 			// const { password, creation_date, ...clientProfile } = resultGetUser.rows[0];
-			res.status(201).json();
+			sendSuccessfullyCreated(res, '')
 		} catch (e) {
-			console.error(
-				'Erreur lors de la récupération du profil:',
-				e.stack
-			);
-			res.status(500).json({ message: 'Erreur serveur' });
+			errorLogger("Erreur lors de la récupération du profil:" + e.stack, 'profil.js [PUT] /profil/:id/upload-service-picture/:serviceId')
+			sendInternalServerError(res, 'Erreur serveur' )
 		}
 	})
 })

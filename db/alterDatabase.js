@@ -1,5 +1,5 @@
 const {checkIfColumnExistInTable, addColumInTable, checkIfTableExist} =  require("./utils/utils")
-const {logLogger} = require("../config/winston/winston.config");
+const {logLogger, errorLogger} = require("../config/winston/winston.config");
 
 const alterInTables = () => {
     try {
@@ -21,7 +21,7 @@ const alterInTables = () => {
                         })
                 }
             })
-            .catch(e => console.log(e))
+            .catch(e => errorLogger(e, "checkIfTableExist('users')"))
         /**
          * MODIFICATIONS DE LA TABLE PRO
          */
@@ -42,9 +42,9 @@ const alterInTables = () => {
                         })
                 }
             })
-            .catch(e => console.log(e))
+            .catch(e => errorLogger(e, " checkIfTableExist('professionals')"))
     } catch (e) {
-        console.log(e)
+       errorLogger(e, 'alterInTables')
     }
 }
 

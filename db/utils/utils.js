@@ -1,4 +1,5 @@
 const { getClientsCollection } = require('../database');
+const {errorLogger} = require("../../config/winston/winston.config");
 
 /**
  * fonction qui vérifie si une table existe
@@ -14,7 +15,7 @@ const checkIfTableExist = async (tableName) => {
         const resultTableExists = await client.query(commandCheckTableExists);
         return {exists: resultTableExists.rows[0].exists, tableName}
     } catch (e) {
-        console.log(`Erreur lors de la verification l'existence dans la table ${tableName}:` + JSON.stringify(e))
+        errorLogger(`Erreur lors de la verification l'existence dans la table ${tableName}:` + JSON.stringify(e), 'checkIfTableExist')
     }
 }
 
@@ -37,7 +38,7 @@ const checkIfColumnExistInTable = async (tableName, columnName) => {
         const resultColumnExists = await client.query(commandCheckColumnExists);
         return {exists: resultColumnExists.rows[0].exists, tableName, columnName}
     } catch (e) {
-        console.log(`Erreur lors de la vérification de la présence de la colonne ${columnName} dans la table ${tableName}:` + JSON.stringify(e))
+        errorLogger(`Erreur lors de la vérification de la présence de la colonne ${columnName} dans la table ${tableName}:` + JSON.stringify(e), 'checkIfColumnExistInTable')
     }
 }
 
@@ -66,7 +67,7 @@ const addColumInTable = async (tableName, columnName, columnType, isNotNull = fa
         await client.query(command);
         return true
     } catch (e) {
-        console.log(`Erreur lors de l'ajout de la colonne ${columnName} dans la table ${tableName}:` + e)
+        errorLogger(`Erreur lors de l'ajout de la colonne ${columnName} dans la table ${tableName}:` + e, 'addColumInTable')
     }
 }
 
@@ -83,7 +84,7 @@ const executeCustomQuery = async (query) => {
         return true
     }
     catch (e) {
-        console.log(`Erreur lors de l'execution de la commande personnalisé ${query}, pensez à verifier la commande en local sur PgAdmin:` + e)
+        errorLogger(`Erreur lors de l'execution de la commande personnalisé ${query}, pensez à verifier la commande en local sur PgAdmin:` + e, 'executeCustomQuery')
     }
 }
 
@@ -104,7 +105,7 @@ const deleteColumInTable = async (tableName, columnName) => {
         await client.query(command);
         return true
     } catch (e) {
-        console.log(`Erreur lors de la suppression de la colonne ${columnName} dans la table ${tableName}:` + e)
+        errorLogger(`Erreur lors de la suppression de la colonne ${columnName} dans la table ${tableName}:` + e, 'deleteColumInTable')
     }
 }
 
@@ -127,7 +128,7 @@ const renameColumInTable = async (tableName, columnName, newName) => {
         await client.query(command);
         return true
     } catch (e) {
-        console.log(`Erreur lors du renommage de la colonne ${columnName} dans la table ${tableName}:` + e)
+        errorLogger(`Erreur lors du renommage de la colonne ${columnName} dans la table ${tableName}:` + e, 'renameColumInTable')
     }
 }
 

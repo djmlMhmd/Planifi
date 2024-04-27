@@ -2,9 +2,9 @@ const express = require('express');
 const { Router } = require('express');
 const router = Router();
 const { getClientsCollection } = require('../db/database');
-const availabilityValidation = require('../validation/validation');
 const {errorLogger, warnLogger, logLogger, verboseLogger} = require("../config/winston/winston.config");
 const {requiredAuth} = require("../middleware/authMiddleware");
+const {sendInternalServerError, sendBadRequest, sendSuccessfullyCreated} = require("../utils/error_message.utils");
 
 router.use(express.json());
 
@@ -27,9 +27,7 @@ router.post('/availability', requiredAuth, async (req, res) => {
 
 		if (professionalResult.rows.length === 0) {
 			warnLogger(`Le professionnel avec cet ID n'existe pas":${professional_id}`, 'availability.js [POST] /availability')
-			return res
-				.status(400)
-				.json({ message: "Le professionnel avec cet ID n'existe pas" });
+			sendBadRequest(res, "Le professionnel avec cet ID n'existe pas")
 		}
 
 		// professinal existing add availability
@@ -40,9 +38,7 @@ router.post('/availability', requiredAuth, async (req, res) => {
 
 		if (existingAvailability.rows.length > 0) {
 			warnLogger(`Cette disponibilité existe déjà: pro:${professional_id}, jour de la semaine:${day_of_week}, temps du début:${start_time}, temps de fin:${end_time}`, 'availability.js [POST] /availability')
-			return res
-				.status(400)
-				.json({ message: 'Cette disponibilité existe déjà' });
+			sendBadRequest(res, 'Cette disponibilité existe déjà')
 		}
 
 		const result = await client.query(
@@ -50,18 +46,10 @@ router.post('/availability', requiredAuth, async (req, res) => {
 			[professional_id, day_of_week, start_time, end_time]
 		);
 		logLogger(`Disponibilité créée avec succès": ${JSON.stringify(result.rows[0])}`, 'availability.js [POST] /availability')
-		return res
-			.status(201)
-			.json({ message: 'Disponibilité créée avec succès' });
+		sendSuccessfullyCreated(res, 'Disponibilité créée avec succès' )
 	} catch (e) {
-		console.error(
-			'Erreur lors de la création de la disponibilité :',
-			e.stack
-		);
 		errorLogger("Erreur lors de la création de la disponibilité :'" + JSON.stringify(e.stack), 'availability.js [POST] /availability')
-		res.status(500).json(
-			'Erreur lors de la création de la disponibilité : ' + e.message
-		);
+		sendInternalServerError(res, 'Erreur lors de la création de la disponibilité : ' + e.message)
 	}
 });
 
@@ -83,14 +71,8 @@ router.get('/availability/:professionalId/:dayOfWeek', requiredAuth, async (req,
 		verboseLogger(`Récuperation des disponibilités pour le profesionnel": ${professionalId}, pour le jour de la semaine ${dayOfWeek}`, 'availability.js [GET] /availability/:professionalId/:dayOfWeek')
 		res.json(availableHours);
 	} catch (error) {
-		console.error(
-			'Erreur lors de la récupération des disponibilités',
-			error
-		);
 		errorLogger("Erreur lors de la récupération des disponibilités" + JSON.stringify(error), 'availability.js [GET] /availability/:professionalId/:dayOfWeek')
-		res.status(500).json({
-			error: 'Erreur lors de la récupération des disponibilités',
-		});
+		sendInternalServerError(res, 'Erreur lors de la récupération des disponibilités')
 	}
 });
 
