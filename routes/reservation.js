@@ -6,10 +6,10 @@ const {requiredAuth} = require("../middleware/authMiddleware");
 const {decodeJWT} = require("../utils/auth.utils");
 const {warnLogger, errorLogger, logLogger, verboseLogger} = require("../config/winston/winston.config");
 const {sendInternalServerError, sendBadRequest, sendSuccessfullyCreated, sendSuccessWithNoContent,
-	sendSuccess
+	sendSuccess, sendFailure
 } = require("../utils/error_message.utils");
 const {isUndefinedOrEmpty, isANumber} = require("../utils/methods.utils");
-
+const {sendConfirmationRendezVousClient, sendRendezVousPrisPro} = require("../mail/send-email");
 const router = Router();
 router.use(express.json());
 
@@ -85,7 +85,47 @@ router.post('/reservation', requiredAuth, async (req, res) => {
 		'INSERT INTO reservations (professional_id, start_time, users_id, service_id, day_of_week) VALUES ($1, $2, $3, $4, $5)',
 		[professional_id, start_time, users_id, service_id, day_of_week]
 	);
-	logLogger(`Réservation créée avec succès: pro${professional_id}, heure début: ${start_time}, service id: ${service_id}, jour de la semaine: ${day_of_week}, user: ${users_id}`, 'reservation.js [POST] /reservation')
+
+
+	//TODO : recuperer les mails du pro et du client
+	try{
+		const clientResultQuery = await client.query('select * from users where users_id = $1', [users_id])
+		const proResultQuery = await client.query('select * from professionals where professional_id = $1', [professional_id])
+		const serviceResultQuery = await client.query('select * from services where service_id = $1', [service_id])
+
+		if(clientResultQuery.rowCount > 0 && proResultQuery.rowCount > 0 && serviceResultQuery.rowCount > 0) {
+			const emailClient = clientResultQuery.rows[0].email
+			const prenom_client = clientResultQuery.rows[0].firstName
+			const nom_client = clientResultQuery.rows[0].lastName
+
+			const emailPro = proResultQuery.rows[0].email
+			const prenom_pro = proResultQuery.rows[0].firstName
+			const nom_pro = proResultQuery.rows[0].lastName
+
+			const nom_service = serviceResultQuery.rows[0].service_name
+
+			const rdvInfosClient = {
+				nom_pro: `${nom_pro.toUpperCase()} ${prenom_pro}`,
+				service_nom: nom_service,
+				date: day_of_week,
+				heure: start_time,
+			}
+
+			const rdvInfosPro = {
+				nom_client: `${nom_client.toUpperCase()} ${prenom_client}`,
+				service_nom: nom_service,
+				date: day_of_week,
+				heure: start_time,
+			}
+			await sendConfirmationRendezVousClient(emailClient, prenom_client, rdvInfosClient)
+			await sendRendezVousPrisPro(emailPro, prenom_pro, rdvInfosPro)
+		}
+	}
+	catch (e) {
+		errorLogger(`Erreur lors de la reservation avec les infos: pro: ${professional_id}, heure début: ${start_time}, service id: ${service_id}, jour de la semaine: ${day_of_week}, user: ${users_id}`, 'reservation.js [POST] /reservation')
+		return sendFailure(res, 'Erreur lors de la reservation' )
+	}
+	logLogger(`Réservation créée avec succès: pro: ${professional_id}, heure début: ${start_time}, service id: ${service_id}, jour de la semaine: ${day_of_week}, user: ${users_id}`, 'reservation.js [POST] /reservation')
 	return sendSuccessfullyCreated(res, 'Réservation créée avec succès' )
 });
 
