@@ -2,7 +2,7 @@
  * Vérifie si la valeur passée en paramètre est bien un nombre
  * @param value chaine de caractère
  */
-const checkIsNumber = (value) => {
+const isANumber = (value) => {
     value = parseInt(value, 10)
     return !isNaN(value) && parseFloat(value) === value
 }
@@ -28,7 +28,7 @@ const isUndefinedOrEmpty = (value)  => {
 }
 
 module.exports ={
-    checkIsNumber,
+    isANumber,
     convertToNumber,
     isUndefinedOrEmpty
 }

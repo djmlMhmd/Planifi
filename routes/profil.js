@@ -9,11 +9,11 @@ const {errorLogger, warnLogger, logLogger, verboseLogger} = require("../config/w
 const {auth} = require("../config/firebase");
 const {uploadSingle, uploadMultiple, ERROR_MESSAGES} = require("../middleware/multer");
 const UUID  = require("uuid-v4")
-const {sendInternalServerError, sendError, sendBadRequest, sendSuccessfullyCreated, sendUnauthrorized, sendSuccess,
+const {sendInternalServerError, sendError, sendBadRequest, sendSuccessfullyCreated, sendUnauthorized, sendSuccess,
 	sendFailure, sendSuccessWithNoContent
 } = require("../utils/error_message.utils");
 const bcrypt = require("bcrypt");
-const {checkIsNumber, convertToNumber, isUndefinedOrEmpty} = require("../utils/methods.utils");
+const {isANumber, convertToNumber} = require("../utils/methods.utils");
 const {constants} = require("../constants/constants");
 const format = require("pg-format");
 const saltRounds = 10;
@@ -43,10 +43,10 @@ router.get('/profil/professionnel/:id',requiredAuth, async (req, res) => {
 
 		const { password, creation_date, ...professionalProfile } =
 			result.rows[0];
-		sendSuccess(res, professionalProfile)
+		return sendSuccess(res, professionalProfile)
 	} catch (e) {
 		errorLogger(`Erreur lors de la récupération du profil professionnel: ${JSON.stringify(e.stack)}`, 'profil.js [GET] /profil/professionnel/:id')
-		sendInternalServerError(res, 'Erreur serveur' )
+		return sendInternalServerError(res, 'Erreur serveur' )
 	}
 });
 
@@ -60,12 +60,12 @@ router.get('/profil/client/:id', requiredAuth, async (req, res) => {
 	let idReq  = req.params['id'];
 	let { id } = decodeJWT(req.cookies.jwt)
 
-	if (!checkIsNumber(idReq)) {
+	if (!isANumber(idReq)) {
 		return sendBadRequest(res, "l'id doit etre un entier")
 	}
 
 	if(convertToNumber(idReq) !== id) {
-		return sendUnauthrorized(res, 'Permission non autorisé')
+		return sendUnauthorized(res, 'Permission non autorisé')
 	}
 
 	if (!id) {
@@ -88,10 +88,10 @@ router.get('/profil/client/:id', requiredAuth, async (req, res) => {
 		}
 
 		const { password, creation_date, ...clientProfile } = result.rows[0];
-		res.json(clientProfile);
+		return sendSuccess(res, clientProfile)
 	} catch (e) {
 		errorLogger(`Erreur lors de la récupération du profil client: ${JSON.stringify(e.stack)}`, 'profil.js [GET] /profil/client/:id')
-		sendInternalServerError(res, 'Erreur serveur' )
+		return sendInternalServerError(res, 'Erreur serveur' )
 	}
 });
 
@@ -99,14 +99,14 @@ router.put('/profil/:id/change-password', requiredAuth, async (req, res) => {
 	let idReq  = req.params['id'];
 	let { id, statut } = decodeJWT(req.cookies.jwt)
 
-	if (!checkIsNumber(idReq)) {
+	if (!isANumber(idReq)) {
 		warnLogger(`L'utilisateur ${id} a appelé la route avec le paramètre de requete suivant: ${idReq}`, 'profil.js [PUT] /profil/:id/change-password')
 		return sendBadRequest(res, "l'id doit etre un entier")
 	}
 
 	if(convertToNumber(idReq) !== id) {
 		warnLogger(`L'utilisateur ${id} a tenté de modifier le mot de passe de l'utilisateur ${idReq}`, 'profil.js [PUT] /profil/:id/change-password')
-		return sendUnauthrorized(res, 'Permission non autorisé')
+		return sendUnauthorized(res, 'Permission non autorisé')
 	}
 	/**
 	 * le front se chargera de vérifier que l'ancien mot de passe et le nouveau sont bien différents
@@ -157,13 +157,13 @@ router.put('/profil/:id/change-password', requiredAuth, async (req, res) => {
 
 			if(updatePasswordResult.rowCount === 0){
 				errorLogger(`Echec lors de la mise à jour du mot de passe de l'utilisateur ${getUserQuery.rows[0].email}`, "profil.js [PUT] /profil/:id/change-password")
-				sendFailure(res, 'Echec de la mise à jour du mot de passe')
+				return sendFailure(res, 'Echec de la mise à jour du mot de passe')
 			}
-			sendSuccessWithNoContent(res)
+			return sendSuccessWithNoContent(res)
 		}
 		else{
 			errorLogger(`L'ancien mot de passe fourni ne correspond pas à celui enregistré en base de l'utilisateur ${getUserQuery.rows[0].email}`, "profil.js [PUT] /profil/:id/change-password")
-			sendBadRequest(res,"L'ancien mot de passe fourni ne correspond pas à celui enregistré en base")
+			return sendBadRequest(res,"L'ancien mot de passe fourni ne correspond pas à celui enregistré en base")
 		}
 	}
 
@@ -175,11 +175,9 @@ router.put('/profil/:id/update-profil-picture', requiredAuth, uploadSingle, asyn
 	const uuid = UUID();
 	let imageUrl = ""
 	const dateActuelle = new Date()
-	if (!id) {
-		return sendError(res, 'Authentification requise')
-	}
+
 	if (!file) {
-		sendBadRequest(res, 'Aucun fichier upload')
+		return sendBadRequest(res, 'Aucun fichier upload')
 	}
 
 	try {
@@ -262,7 +260,7 @@ router.put('/profil/:id/update-profil-picture', requiredAuth, uploadSingle, asyn
 
 	} catch (e) {
 		errorLogger('Erreur lors de la récupération du profil:' + e.stack, ' profil.js [PUT] /profil/:id/update-profile-picture')
-		sendInternalServerError(res, 'Erreur serveur' )
+		return sendInternalServerError(res, 'Erreur serveur' )
 	}
 })
 
@@ -291,14 +289,14 @@ router.post('/profil/:idPro/upload-service-picture/:serviceId',requiredAuth, asy
 			sendBadRequest(res, 'Aucun fichier upload')
 		}
 
-		if (!checkIsNumber(idPro) || !checkIsNumber(serviceId) ) {
+		if (!isANumber(idPro) || !isANumber(serviceId) ) {
 			warnLogger(`L'utilisateur ${id} a appelé la route avec le paramètre de requete suivant: idPro:${idPro} et serviceId: ${serviceId}`, 'profil.js [PUT] /profil/:idPro/upload-service-picture/:serviceId')
 			return sendBadRequest(res, "le 'idPro' et le 'serviceId' de la requête doivent etre des entiers")
 		}
 
 		if(convertToNumber(idPro) !== id) {
 			warnLogger(`L'utilisateur ${id} a tenté d'upload des images en se faisant passer pour l'utilisateur: ${idPro}`, 'profil.js [PUT] /profil/:idPro/upload-service-picture/:serviceId')
-			return sendUnauthrorized(res, 'Permission non autorisé')
+			return sendUnauthorized(res, 'Permission non autorisé')
 		}
 
 
@@ -347,7 +345,7 @@ router.post('/profil/:idPro/upload-service-picture/:serviceId',requiredAuth, asy
 			}
 			const client = getClientsCollection();
 
-			let dataToInsertString = []
+			let dataToInsertString
 			// TODO: a tester
 			if(tableauEchecs.length > 0){
 				let images_upload =  tableauURL.filter((url) => tableauEchecs.includes(url) === false)
@@ -358,11 +356,9 @@ router.post('/profil/:idPro/upload-service-picture/:serviceId',requiredAuth, asy
 			}
 
 			try {
-				// TODO: rajouter la sauvegarde des images dans la nouvelle table
 				const insertImagesQuery = format('INSERT INTO images_services_professionals (pro_id, service_id, image_url) VALUES %L', dataToInsertString)
-
-
 				const insertImageResult = await client.query(insertImagesQuery)
+
 				if(insertImageResult.rowCount === 0 ) {
 					errorLogger("Erreur lors de l'enregistrement des images en base" + e.stack, 'profil.js [PUT] /profil/:id/upload-service-picture/:serviceId')
 					return sendFailure(res, "Erreur lors de l'enregistrement des images en base" )

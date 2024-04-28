@@ -7,7 +7,7 @@ const bcrypt = require('bcrypt');
 const {createToken, verifyJWT, REGISTRATION_EXPIRES_IN, JWT_COOKIE_EXPIRES_IN} = require("../utils/auth.utils");
 const saltRounds = 10;
 const {logLogger, errorLogger, warnLogger} = require('../config/winston/winston.config')
-const {sendInternalServerError, sendError, sendBadRequest, sendSuccess, sendSuccessWithNoContent, sendUnauthrorized,
+const {sendInternalServerError, sendError, sendBadRequest, sendSuccess, sendSuccessWithNoContent, sendUnauthorized,
 	sendFailure
 } = require("../utils/error_message.utils");
 const {constants} = require("../constants/constants");
@@ -78,11 +78,11 @@ router.post('/inscription', async (req, res) => {
 			await sendRegistrationLink(email, firstName, `${process.env.API_URL}/confirm-registration?token=${token}`)
 		} else {
 			errorLogger('Le compte existe déjà ou une autre erreur est survenue.', 'authentification.js [POST] /inscription')
-			sendBadRequest(res, 'Le compte existe déjà ou une autre erreur est survenue.')
+			return sendBadRequest(res, 'Le compte existe déjà ou une autre erreur est survenue.')
 		}
 	} catch (e) {
 		errorLogger(`Erreur lors de l'inscription : ${e.stack}`, 'authentification.js [POST] /inscription')
-		sendInternalServerError(res, "Erreur serveur lors de l'inscription. " + e.message)
+		return sendInternalServerError(res, "Erreur serveur lors de l'inscription. " + e.message)
 	}
 });
 
@@ -114,7 +114,7 @@ router.post('/connexion', async (req, res) => {
 
 				if (!est_verifie) {
 					warnLogger(`L'utilisateur ${users_id} (client) essaye de se connecter en étant pas vérifié`, 'authentification.js [POST] /connexion')
-					return sendUnauthrorized(res, 'Veuillez vérifier votre adresse email avant de vous connecter')
+					return sendUnauthorized(res, 'Veuillez vérifier votre adresse email avant de vous connecter')
 				}
 				const hashedPassword = clientQueryResult.rows[0].password;
 
@@ -140,8 +140,8 @@ router.post('/connexion', async (req, res) => {
 					const {professional_id, est_verifie} = professionalQueryResult.rows[0];
 
 					if (!est_verifie) {
-						warnLogger(`L'utilisateur ${users_id} (professionnel) essaye de se connecter en étant pas vérifié`, 'authentification.js [POST] /connexion')
-						return sendUnauthrorized(res, 'Veuillez vérifier votre adresse email avant de vous connecter')
+						warnLogger(`L'utilisateur ${professional_id} (professionnel) essaye de se connecter en étant pas vérifié`, 'authentification.js [POST] /connexion')
+						return sendUnauthorized(res, 'Veuillez vérifier votre adresse email avant de vous connecter')
 					}
 
 					const hashedPassword = professionalQueryResult.rows[0].password;
@@ -155,17 +155,17 @@ router.post('/connexion', async (req, res) => {
 						return sendSuccessWithNoContent(res)
 					} else {
 						errorLogger("Échec de l'authentification en tant que professionnel : mot de passe incorrect", 'authentification.js /connexion')
-						sendError(res, "Échec de l'authentification")
+						return sendError(res, "Échec de l'authentification")
 					}
 				} else {
 					errorLogger("Échec de l'authentification : e-mail non trouvé", 'authentification.js /connexion')
-					sendError(res, "Échec de l'authentification")
+					return sendError(res, "Échec de l'authentification")
 				}
 			}
 		}
 	} catch (e) {
 		errorLogger("Erreur lors de l'authentification : " + e.stack, 'authentification.js /connexion')
-		sendInternalServerError(res, "Erreur serveur lors de l'authentification. " + e.message)
+		return sendInternalServerError(res, "Erreur serveur lors de l'authentification. " + e.message)
 	}
 });
 
@@ -238,7 +238,7 @@ router.post('/resend-registration-mail', async (req, res) => {
 
 			if(est_verifie) {
 				warnLogger(`L'utilisateur ${email} essaye de renvoyer un mail de confirmation d'inscription en étant vérifié`, 'authentification.js [POST] /resend-registration-mail')
-				return sendUnauthrorized(res, 'Veuillez votre compte est déjà vérifié, veuillez vous connecter')
+				return sendUnauthorized(res, 'Veuillez votre compte est déjà vérifié, veuillez vous connecter')
 			}
 
 			let id
@@ -258,7 +258,7 @@ router.post('/resend-registration-mail', async (req, res) => {
 			await sendRegistrationLink(email, firstName, `${process.env.API_URL}/confirm-registration?token=${token}`)
 		} else {
 			errorLogger("Échec de l'authentification : e-mail non trouvé", 'authentification.js /resend-registration-mail')
-			sendError(res, "Échec de l'authentification : e-mail non trouvé")
+			return sendError(res, "Échec de l'authentification : e-mail non trouvé")
 		}
 	}
 	catch (e) {
