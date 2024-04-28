@@ -4,11 +4,12 @@ const router = Router();
 const { userValidation } = require('../validation/validation');
 const { getClientsCollection } = require('../db/database');
 const bcrypt = require('bcrypt');
-const {createToken, EXPIRES_IN, verifyJWT} = require("../utils/auth.utils");
+const {createToken, EXPIRES_IN, verifyJWT, REGISTRATION_EXPIRES_IN} = require("../utils/auth.utils");
 const saltRounds = 10;
 const {logLogger, errorLogger} = require('../config/winston/winston.config')
 const {sendInternalServerError, sendError, sendBadRequest, sendSuccess} = require("../utils/error_message.utils");
 const {constants} = require("../constants/constants");
+const {sendRegistrationLink} = require("../mail/send-email");
 
 router.use(express.json());
 
@@ -19,16 +20,18 @@ router.post('/inscription', async (req, res) => {
 	const { error } = userValidation(body);
 
 	if (error) {
-		errorLogger('Erreur lors de la validation des données de\'utilisateur ' + JSON.stringify(body) + ': error', 'authentification.js /inscription')
-		sendBadRequest(res, error.details[0].message)
+		errorLogger(`Erreur lors de la validation des données de l'utilisateur ${JSON.stringify(body)}:`, 'authentification.js [POST] /inscription')
+		return sendBadRequest(res, error.details[0].message)
+	}
+	if(reqValue !== constants.STATUT_CLIENT && reqValue !== constants.STATUT_PROFESSIONNEL) {
+		errorLogger(`Le paramètre de requête est incorrect ou manquant (?user_type=): ${reqValue}`, 'authentification.js [POST] /inscription')
+		return sendBadRequest(res, `Le paramètre de requête est incorrect: ${reqValue}`)
 	}
 
 	try {
 		const hash = await bcrypt.hash(body.password, saltRounds);
 		const client = getClientsCollection();
-		const tableName =
-			reqValue === constants.STATUT_PROFESSIONNEL ? 'professionals' : 'users';
-
+		let insertQuery
 		const values = [
 			body.firstName,
 			body.lastName,
@@ -37,36 +40,45 @@ router.post('/inscription', async (req, res) => {
 			body.phone,
 		];
 
-		// Pour les professionnels, on ajoute aussi company_name et company_address
-		if (reqValue === constants.STATUT_PROFESSIONNEL) {
+		if(reqValue === constants.STATUT_PROFESSIONNEL) {
+			// Pour les professionnels, on ajoute aussi company_name et company_address
 			values.push(body.company_name);
 			values.push(body.company_address);
+			insertQuery = `INSERT INTO professionals ("firstName", "lastName", password, email, phone, company_name, company_address)
+       						VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING RETURNING *`
 		}
-
-		const insertQuery =
-			reqValue === constants.STATUT_PROFESSIONNEL
-				? `INSERT INTO ${tableName}("firstName", "lastName", password, email, phone, company_name, company_address)
-       VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING RETURNING *`
-				: `INSERT INTO ${tableName}("firstName", "lastName", password, email, phone)
-       VALUES($1, $2, $3, $4, $5) RETURNING *`;
+		else {
+			insertQuery = `INSERT INTO users ("firstName", "lastName", password, email, phone)
+       						VALUES($1, $2, $3, $4, $5) RETURNING *`;
+		}
 
 		const result = await client.query(insertQuery, values);
 
 		// Vérifie si des lignes ont été insérées
 		if (result.rowCount > 0) {
-			logLogger(`${reqValue} inscrit avec succès:` + JSON.stringify(result.rows[0]) , 'authentification.js /inscription')
-			const token = createToken(result.rows[0].id, reqValue)
-			res.cookie('jwt', token, {httpOnly: true, maxAge: EXPIRES_IN * 1000})
-			res.json({
-				success: true,
-				redirectUrl: 'http://localhost:3000/connexion',
-			});
+			logLogger(`${reqValue} inscrit avec succès:` + JSON.stringify(result.rows[0]) , 'authentification.js [POST] /inscription')
+			const {email, firstName} = result.rows[0]
+			let id
+			if(reqValue === constants.STATUT_PROFESSIONNEL) {
+				id = result.rows[0].professional_id
+			}
+			else {
+				id = result.rows[0].users_id
+			}
+			/**
+			 * on crée un token qui ne durera que 10 minutes
+			 * @type {string}
+			 */
+			const token = createToken(id, reqValue, constants.CONFIRM_REGISTRATION, REGISTRATION_EXPIRES_IN)
+
+			sendSuccess(res, `Votre inscription a bien été prise en compte, un lien de confirmation d'inscription vous a été envoyé à votre adresse mail: ${email}`)
+			await sendRegistrationLink(email, firstName, `${process.env.API_URL}/confirm-registration?token=${token}`)
 		} else {
-			errorLogger('Le compte existe déjà ou une autre erreur est survenue.', 'authentification.js /inscription')
+			errorLogger('Le compte existe déjà ou une autre erreur est survenue.', 'authentification.js [POST] /inscription')
 			sendBadRequest(res, 'Le compte existe déjà ou une autre erreur est survenue.')
 		}
 	} catch (e) {
-		errorLogger('Erreur lors de l\'inscription :' + e.stack, 'authentification.js /inscription')
+		errorLogger(`Erreur lors de l'inscription : ${e.stack}`, 'authentification.js [POST] /inscription')
 		sendInternalServerError(res, "Erreur serveur lors de l'inscription. " + e.message)
 	}
 });
@@ -173,6 +185,7 @@ router.get('/confirm-registration', async (req, res) => {
 					[ true, id]
 				);
 			}
+			logLogger(`L'inscription de l'utilisateur: ${id} a bien été confirmée`, 'Authentification.js [GET] /confirm-registration')
 			return sendSuccess(res, 'Votre inscription a bien été confirmée')
 		}
 		catch (e) {
