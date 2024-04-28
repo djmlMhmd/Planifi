@@ -288,7 +288,7 @@ const createTableImagesServicesProfessionals = async () => {
 		  pro_id INT,
 		  service_id INT,
 		  image_URL VARCHAR,
-		  CONSTRAINT FK_sender_id FOREIGN KEY (pro_id)
+		  CONSTRAINT FK_pro_id FOREIGN KEY (pro_id)
 			  REFERENCES professionals(professional_id),
 		  CONSTRAINT FK_service_id FOREIGN KEY (service_id)
 			  REFERENCES services(service_id)
