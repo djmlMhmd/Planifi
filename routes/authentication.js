@@ -4,10 +4,10 @@ const router = Router();
 const { userValidation } = require('../validation/validation');
 const { getClientsCollection } = require('../db/database');
 const bcrypt = require('bcrypt');
-const {createToken, EXPIRES_IN} = require("../utils/auth.utils");
+const {createToken, EXPIRES_IN, verifyJWT} = require("../utils/auth.utils");
 const saltRounds = 10;
 const {logLogger, errorLogger} = require('../config/winston/winston.config')
-const {sendInternalServerError, sendError, sendBadRequest} = require("../utils/error_message.utils");
+const {sendInternalServerError, sendError, sendBadRequest, sendSuccess} = require("../utils/error_message.utils");
 const {constants} = require("../constants/constants");
 
 router.use(express.json());
@@ -145,4 +145,41 @@ router.post('/connexion', async (req, res) => {
 		sendInternalServerError(res, "Erreur serveur lors de l'authentification. " + e.message)
 	}
 });
+
+router.get('/confirm-registration', async (req, res) => {
+	const token = req.query['token'];
+	if(token === undefined || token === '' ){
+		return sendBadRequest(res, 'Le token de confirmation est absent')
+	}
+	const userInfo = verifyJWT(token)
+	if(userInfo === null) {
+		return sendError(res, "Le token n'est pas valide")
+	}
+
+	const {id, statut, type } = userInfo
+	if(type === constants.CONFIRM_REGISTRATION) {
+		const client = getClientsCollection();
+		try {
+
+			if(statut === constants.STATUT_CLIENT) {
+				await client.query(
+					'UPDATE users SET est_verifie = $1 WHERE users_id = $2',
+					[ true, id]
+				);
+			}
+			else {
+				await client.query(
+					'UPDATE professionals SET est_verifie = $1 WHERE professional_id = $2',
+					[ true, id]
+				);
+			}
+			return sendSuccess(res, 'Votre inscription a bien été confirmée')
+		}
+		catch (e) {
+			return sendInternalServerError(res, `Erreur lors de la mise à jour du statut 'est_verifie' de l'utilisateur ${id}`)
+		}
+	}
+	return sendInternalServerError(res, 'Problème au niveau du serveur')
+});
+
 module.exports = router;
