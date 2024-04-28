@@ -169,7 +169,7 @@ router.post('/connexion', async (req, res) => {
 
 router.get('/confirm-registration', async (req, res) => {
 	const token = req.query['token'];
-	if(token === undefined || token === '' ){
+	if(isUndefinedOrEmpty(token)){
 		return sendBadRequest(res, 'Le token de confirmation est absent')
 	}
 	const userInfo = verifyJWT(token)
@@ -204,4 +204,63 @@ router.get('/confirm-registration', async (req, res) => {
 	return sendInternalServerError(res, 'Problème au niveau du serveur')
 });
 
+
+router.post('/resend-registration-mail', async (req, res) => {
+	const user_type = req.query['user_type'];
+	const { email } = req.body;
+
+	if (isUndefinedOrEmpty(email)) {
+		errorLogger(`Le champ "email" doit être renseigné`, 'authentification.js [POST] /resend-registration-mail')
+		return sendBadRequest(res, "Les données envoyées sont incorrectes")
+	}
+
+	if(user_type !== constants.STATUT_CLIENT && user_type !== constants.STATUT_PROFESSIONNEL) {
+		errorLogger(`Le paramètre de requête est incorrect ou manquant (?user_type=): ${user_type}`, 'authentification.js [POST] /resend-registration-mail')
+		return sendBadRequest(res, `Le paramètre de requête est incorrect (?user_type=): ${user_type}`)
+	}
+
+	const client = getClientsCollection();
+	try {
+		let userQuery
+		if(user_type === constants.STATUT_CLIENT) {
+			userQuery = 'SELECT * from users where email = $1'
+		}
+		else {
+			userQuery = 'SELECT * from professionals where email = $1'
+		}
+		const userQueryresult = await client.query(userQuery, [ email]);
+
+		// Vérifie si des lignes ont été insérées
+		if (userQueryresult.rowCount > 0) {
+			const {email, firstName, est_verifie} = userQueryresult.rows[0]
+
+			if(est_verifie) {
+				warnLogger(`L'utilisateur ${email} essaye de renvoyer un mail de confirmation d'inscription en étant vérifié`, 'authentification.js [POST] /resend-registration-mail')
+				return sendUnauthrorized(res, 'Veuillez votre compte est déjà vérifié, veuillez vous connecter')
+			}
+
+			let id
+			if(user_type === constants.STATUT_PROFESSIONNEL) {
+				id = userQueryresult.rows[0].professional_id
+			}
+			else {
+				id = userQueryresult.rows[0].users_id
+			}
+			/**
+			 * on crée un token qui ne durera que 10 minutes
+			 * @type {string}
+			 */
+			const token = createToken(id, user_type, constants.CONFIRM_REGISTRATION, REGISTRATION_EXPIRES_IN)
+
+			sendSuccess(res, `Un lien de confirmation d'inscription a bien été renvoyé votre adresse mail: ${email}`)
+			await sendRegistrationLink(email, firstName, `${process.env.API_URL}/confirm-registration?token=${token}`)
+		} else {
+			errorLogger("Échec de l'authentification : e-mail non trouvé", 'authentification.js /resend-registration-mail')
+			sendError(res, "Échec de l'authentification : e-mail non trouvé")
+		}
+	}
+	catch (e) {
+		return sendInternalServerError(res, `Erreur lors du renvoie de mail à l'utilisateur ${id}`)
+	}
+});
 module.exports = router;
