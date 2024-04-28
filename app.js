@@ -98,8 +98,6 @@ app.use('/api', require('./routes/reservation'));
 app.use(deleteReservation);
 app.use(express.urlencoded({ extended: true }));
 
-//sendRestart()
-//sendResetPassword('marius.vitta@gmail.com', "Marius", "http://localhost:3000/confirm-registration")
 
 // permet de lancer serveur web
 app.listen(port, () => {
