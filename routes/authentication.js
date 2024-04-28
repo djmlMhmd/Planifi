@@ -4,12 +4,13 @@ const router = Router();
 const { userValidation } = require('../validation/validation');
 const { getClientsCollection } = require('../db/database');
 const bcrypt = require('bcrypt');
-const {createToken, EXPIRES_IN, verifyJWT, REGISTRATION_EXPIRES_IN} = require("../utils/auth.utils");
+const {createToken, verifyJWT, REGISTRATION_EXPIRES_IN, JWT_COOKIE_EXPIRES_IN} = require("../utils/auth.utils");
 const saltRounds = 10;
-const {logLogger, errorLogger} = require('../config/winston/winston.config')
-const {sendInternalServerError, sendError, sendBadRequest, sendSuccess} = require("../utils/error_message.utils");
+const {logLogger, errorLogger, warnLogger} = require('../config/winston/winston.config')
+const {sendInternalServerError, sendError, sendBadRequest, sendSuccess, sendSuccessWithNoContent, sendUnauthrorized} = require("../utils/error_message.utils");
 const {constants} = require("../constants/constants");
 const {sendRegistrationLink} = require("../mail/send-email");
+const {isUndefinedOrEmpty} = require("../utils/methods.utils");
 
 router.use(express.json());
 
@@ -87,70 +88,78 @@ router.post('/inscription', async (req, res) => {
 
 router.post('/connexion', async (req, res) => {
 	const { email, password } = req.body;
+	const reqValue = req.query['user_type'];
+
+	if (isUndefinedOrEmpty(email) || isUndefinedOrEmpty(password)) {
+		errorLogger(`Le champ "email" et le champ "password" doivent être renseignés`, 'authentification.js [POST] /connexion')
+		return sendBadRequest(res, "Les données envoyées sont incorrectes")
+	}
+
+	if(reqValue !== constants.STATUT_CLIENT && reqValue !== constants.STATUT_PROFESSIONNEL) {
+		errorLogger(`Le paramètre de requête est incorrect ou manquant (?user_type=): ${reqValue}`, 'authentification.js [POST] /inscription')
+		return sendBadRequest(res, `Le paramètre de requête est incorrect (?user_type=): ${reqValue}`)
+	}
 
 	const client = getClientsCollection();
 	try {
-		const connexionResult = await client.query(
-			'SELECT * FROM users WHERE email = $1',
-			[email]
-		);
+		if(reqValue === constants.STATUT_CLIENT) {
+			const clientQueryResult = await client.query(
+				'SELECT * FROM users WHERE email = $1',
+				[email]
+			);
+			if (clientQueryResult.rows.length === 1) {
+				const {users_id, est_verifie} = clientQueryResult.rows[0]
 
-		const professionalQuery = await client.query(
-			'SELECT * FROM professionals WHERE email = $1',
-			[email]
-		);
+				if (!est_verifie) {
+					warnLogger(`L'utilisateur ${users_id} (client) essaye de se connecter en étant pas vérifié`, 'authentification.js [POST] /connexion')
+					return sendUnauthrorized(res, 'Veuillez vérifier votre adresse email avant de vous connecter')
+				}
+				const hashedPassword = clientQueryResult.rows[0].password;
 
-		if (connexionResult.rows.length === 1) {
-			const hashedPassword = connexionResult.rows[0].password;
+				//Compare the password supplied with the hashed password
+				const match = await bcrypt.compare(password, hashedPassword);
 
-			//Compare the password supplied with the hashed password
-			const match = await bcrypt.compare(password, hashedPassword);
+				if (match) {
+					const token = createToken(users_id, constants.STATUT_CLIENT)
+					res.cookie('jwt', token, {httpOnly: true, maxAge: JWT_COOKIE_EXPIRES_IN})
+					logLogger('Authentification réussie', 'authentification.js [POST] /connexion')
+					return sendSuccessWithNoContent(res)
+				}
+				errorLogger("Échec de l'authentification: mot de passe incorrect", 'authentification.js [POST] /connexion')
+				return sendError(res, "Échec de l'authentification")
 
-			if (match) {
-				const clientID = connexionResult.rows[0].users_id;
-				/**
-				 * correspond à la durée de vie du cookie ici on est sur 3 jours
-				 * 3 => nombres de jours
-				 * 24 => 24h
-				 * 60 => 60 minutes
-				 * 60 => 60 secondes
-				 * 1000 => 1s (millisecondses)
-				 *
-				 * la durée de vie d'un cookie se transmet en millisecondes
-				 */
-				const maxAge = 3 * 24 * 60 * 60 * 1000;
-				res.cookie('clientID', clientID, { maxAge });
-
-				const token = createToken(clientID, constants.STATUT_CLIENT)
-				res.cookie('jwt', token, {httpOnly: true, maxAge: EXPIRES_IN * 1000})
-				logLogger('Authentification réussie' , 'authentification.js /connexion')
-				logLogger(`clientID dans la session : ${clientID}`, 'authentification.js /connexion')
-				res.redirect(`/profil/client/${clientID}`);
 			} else {
-				errorLogger("Échec de l'authentification: mot de passe incorrect", 'authentification.js /connexion')
-				sendError(res, "Échec de l'authentification")
-			}
-		} else if (professionalQuery.rows.length === 1) {
-			const professional = professionalQuery.rows[0];
-			const hashedPassword = professional.password;
+				const professionalQueryResult = await client.query(
+					'SELECT * FROM professionals WHERE email = $1',
+					[email]
+				);
 
-			const match = await bcrypt.compare(password, hashedPassword);
+				if (professionalQueryResult.rows.length === 1) {
+					const {professional_id, est_verifie} = professionalQueryResult.rows[0];
 
-			if (match) {
-				const professionalID = professional.professional_id;
-				req.cookies.professionalID = professionalID;
-				const token = createToken(professionalID, constants.STATUT_PROFESSIONNEL)
-				res.cookie('jwt', token, {httpOnly: true, maxAge: EXPIRES_IN * 1000})
-				logLogger('Authentification réussie en tant que professionnel', 'authentification.js /connexion')
-				logLogger(`professionalID dans la session :', ${req.session.professionalID}`, 'authentification.js /connexion')
-				res.redirect(`/profil/professionnel/${professionalID}`);
-			} else {
-				errorLogger("Échec de l'authentification en tant que professionnel : mot de passe incorrect", 'authentification.js /connexion')
-				sendError(res, "Échec de l'authentification")
+					if (!est_verifie) {
+						warnLogger(`L'utilisateur ${users_id} (professionnel) essaye de se connecter en étant pas vérifié`, 'authentification.js [POST] /connexion')
+						return sendUnauthrorized(res, 'Veuillez vérifier votre adresse email avant de vous connecter')
+					}
+
+					const hashedPassword = professionalQueryResult.rows[0].password;
+
+					const match = await bcrypt.compare(password, hashedPassword);
+
+					if (match) {
+						const token = createToken(professional_id, constants.STATUT_PROFESSIONNEL)
+						res.cookie('jwt', token, {httpOnly: true, maxAge: JWT_COOKIE_EXPIRES_IN})
+						logLogger('Authentification réussie en tant que professionnel', 'authentification.js /connexion')
+						return sendSuccessWithNoContent(res)
+					} else {
+						errorLogger("Échec de l'authentification en tant que professionnel : mot de passe incorrect", 'authentification.js /connexion')
+						sendError(res, "Échec de l'authentification")
+					}
+				} else {
+					errorLogger("Échec de l'authentification : e-mail non trouvé", 'authentification.js /connexion')
+					sendError(res, "Échec de l'authentification")
+				}
 			}
-		} else {
-			errorLogger("Échec de l'authentification : e-mail non trouvé", 'authentification.js /connexion')
-			sendError(res, "Échec de l'authentification")
 		}
 	} catch (e) {
 		errorLogger("Erreur lors de l'authentification : " + e.stack, 'authentification.js /connexion')
