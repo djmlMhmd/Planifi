@@ -13,8 +13,13 @@ const {sendInternalServerError, sendError, sendBadRequest, sendSuccess, sendSucc
 const {constants} = require("../constants/constants");
 const {sendRegistrationLink, sendResetPassword} = require("../mail/send-email");
 const {isUndefinedOrEmpty} = require("../utils/methods.utils");
+const {requiredAuth} = require("../middleware/authMiddleware");
 
 router.use(express.json());
+
+router.get('/auth', requiredAuth, (req, res) =>{
+	return sendSuccessWithNoContent(res)
+})
 
 // REGISTRATION
 router.post('/inscription', async (req, res) => {
