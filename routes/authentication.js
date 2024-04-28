@@ -7,9 +7,11 @@ const bcrypt = require('bcrypt');
 const {createToken, verifyJWT, REGISTRATION_EXPIRES_IN, JWT_COOKIE_EXPIRES_IN} = require("../utils/auth.utils");
 const saltRounds = 10;
 const {logLogger, errorLogger, warnLogger} = require('../config/winston/winston.config')
-const {sendInternalServerError, sendError, sendBadRequest, sendSuccess, sendSuccessWithNoContent, sendUnauthrorized} = require("../utils/error_message.utils");
+const {sendInternalServerError, sendError, sendBadRequest, sendSuccess, sendSuccessWithNoContent, sendUnauthrorized,
+	sendFailure
+} = require("../utils/error_message.utils");
 const {constants} = require("../constants/constants");
-const {sendRegistrationLink} = require("../mail/send-email");
+const {sendRegistrationLink, sendResetPassword} = require("../mail/send-email");
 const {isUndefinedOrEmpty} = require("../utils/methods.utils");
 
 router.use(express.json());
@@ -174,7 +176,7 @@ router.get('/confirm-registration', async (req, res) => {
 	}
 	const userInfo = verifyJWT(token)
 	if(userInfo === null) {
-		return sendError(res, "Le token n'est pas valide")
+		return sendError(res, `Le token n'est pas valide: ${token}`)
 	}
 
 	const {id, statut, type } = userInfo
@@ -263,4 +265,118 @@ router.post('/resend-registration-mail', async (req, res) => {
 		return sendInternalServerError(res, `Erreur lors du renvoie de mail à l'utilisateur ${id}`)
 	}
 });
+
+router.post('/forgot-password', async (req, res) => {
+	const { email } = req.body;
+
+	if (isUndefinedOrEmpty(email)) {
+		errorLogger(`Le champ "email" doit être renseigné`, 'authentification.js [POST] /forgot-password')
+		return sendBadRequest(res, "Les données envoyées sont incorrectes")
+	}
+
+	/**
+	 * si l'utilisateur perd son mot de passe
+	 * on va agir comme si on savait pas si c'est un pro ou un client
+	 * afin de lui renvoyer un mail peu importe son statut
+	 */
+	const client = getClientsCollection();
+	try {
+		const userQuery = 'SELECT users_id, email, "firstName" from users where email = $1'
+		const proQuery = 'SELECT professional_id, email, "firstName" from professionals where email = $1'
+
+		const userQueryresult = await client.query(userQuery, [ email]);
+		const proQueryresult = await client.query(proQuery, [ email]);
+
+		// Cas du client
+		if(userQueryresult.rowCount > 0) {
+			const {users_id, email, firstName} = userQueryresult.rows[0]
+
+			/**
+			 * on crée un token qui ne durera que 10 minutes
+			 * @type {string}
+			 */
+			const token = createToken(users_id, constants.STATUT_CLIENT, constants.FORGOT_PASSWORD, REGISTRATION_EXPIRES_IN)
+
+			sendSuccess(res, `Un lien de réinitialisation de votre mot de passe a bien été envoyé votre adresse mail: ${email}`)
+			await sendResetPassword(email, firstName, `${process.env.API_URL}/forgot-password-reset?token=${token}&user_type=${constants.STATUT_CLIENT}`)
+		}
+		else if(proQueryresult.rowCount > 0){
+			const {professional_id, email, firstName} = proQueryresult.rows[0]
+
+			/**
+			 * on crée un token qui ne durera que 10 minutes
+			 * @type {string}
+			 */
+			const token = createToken(professional_id, constants.STATUT_PROFESSIONNEL, constants.FORGOT_PASSWORD, REGISTRATION_EXPIRES_IN)
+
+			sendSuccess(res, `Un lien de réinitialisation de votre mot de passe a bien été envoyé votre adresse mail: ${email}`)
+			await sendResetPassword(email, firstName, `${process.env.API_URL}/forgot-password-reset'?token=${token}&user_type=${constants.STATUT_PROFESSIONNEL}`)
+		}
+		else {
+			errorLogger("Échec de l'authentification : e-mail non trouvé", 'authentification.js /forgot-password')
+			return sendError(res, "Échec de l'authentification : e-mail non trouvé")
+		}
+	}
+	catch (e) {
+		return sendInternalServerError(res, `Erreur lors de l'envoie du mail pour obtenir la réinitialisation du mot de passe ${email}`)
+	}
+});
+
+router.put('/forgot-password-reset', async (req, res) => {
+	const token = req.query['token'];
+	const { password, passwordConfirm } = req.body;
+
+	if (isUndefinedOrEmpty(password) || isUndefinedOrEmpty(passwordConfirm)) {
+		errorLogger(`Les champs "password" et "passwordConfirm" doivent être renseignés`, 'authentification.js [PUT] /forgot-password-reset')
+		return sendBadRequest(res, "Les données envoyées sont incorrectes")
+	}
+
+	if(isUndefinedOrEmpty(token)) {
+		errorLogger(`Le paramètre de requête est incorrect ou manquant (?token=): ${token}`, 'authentification.js [PUT] /forgot-password-reset')
+		return sendBadRequest(res, `Le paramètre de requête est incorrect (?token=): ${token}`)
+	}
+
+	const infosUser = verifyJWT(token)
+	if(infosUser === null){
+		warnLogger(`Ce token n'est pas valide: ${token}`, 'authentification.js [PUT] /forgot-password-reset')
+		return sendBadRequest(res, `Le token n'est plus  valide: ${token}`)
+	}
+	const { id, statut, type } = infosUser
+
+	if(type === constants.FORGOT_PASSWORD) {
+		const client = getClientsCollection();
+		try {
+			if(password !== passwordConfirm) {
+				errorLogger(`Les mots de passe ne correspondent pas`, 'authentification.js [PUT] /forgot-password-reset')
+				return sendBadRequest(res, "Les mots de passe ne correspondent pas")
+			}
+			const hash = await bcrypt.hash(password, saltRounds);
+			let updatePasswordResult
+
+			if(statut === constants.STATUT_PROFESSIONNEL) {
+				updatePasswordResult = await client.query(
+					'UPDATE professionals SET password = $1 WHERE professional_id = $2',
+					[ hash, id]
+				);
+			}
+			else {
+				updatePasswordResult = await client.query(
+					'UPDATE users SET password = $1 WHERE users_id = $2',
+					[ hash, id]
+				);
+			}
+			if(updatePasswordResult.rowCount === 0){
+				errorLogger(`Echec lors de la mise à jour du mot de passe de l'utilisateur ${id} (${statut})`, "authentification.js [PUT] /forgot-password-reset")
+				return sendFailure(res, 'Echec de la mise à jour du mot de passe')
+			}
+			return sendSuccessWithNoContent(res)
+		}
+		catch (e) {
+			errorLogger(`Echec lors de la mise à jour du mot de passe de l'utilisateur ${id} (${statut}): ${e}`, "authentification.js [PUT] /forgot-password-reset")
+			return sendInternalServerError(res, `Echec lors de la mise à jour du mot de passe de l'utilisateur ${id} (${statut})`)
+		}
+	}
+	return sendError(res, `Token incorrect`)
+});
+
 module.exports = router;

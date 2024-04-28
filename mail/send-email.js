@@ -23,13 +23,18 @@ const sendResetPassword = async (userEmail, name, linkResetPassword) => {
          */
         let template = templateResetPassword.replace('[prenom]', name)
         template = template.replace('[lien_reinitialisation]', linkResetPassword)
+        /**
+         * info.accepted: tableau contenant les mails accepté
+         * info.rejected: tableau contenant les mails non envoyé
+         * info.envelope: { from: 'test@shandoragames.fr', to: [ 'marius.vitta@gmail.com' ] },
+         */
         const info = await transporter.sendMail({
             from: `Planifi <${process.env.MAIL_USERNAME}>`,
             to: userEmail,
             subject: "Réinitialisation de votre mot de passe",
             html: template,
         })
-        logLogger(`un mail de reinitialisation de mot de passe a bien été envoyé à: ${info.messageId}`, "sendResetPassword")
+        logLogger(`un mail de reinitialisation de mot de passe a bien été envoyé à ${userEmail} avec l'id: ${info.messageId}`, "sendResetPassword")
     }
     catch (e) {
         errorLogger(`Erreur lors de lors de l'envoi du mail à ${userEmail}` + e, "sendResetPassword")
@@ -59,7 +64,7 @@ const sendRegistrationLink = async (userEmail, name, linkRegistration) => {
             html: template
         })
         logLogger(`Message envoyé: ${info.messageId}`, "sendRegistrationLink")
-        logLogger(`Un mail de confirmation d'inscription a bien été envoyé à: ${info.messageId}`, "sendRegistrationLink")
+        logLogger(`Un mail de confirmation d'inscription a bien été envoyé à: ${userEmail} avec l'id: ${info.messageId}`, "sendRegistrationLink")
     }
     catch (e) {
         errorLogger(`Erreur lors de l'envoi du mail à ${userEmail}` + e, "sendRegistrationLink")
