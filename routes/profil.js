@@ -379,5 +379,12 @@ router.post('/profil/:idPro/upload-service-picture/:serviceId',requiredAuth, asy
 
 })
 
+router.put('/profil/:id/update-preferences', requiredAuth, uploadSingle, async (req, res) => {
+	const { id, statut } = decodeJWT(req.cookies.jwt)
+
+	//TODO: demander à Djamal plus de précisions
+})
+
+
 
 module.exports = router;

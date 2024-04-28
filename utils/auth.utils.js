@@ -1,5 +1,8 @@
 const jwt = require("jsonwebtoken");
-const {errorLogger} = require("../config/winston/winston.config");
+const {errorLogger, logLogger} = require("../config/winston/winston.config");
+const limiter = require("express-rate-limit");
+const {sendTooManyRequest} = require("./error_message.utils");
+const {json} = require("express");
 
 /**
  * Durée d'expiration du token JWT
@@ -74,8 +77,66 @@ const verifyJWT = (token) => {
         userInfos = decodedToken
     })
     return userInfos
-
 }
+
+/**
+ * limite le nombre de tentatives de connexion pour une IP pour une durée donnée
+ *
+ * ici on limite à l'utilisateur par tranche de 1H 5 inscription max
+ *
+ * @type {RateLimitRequestHandler}
+ */
+const registrationLimiter = limiter({
+    windowMs: 60 * 60 * 1000, // 1H
+    max: 10,
+    handler: (req, res) =>{
+        logLogger(JSON.stringify(req.rateLimit), 'registrationLimiter')
+        const dateReset = new Date(req.rateLimit.resetTime)
+        req.rateLimit.resetTime = dateReset.toLocaleTimeString()
+        return sendTooManyRequest(res, `Trop de comptes ont été crée à cette adresse IP, veuillez reesayer après ${req.rateLimit.resetTime}`)
+    },
+    requestWasSuccessful: (request, response) => response.statusCode < 400,
+    skipSuccessfulRequests: true
+})
+
+const authLimiter = limiter({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 5,
+    handler: (req, res) =>{
+        logLogger(JSON.stringify(req.rateLimit), 'authLimiter')
+        const dateReset = new Date(req.rateLimit.resetTime)
+        req.rateLimit.resetTime = dateReset.toLocaleTimeString()
+        return sendTooManyRequest(res, `Trop de tentatives de connexion ont été faites à cette adresse IP, veuillez reesayer après ${req.rateLimit.resetTime}`)
+    },
+    requestWasSuccessful: (request, response) => response.statusCode < 400,
+    skipSuccessfulRequests: true
+});
+
+const sendMailResetPasswordLimiter = limiter({
+    windowMs: 60 * 60 * 1000, // 1H
+    max: 5,
+    handler: (req, res) =>{
+        logLogger(JSON.stringify(req.rateLimit), 'sendMailResetPasswordLimiter')
+        const dateReset = new Date(req.rateLimit.resetTime)
+        req.rateLimit.resetTime = dateReset.toLocaleTimeString()
+        return sendTooManyRequest(res, `Trop de tentatives de demande de réinitialisation de mot de passe ont été faites à cette adresse IP, veuillez reesayer après ${req.rateLimit.resetTime}`)
+    },
+    requestWasSuccessful: (request, response) => response.statusCode < 400,
+    skipSuccessfulRequests: false
+})
+
+const sendMailConfirmRegistrationLimiter = limiter({
+    windowMs: 60 * 60 * 1000, // 1H
+    max: 5,
+    handler: (req, res) =>{
+        logLogger(JSON.stringify(req.rateLimit), 'sendMailConfirmRegistrationLimiter')
+        const dateReset = new Date(req.rateLimit.resetTime)
+        req.rateLimit.resetTime = dateReset.toLocaleTimeString()
+        return sendTooManyRequest(res, `Trop de tentatives de demande d'envoi de mails de confirmation ont été faites à cette adresse IP, veuillez reesayer après ${req.rateLimit.resetTime}`)
+    },
+    requestWasSuccessful: (request, response) => response.statusCode < 400,
+    skipSuccessfulRequests: false
+})
 
 module.exports = {
     createToken,
@@ -83,5 +144,9 @@ module.exports = {
     verifyJWT,
     EXPIRES_IN,
     REGISTRATION_EXPIRES_IN,
-    JWT_COOKIE_EXPIRES_IN
+    JWT_COOKIE_EXPIRES_IN,
+    registrationLimiter,
+    authLimiter,
+    sendMailResetPasswordLimiter,
+    sendMailConfirmRegistrationLimiter
 }

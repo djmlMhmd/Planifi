@@ -104,6 +104,21 @@ const sendFailure = (res, error, status = 412) => {
 }
 
 /**
+ * Case for update,created,deleted failed
+ *
+ * @param res objet résultat de la requete
+ * @param error message
+ * @param status status de la requete
+ */
+const sendTooManyRequest = (res, error, status = 429) => {
+    res.status(status).json({
+        code: status,
+        message: error,
+        error: true
+    })
+}
+
+/**
  * Case for if your server is crash or database error etc
  *
  * @param res objet résultat de la requete
@@ -126,5 +141,6 @@ module.exports = {
     sendFailure,
     sendInternalServerError,
     sendBadRequest,
-    sendSuccessWithNoContent
+    sendSuccessWithNoContent,
+    sendTooManyRequest
 }
