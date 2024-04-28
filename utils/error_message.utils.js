@@ -80,7 +80,7 @@ const sendError = (res, error, status = 401) => {
  * @param message message
  * @param status status de la requete
  */
-const sendUnauthrorized = (res, message, status = 403) => {
+const sendUnauthorized = (res, message, status = 403) => {
     res.status(status).json({
         code: status,
         message,
@@ -122,7 +122,7 @@ module.exports = {
     sendSuccess,
     sendSuccessfullyCreated,
     sendError,
-    sendUnauthrorized,
+    sendUnauthorized,
     sendFailure,
     sendInternalServerError,
     sendBadRequest,

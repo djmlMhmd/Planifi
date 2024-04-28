@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken')
 const {errorLogger} = require("../config/winston/winston.config");
-const {sendUnauthrorized} = require("../utils/error_message.utils");
+const {sendUnauthorized} = require("../utils/error_message.utils");
 
 /**
  * Middleware qui va sécuriser les routes et obliger les utilisateurs
@@ -15,10 +15,10 @@ const requiredAuth = (req, res, next) => {
 
     // verification si le JWT token existe et est correct
     if(token){
-        jwt.verify(token, process.env.JWT_SECRET, (err, decodedToken) =>{
+        jwt.verify(token, process.env.JWT_SECRET, (err) =>{
             if(err){
                 errorLogger(err.message, 'requiredAuth')
-                sendUnauthrorized(res, 'Authentification requise')
+                sendUnauthorized(res, 'Authentification requise')
             }
             else{
                 next()
@@ -26,7 +26,7 @@ const requiredAuth = (req, res, next) => {
         })
     }
     else{
-        sendUnauthrorized(res, 'Authentification requise')
+        sendUnauthorized(res, 'Authentification requise')
     }
 }
 

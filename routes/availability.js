@@ -4,7 +4,8 @@ const router = Router();
 const { getClientsCollection } = require('../db/database');
 const {errorLogger, warnLogger, logLogger, verboseLogger} = require("../config/winston/winston.config");
 const {requiredAuth} = require("../middleware/authMiddleware");
-const {sendInternalServerError, sendBadRequest, sendSuccessfullyCreated} = require("../utils/error_message.utils");
+const {sendInternalServerError, sendBadRequest, sendSuccessfullyCreated, sendSuccess} = require("../utils/error_message.utils");
+const {isANumber} = require("../utils/methods.utils");
 
 router.use(express.json());
 
@@ -18,7 +19,7 @@ router.post('/availability', requiredAuth, async (req, res) => {
 	try {
 		const client = getClientsCollection();
 
-		// check if professsional existing
+		// check if professional existing
 		const checkProfessionalQuery =
 			'SELECT * FROM professionals WHERE professional_id = $1';
 		const professionalResult = await client.query(checkProfessionalQuery, [
@@ -27,10 +28,10 @@ router.post('/availability', requiredAuth, async (req, res) => {
 
 		if (professionalResult.rows.length === 0) {
 			warnLogger(`Le professionnel avec cet ID n'existe pas":${professional_id}`, 'availability.js [POST] /availability')
-			sendBadRequest(res, "Le professionnel avec cet ID n'existe pas")
+			return sendBadRequest(res, "Le professionnel avec cet ID n'existe pas")
 		}
 
-		// professinal existing add availability
+		// professional existing add availability
 		const existingAvailability = await client.query(
 			'SELECT * FROM availability WHERE professional_id = $1 AND day_of_week = $2 AND start_time = $3 AND end_time = $4',
 			[professional_id, day_of_week, start_time, end_time]
@@ -38,7 +39,7 @@ router.post('/availability', requiredAuth, async (req, res) => {
 
 		if (existingAvailability.rows.length > 0) {
 			warnLogger(`Cette disponibilité existe déjà: pro:${professional_id}, jour de la semaine:${day_of_week}, temps du début:${start_time}, temps de fin:${end_time}`, 'availability.js [POST] /availability')
-			sendBadRequest(res, 'Cette disponibilité existe déjà')
+			return sendBadRequest(res, 'Cette disponibilité existe déjà')
 		}
 
 		const result = await client.query(
@@ -46,20 +47,22 @@ router.post('/availability', requiredAuth, async (req, res) => {
 			[professional_id, day_of_week, start_time, end_time]
 		);
 		logLogger(`Disponibilité créée avec succès": ${JSON.stringify(result.rows[0])}`, 'availability.js [POST] /availability')
-		sendSuccessfullyCreated(res, 'Disponibilité créée avec succès' )
+		return sendSuccessfullyCreated(res, 'Disponibilité créée avec succès' )
 	} catch (e) {
 		errorLogger("Erreur lors de la création de la disponibilité :'" + JSON.stringify(e.stack), 'availability.js [POST] /availability')
-		sendInternalServerError(res, 'Erreur lors de la création de la disponibilité : ' + e.message)
+		return sendInternalServerError(res, 'Erreur lors de la création de la disponibilité : ' + e.message)
 	}
 });
-
-// Route to display the availability of a professional
 
 // Route pour obtenir les disponibilités d'un professionnel
 router.get('/availability/:professionalId/:dayOfWeek', requiredAuth, async (req, res) => {
 	try {
 		const client = getClientsCollection();
 		const { professionalId, dayOfWeek } = req.params;
+
+		if (!isANumber(professionalId) ) {
+			return sendBadRequest(res, "le professionalId doit etre un entier")
+		}
 
 		// Récupére les heures disponibles pour le professionnel et le jour de la semaine
 		const availability = await client.query(
@@ -69,10 +72,10 @@ router.get('/availability/:professionalId/:dayOfWeek', requiredAuth, async (req,
 
 		const availableHours = availability.rows.map((row) => row.start_time);
 		verboseLogger(`Récuperation des disponibilités pour le profesionnel": ${professionalId}, pour le jour de la semaine ${dayOfWeek}`, 'availability.js [GET] /availability/:professionalId/:dayOfWeek')
-		res.json(availableHours);
+		return sendSuccess(res, availableHours);
 	} catch (error) {
 		errorLogger("Erreur lors de la récupération des disponibilités" + JSON.stringify(error), 'availability.js [GET] /availability/:professionalId/:dayOfWeek')
-		sendInternalServerError(res, 'Erreur lors de la récupération des disponibilités')
+		return sendInternalServerError(res, 'Erreur lors de la récupération des disponibilités')
 	}
 });
 
