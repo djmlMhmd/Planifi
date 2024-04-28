@@ -6,14 +6,14 @@ const {errorLogger} = require("../config/winston/winston.config");
  *
  * @type {number}
  */
-const EXPIRES_IN = 3 * 24 * 60 * 60;
+const EXPIRES_IN = 5 * 24 * 60 * 60; // 5 JOURS
 
 /**
  * Durée d'expiration du token JWT pour l'inscription
  *
  * @type {number}
  */
-const REGISTRATION_EXPIRES_IN = 60 * 60; // 1 H
+const REGISTRATION_EXPIRES_IN = 10 * 60; // 10 min
 
 /**
  * Crée un token avec l'id et le statut de l'utilisateur
@@ -63,4 +63,4 @@ const verifyJWT = (token) => {
 
 }
 
-module.exports = { createToken, decodeJWT, EXPIRES_IN, verifyJWT }
+module.exports = { createToken, decodeJWT, EXPIRES_IN, verifyJWT, REGISTRATION_EXPIRES_IN }
