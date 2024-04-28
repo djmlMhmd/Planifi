@@ -4,6 +4,7 @@ const {errorLogger} = require("../config/winston/winston.config");
 /**
  * Durée d'expiration du token JWT
  *
+ *
  * @type {number}
  */
 const EXPIRES_IN = 5 * 24 * 60 * 60; // 5 JOURS
@@ -14,6 +15,19 @@ const EXPIRES_IN = 5 * 24 * 60 * 60; // 5 JOURS
  * @type {number}
  */
 const REGISTRATION_EXPIRES_IN = 10 * 60; // 10 min
+
+/**
+ * correspond à la durée de vie du cookie ici on est sur 3 jours
+ * 5 => nombres de jours
+ * 24 => 24h
+ * 60 => 60 minutes
+ * 60 => 60 secondes
+ * 1000 => 1s (millisecondses)
+ *
+ * la durée de vie d'un cookie se transmet en millisecondes
+ */
+const JWT_COOKIE_EXPIRES_IN = 5 * 24 * 60 * 60 * 1000;
+
 
 /**
  * Crée un token avec l'id et le statut de l'utilisateur
@@ -63,4 +77,11 @@ const verifyJWT = (token) => {
 
 }
 
-module.exports = { createToken, decodeJWT, EXPIRES_IN, verifyJWT, REGISTRATION_EXPIRES_IN }
+module.exports = {
+    createToken,
+    decodeJWT,
+    verifyJWT,
+    EXPIRES_IN,
+    REGISTRATION_EXPIRES_IN,
+    JWT_COOKIE_EXPIRES_IN
+}
