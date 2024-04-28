@@ -52,6 +52,18 @@ const alterInTables = () => {
                                     })
                             }
                         })
+                    checkIfColumnExistInTable(resultTableExists.tableName, 'profile_picture')
+                        .then((resultColumnExists) => {
+                            if (!resultColumnExists.exists) {
+                                /* Créer la colonne ici*/
+                                addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'VARCHAR', false, 'NULL')
+                                    .then(columnAddResult => {
+                                        if (columnAddResult) {
+                                            logLogger(`La colonne 'profile_picture' a bien été ajouté dans la table 'PROFESSIONALS`, 'alterInTables')
+                                        }
+                                    })
+                            }
+                        })
                 }
             })
             .catch(e => errorLogger(e, " checkIfTableExist('professionals')"))

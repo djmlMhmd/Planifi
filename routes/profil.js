@@ -59,7 +59,7 @@ router.get('/profil/client/:id', requiredAuth, async (req, res) => {
 	 * on est forcément authentifié et donc le cookie "JWT" existe
  	 */
 	let idReq  = req.params['id'];
-	let { id, statut } = decodeJWT(req.cookies.jwt)
+	let { id } = decodeJWT(req.cookies.jwt)
 
 	if (!checkIsNumber(idReq)) {
 		return sendBadRequest(res, "l'id doit etre un entier")
@@ -120,7 +120,7 @@ router.put('/profil/:id/change-password', requiredAuth, async (req, res) => {
 	}
 
 	const client = getClientsCollection();
-	let getUserQuery = ''
+	let getUserQuery
 	if(statut === constants.STATUT_PROFESSIONNEL) {
 		getUserQuery = await client.query(
 			'SELECT * FROM professionals WHERE professional_id = $1',
@@ -171,20 +171,18 @@ router.put('/profil/:id/change-password', requiredAuth, async (req, res) => {
 })
 
 router.put('/profil/:id/update-profil-picture', requiredAuth, uploadSingle, async (req, res) => {
-	// Retrieves the client ID from the session or cookie
-	const userID = req.cookies.clientID;
+	let { id, statut } = decodeJWT(req.cookies.jwt)
 	const file = req.file
 	const uuid = UUID();
 	let downLoadPath = "https://firebasestorage.googleapis.com/v0/b/planifi-1f28d.appspot.com/o";
 	let imageUrl = ""
 	const dateActuelle = new Date()
-	if (!userID) {
+	if (!id) {
 		return sendError(res, 'Authentification requise')
 	}
 	if (!file) {
 		sendBadRequest(res, 'Aucun fichier upload')
 	}
-	//req.session.clientID = userID;
 
 	try {
 		// mise en ligne de la photo de profil de l'utilisateur
@@ -211,41 +209,58 @@ router.put('/profil/:id/update-profil-picture', requiredAuth, uploadSingle, asyn
 		})
 
 		blobStream.on("error", err => {
-			errorLogger(`erreur lors de l'upload de l'image ${imageUrl} de l'utilisateur ${userID}`, 'profil.js [POST] /profil/:id/update-profil-picture')
+			errorLogger(`erreur lors de l'upload de l'image ${imageUrl} de l'utilisateur ${id}`, 'profil.js [POST] /profil/:id/update-profil-picture')
 			errorLogger(err, 'profil.js [POST] /profil/:id/update-profil-picture')
 		})
 
 		blobStream.on("finish", () => {
-			logLogger(`upload de l'image ${imageUrl} de l'utilisateur ${userID} a bien été effectuée`, 'profil.js [POST] /profil/:id/update-profil-picture')
+			logLogger(`upload de l'image ${imageUrl} de l'utilisateur ${id} a bien été effectuée`, 'profil.js [POST] /profil/:id/update-profil-picture')
 		})
 
 		blobStream.end(req.file.buffer)
 
 		const client = getClientsCollection();
-		const queryUpdateProfilPicture = {
-			text: 'UPDATE users SET profile_picture = $1 WHERE users_id = $2',
-			values: [imageUrl, userID],
-		};
+		let queryUpdateProfilPicture
+		if(statut === constants.STATUT_CLIENT) {
+			queryUpdateProfilPicture = {
+				text: 'UPDATE users SET profile_picture = $1 WHERE users_id = $2',
+				values: [imageUrl, id],
+			};
+		}
+		else {
+			queryUpdateProfilPicture = {
+				text: 'UPDATE professionals SET profile_picture = $1 WHERE professional_id = $2',
+				values: [imageUrl, id],
+			};
+		}
 
 		const resultUpdateProfilPicture = await client.query(queryUpdateProfilPicture);
 
 		if (resultUpdateProfilPicture.rowCount === 0) {
-			sendError(res, "Erreur lors de la mise à jour de la photo de profil de l'utilisateur")
+			errorLogger("Erreur lors de la mise à jour de la photo de profil de l'utilisateur", 'profil.js [PUT] /profil/:id/update-profil-picture')
+			return sendError(res, "Erreur lors de la mise à jour de la photo de profil de l'utilisateur")
 		}
 
+		if(statut === constants.STATUT_CLIENT) {
+			const queryGetUser = {
+				text: 'SELECT * FROM users WHERE users_id = $1',
+				values: [id],
+			};
+
+			const resultGetUser = await client.query(queryGetUser);
+
+
+			const { password, creation_date, ...clientProfile} = resultGetUser.rows[0];
+			return sendSuccessfullyCreated(res, clientProfile )
+		}
 		const queryGetUser = {
-			text: 'SELECT * FROM users WHERE users_id = $1',
-			values: [userID],
+			text: 'SELECT * FROM professionals WHERE professional_id = $1',
+			values: [id],
 		};
 
 		const resultGetUser = await client.query(queryGetUser);
-
-		if (resultGetUser.rows.length === 0) {
-			sendError(res, 'Profil client non trouvé')
-		}
-
-		const { password, creation_date, ...clientProfile} = resultGetUser.rows[0];
-		return sendSuccessfullyCreated(res, clientProfile )
+		const { password, creation_date, ...proProfile} = resultGetUser.rows[0];
+		return sendSuccessfullyCreated(res, proProfile )
 
 	} catch (e) {
 		errorLogger('Erreur lors de la récupération du profil:' + e.stack, ' profil.js [PUT] /profil/:id/update-profile-picture')
