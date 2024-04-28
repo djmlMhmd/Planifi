@@ -4,7 +4,9 @@ const router = Router();
 const { userValidation } = require('../validation/validation');
 const { getClientsCollection } = require('../db/database');
 const bcrypt = require('bcrypt');
-const {createToken, verifyJWT, REGISTRATION_EXPIRES_IN, JWT_COOKIE_EXPIRES_IN} = require("../utils/auth.utils");
+const {createToken, verifyJWT, REGISTRATION_EXPIRES_IN, JWT_COOKIE_EXPIRES_IN, registrationLimiter, authLimiter,
+	sendMailResetPasswordLimiter, sendMailConfirmRegistrationLimiter
+} = require("../utils/auth.utils");
 const saltRounds = 10;
 const {logLogger, errorLogger, warnLogger} = require('../config/winston/winston.config')
 const {sendInternalServerError, sendError, sendBadRequest, sendSuccess, sendSuccessWithNoContent, sendUnauthorized,
@@ -22,7 +24,7 @@ router.get('/auth', requiredAuth, (req, res) =>{
 })
 
 // REGISTRATION
-router.post('/inscription', async (req, res) => {
+router.post('/inscription', registrationLimiter,  async (req, res) => {
 	const { body } = req;
 	const reqValue = req.query['user_type'];
 	const { error } = userValidation(body);
@@ -93,7 +95,7 @@ router.post('/inscription', async (req, res) => {
 
 // CONNEXION
 
-router.post('/connexion', async (req, res) => {
+router.post('/connexion', authLimiter, async (req, res) => {
 	const { email, password } = req.body;
 	const reqValue = req.query['user_type'];
 
@@ -212,7 +214,7 @@ router.get('/confirm-registration', async (req, res) => {
 });
 
 
-router.post('/resend-registration-mail', async (req, res) => {
+router.post('/resend-registration-mail', sendMailConfirmRegistrationLimiter,  async (req, res) => {
 	const user_type = req.query['user_type'];
 	const { email } = req.body;
 
@@ -271,7 +273,7 @@ router.post('/resend-registration-mail', async (req, res) => {
 	}
 });
 
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', sendMailResetPasswordLimiter, async (req, res) => {
 	const { email } = req.body;
 
 	if (isUndefinedOrEmpty(email)) {
