@@ -5,7 +5,7 @@ const { getClientsCollection } = require('../db/database');
 router.use(express.json());
 const {requiredAuth} = require("../middleware/authMiddleware");
 const {decodeJWT} = require("../utils/auth.utils");
-const {errorLogger, warnLogger, logLogger} = require("../config/winston/winston.config");
+const {errorLogger, warnLogger, logLogger, verboseLogger} = require("../config/winston/winston.config");
 const {auth} = require("../config/firebase");
 const {uploadSingle, uploadMultiple, ERROR_MESSAGES} = require("../middleware/multer");
 const UUID  = require("uuid-v4")
@@ -13,14 +13,14 @@ const {sendInternalServerError, sendError, sendBadRequest, sendSuccessfullyCreat
 	sendFailure, sendSuccessWithNoContent
 } = require("../utils/error_message.utils");
 const bcrypt = require("bcrypt");
-const {checkIsNumber, convertToNumber} = require("../utils/methods.utils");
+const {checkIsNumber, convertToNumber, isUndefinedOrEmpty} = require("../utils/methods.utils");
 const {constants} = require("../constants/constants");
+const format = require("pg-format");
 const saltRounds = 10;
 
 // PROFESSIONAL PROFILE
 
 router.get('/profil/professionnel/:id',requiredAuth, async (req, res) => {
-	const professionnelId = req.cookies.professionalID;
 
 	const { id } = decodeJWT(req.cookies.jwt)
 	if (!id) {
@@ -37,11 +37,10 @@ router.get('/profil/professionnel/:id',requiredAuth, async (req, res) => {
 		const result = await client.query(query);
 
 		if (result.rows.length === 0) {
-			warnLogger(`Profil professionnel non trouvé ${professionnelId}`, 'profil.js [GET] /profil/professionnel/:id')
+			warnLogger(`Profil professionnel non trouvé ${id}`, 'profil.js [GET] /profil/professionnel/:id')
 			return sendError(res, 'Profil professionnel non trouvé')
 		}
 
-		//const professionnel = result.rows[0];
 		const { password, creation_date, ...professionalProfile } =
 			result.rows[0];
 		sendSuccess(res, professionalProfile)
@@ -174,7 +173,6 @@ router.put('/profil/:id/update-profil-picture', requiredAuth, uploadSingle, asyn
 	let { id, statut } = decodeJWT(req.cookies.jwt)
 	const file = req.file
 	const uuid = UUID();
-	let downLoadPath = "https://firebasestorage.googleapis.com/v0/b/planifi-1f28d.appspot.com/o";
 	let imageUrl = ""
 	const dateActuelle = new Date()
 	if (!id) {
@@ -200,7 +198,7 @@ router.put('/profil/:id/update-profil-picture', requiredAuth, uploadSingle, asyn
 		 * cela n'écrase pas l'image de l'autre
 		 * .getTime() => renvoie le temps actuelle en millisecondes donc est unique
 		 */
-		imageUrl = `${downLoadPath}/${encodeURIComponent(`images/profile-picture/${dateActuelle.getTime()} - ${file.originalname}`)}?alt=media&token=${uuid}`
+		imageUrl = `${process.env.DOWNLOAD_PATH}/${encodeURIComponent(`images/profile-picture/${dateActuelle.getTime()} - ${file.originalname}`)}?alt=media&token=${uuid}`
 
 		const blob = bucket.file(`images/profile-picture/${dateActuelle.getTime()} - ${file.originalname}`)
 		const blobStream = blob.createWriteStream({
@@ -269,7 +267,7 @@ router.put('/profil/:id/update-profil-picture', requiredAuth, uploadSingle, asyn
 })
 
 
-router.put('/profil/:id/upload-service-picture/:serviceId', async (req, res) => {
+router.post('/profil/:idPro/upload-service-picture/:serviceId',requiredAuth, async (req, res) => {
 	/**
 	 * doc: https://github.com/expressjs/multer/blob/master/lib/multer-error.js
 	 */
@@ -284,24 +282,32 @@ router.put('/profil/:id/upload-service-picture/:serviceId', async (req, res) => 
 
 			}
 		}
-
-		let downLoadPath = "https://firebasestorage.googleapis.com/v0/b/planifi-1f28d.appspot.com/o";
 		const files = req.files
-		let imageUrl = ""
-		const dateActuelle = new Date()
 
 		const { id } = decodeJWT(req.cookies.jwt)
-		if (!id) {
-			return sendError(res, 'Authentification requise')
-		}
+		const { idPro, serviceId } = req.params;
 
 		if (files.length === 0) {
 			sendBadRequest(res, 'Aucun fichier upload')
 		}
+
+		if (!checkIsNumber(idPro) || !checkIsNumber(serviceId) ) {
+			warnLogger(`L'utilisateur ${id} a appelé la route avec le paramètre de requete suivant: idPro:${idPro} et serviceId: ${serviceId}`, 'profil.js [PUT] /profil/:idPro/upload-service-picture/:serviceId')
+			return sendBadRequest(res, "le 'idPro' et le 'serviceId' de la requête doivent etre des entiers")
+		}
+
+		if(convertToNumber(idPro) !== id) {
+			warnLogger(`L'utilisateur ${id} a tenté d'upload des images en se faisant passer pour l'utilisateur: ${idPro}`, 'profil.js [PUT] /profil/:idPro/upload-service-picture/:serviceId')
+			return sendUnauthrorized(res, 'Permission non autorisé')
+		}
+
+
 		try {
 			let tableauEchecs = []
+			let tableauURL = []
 			for(let file of files){
 				const uuid = UUID();
+				let dateActuelle = new Date()
 
 				// mise en ligne des photos du pro
 				let bucket = auth.storage().bucket();
@@ -318,8 +324,8 @@ router.put('/profil/:id/upload-service-picture/:serviceId', async (req, res) => 
 				 * cela n'écrase pas l'image de l'autre
 				 * .getTime() => renvoie le temps actuelle en millisecondes donc est unique
 				 */
-				imageUrl = `${downLoadPath}/${encodeURIComponent(`images/service-images/${dateActuelle.getTime()} - ${file.originalname}`)}?alt=media&token=${uuid}`
-
+				let imageUrl = `${process.env.DOWNLOAD_PATH}/${encodeURIComponent(`images/service-images/${dateActuelle.getTime()} - ${file.originalname}`)}?alt=media&token=${uuid}`
+				tableauURL.push(imageUrl)
 				const blob = bucket.file(`images/service-images/${dateActuelle.getTime()} - ${file.originalname}`)
 				const blobStream = blob.createWriteStream({
 					metadata: metadata,
@@ -333,46 +339,48 @@ router.put('/profil/:id/upload-service-picture/:serviceId', async (req, res) => 
 				})
 
 				blobStream.on("finish", () => {
-					logLogger(`upload de l'image ${imageUrl} de l'utilisateur ${userID} a bien été effectuée`, 'profil.js [POST] /profil/:id/upload-service-picture/:serviceId')
+					logLogger(`upload de l'image ${imageUrl} de l'utilisateur ${id} a bien été effectuée`, 'profil.js [POST] /profil/:id/upload-service-picture/:serviceId')
 				})
 
 				blobStream.end(file.buffer)
 
-				const client = getClientsCollection();
-				// TODO: rajouter la sauvegarde des images dans la nouvelle table
-				// const queryUpdateProfilPicture = {
-				// 	text: 'UPDATE users SET profile_picture = $1 WHERE users_id = $2',
-				// 	values: [imageUrl, userID],
-				// };
-				//
-				// const resultUpdateProfilPicture = await client.query(queryUpdateProfilPicture);
-
-				// if (resultUpdateProfilPicture.rowCount === 0) {
-				// 	return res
-				// 		.status(404)
-				// 		.json({ message: "Erreur lors de la mise à jour de la photo de profil de l'utilisateur"});
-				// }
 			}
-			// const queryGetUser = {
-			// 	text: 'SELECT * FROM users WHERE users_id = $1',
-			// 	values: [id],
-			// };
-			//
-			// const resultGetUser = await client.query(queryGetUser);
-			//
-			// if (resultGetUser.rows.length === 0) {
-			// 	return res
-			// 		.status(404)
-			// 		.json({ message: 'Profil client non trouvé' });
-			// }
-			//
-			// const { password, creation_date, ...clientProfile } = resultGetUser.rows[0];
-			sendSuccessfullyCreated(res, '')
+			const client = getClientsCollection();
+
+			let dataToInsertString = []
+			// TODO: a tester
+			if(tableauEchecs.length > 0){
+				let images_upload =  tableauURL.filter((url) => tableauEchecs.includes(url) === false)
+				dataToInsertString = images_upload.map((url) => [idPro, serviceId, url])
+			}
+			else {
+				dataToInsertString = tableauURL.map((url) => [2, 2, url])
+			}
+
+			try {
+				// TODO: rajouter la sauvegarde des images dans la nouvelle table
+				const insertImagesQuery = format('INSERT INTO images_services_professionals (pro_id, service_id, image_url) VALUES %L', dataToInsertString)
+
+
+				const insertImageResult = await client.query(insertImagesQuery)
+				if(insertImageResult.rowCount === 0 ) {
+					errorLogger("Erreur lors de l'enregistrement des images en base" + e.stack, 'profil.js [PUT] /profil/:id/upload-service-picture/:serviceId')
+					return sendFailure(res, "Erreur lors de l'enregistrement des images en base" )
+				}
+				verboseLogger(`Les images du pro ${idPro} ont bien été sauvegarder en base pour le service: ${serviceId} (${dataToInsertString.length} images upload)`, 'profil.js [PUT] /profil/:id/upload-service-picture/:serviceId')
+				return sendSuccessfullyCreated(res, `L'upload des images pour le service ${serviceId} a bien fonctionné`)
+			}
+			catch (e) {
+				errorLogger("Erreur lors de l'enregistrement des images en base" + e.stack, 'profil.js [PUT] /profil/:id/upload-service-picture/:serviceId')
+				return sendFailure(res, "Erreur lors de l'enregistrement des images en base" )
+			}
+
 		} catch (e) {
-			errorLogger("Erreur lors de la récupération du profil:" + e.stack, 'profil.js [PUT] /profil/:id/upload-service-picture/:serviceId')
-			sendInternalServerError(res, 'Erreur serveur' )
+			errorLogger("Erreur lors de l'upload des images" + e.stack, 'profil.js [PUT] /profil/:id/upload-service-picture/:serviceId')
+			return sendInternalServerError(res, 'Erreur serveur' )
 		}
 	})
+
 })
 
 
