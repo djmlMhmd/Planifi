@@ -40,7 +40,8 @@ const createTableUser = async () => {
 		  address VARCHAR(100),
 		  phone VARCHAR(20),
 		  creation_date DATE NOT NULL DEFAULT CURRENT_DATE,
-		  profile_picture VARCHAR
+		  profile_picture VARCHAR,
+		  est_verifie BOOLEAN DEFAULT false
         );
       `;
 
@@ -76,7 +77,8 @@ const createTableProfessional = async () => {
           company_name VARCHAR(100),
           company_address VARCHAR(300),
           creation_date DATE NOT NULL DEFAULT CURRENT_DATE,
-		  profile_picture VARCHAR
+		  profile_picture VARCHAR,
+		  est_verifie BOOLEAN DEFAULT false
         );
       `;
 
