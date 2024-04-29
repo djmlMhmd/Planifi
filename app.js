@@ -12,8 +12,9 @@ const {
 	createTableReservation,
 	createTableAvailability,
 	createTableMessages,
-	createTableDefaultAvailability, createTablePreferencePro, createTableImagesServicesProfessionals,
+	/*createTableDefaultAvailability,*/
 } = require('./db/database');
+const { dbConnexion, getDatabase } = require('./db/database');
 const path = require('path');
 const app = express();
 const port = 3000;
@@ -28,28 +29,7 @@ const secretKey = process.env.SECRET_KEY;
 const EventEmitter = require('events');
 const indexRoutes = require('./routes/index');
 const serviceRouter = require('./routes/services');
-
-// message en temps réel
-const http = require('http');
-const socketIo = require('socket.io');
-const {alterInTables} = require("./db/alterDatabase");
-const {logLogger} = require("./config/winston/winston.config");
-const {sendResetPassword, sendRestart} = require("./mail/send-email");
-const {deleteInTables} = require("./db/deleteDatabase");
-const server = http.createServer(app);
-const io = socketIo(server);
-
-// Gestion des connexions WebSocket
-io.on('connection', (socket) => {
-	console.log("Un utilisateur s'est connecté");
-
-	// Réception d'un message d'un client et transmission au professionnel
-	socket.on('send_message', (message) => {
-		// utilise socket.to pour envoyer le message à un socket/pro spécifique
-		// Sauvegarde le message dans votre base de données ici
-		console.log(message);
-	});
-});
+const messagesRoutes = require('./messagerie/message');
 
 getClientsCollection();
 connectToDatabase().then( ()=> {
@@ -58,7 +38,7 @@ connectToDatabase().then( ()=> {
 	createTableService();
 	createTableAvailability();
 	createTableReservation();
-	createTableDefaultAvailability();
+	//createTableDefaultAvailability();
 	createTableMessages();
 	//deleteInTables()
 	alterInTables();
@@ -97,6 +77,8 @@ app.use(reservation);
 app.use('/api', require('./routes/reservation'));
 app.use(deleteReservation);
 app.use(express.urlencoded({ extended: true }));
+app.use('/', messagesRoutes);
+
 
 
 // permet de lancer serveur web
