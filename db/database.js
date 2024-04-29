@@ -35,6 +35,9 @@ const createTableUser = async () => {
 		  "lastName" VARCHAR(100),
           password VARCHAR(100),
           email VARCHAR(100) UNIQUE NOT NULL,
+		  country VARCHAR(100),
+		  city VARCHAR(100),
+		  address VARCHAR(100),
 		  phone VARCHAR(20),
 		  creation_date DATE NOT NULL DEFAULT CURRENT_DATE,
 		  profile_picture VARCHAR
@@ -66,6 +69,9 @@ const createTableProfessional = async () => {
           "lastName" VARCHAR(100),
           password VARCHAR(100),
           email VARCHAR(100) UNIQUE NOT NULL,
+		  country VARCHAR(100),
+		  city VARCHAR(100),
+		  address VARCHAR(100),
           phone VARCHAR(20),
           company_name VARCHAR(100),
           company_address VARCHAR(300),
@@ -147,8 +153,9 @@ const createTableAvailability = async () => {
 
 const createTableReservation = async () => {
 	try {
+		const client = getClientsCollection();
 		const checkTableQuery = `
-            SELECT to_regclass('reservations') as table_exists;
+            SELECT to_regclass('public.reservations') as table_exists;
         `;
 
 		const result = await client.query(checkTableQuery);
@@ -157,19 +164,17 @@ const createTableReservation = async () => {
                 CREATE TABLE reservations (
                     reservation_id SERIAL PRIMARY KEY,
                     professional_id INT,
-                    CONSTRAINT FK_professional_id FOREIGN KEY(professional_id)
-                    REFERENCES professionals(professional_id),
+                    CONSTRAINT FK_professional_id FOREIGN KEY (professional_id)
+                        REFERENCES professionals(professional_id),
                     users_id INT,
                     CONSTRAINT FK_users_id FOREIGN KEY (users_id)
-                    REFERENCES users(users_id),
+                        REFERENCES users(users_id),
                     day_of_week VARCHAR(10) NOT NULL,
                     start_time TIME NOT NULL,
+                    end_time TIME NOT NULL,
                     service_id INT,
                     CONSTRAINT FK_service_id FOREIGN KEY (service_id)
-                    REFERENCES services(service_id),
-                    default_availability_id INT,
-                    CONSTRAINT FK_default_availability_id FOREIGN KEY (default_availability_id)
-                    REFERENCES default_availability(default_availability_id)
+                        REFERENCES services(service_id)
                 );
             `;
 
@@ -179,10 +184,11 @@ const createTableReservation = async () => {
 			verboseLogger('La table [reservation] existe déjà.', 'createTableReservation')
 		}
 	} catch (e) {
-		errorLogger('Erreur lors de la création/verification de la table [reservation]:' + e.stack, 'createTableReservation')
+		errorLogger('Erreur lors de la création/mise à jour de la table [reservation]:' + e.stack, 'createTableReservation')
 	}
 };
 
+/*
 const createTableDefaultAvailability = async () => {
 	try {
 		const checkTableQuery = `
@@ -210,7 +216,7 @@ const createTableDefaultAvailability = async () => {
 	} catch (e) {
 		errorLogger('Erreur lors de la création/verification de la table [default_availability]:' + e.stack, 'createTableDefaultAvailability')
 	}
-};
+};*/
 
 const createTableMessages = async () => {
 	try {
@@ -305,50 +311,6 @@ const createTableImagesServicesProfessionals = async () => {
 	}
 };
 
-const saveMessage = async ({
-	sender_id,
-	receiver_id,
-	subject,
-	message_body,
-	service_id,
-}) => {
-	try {
-		const insertQuery = `
-      INSERT INTO messages (sender_id, receiver_id, subject, message_body, service_id, sent_at)
-      VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *;
-    `;
-		const result = await client.query(insertQuery, [
-			sender_id,
-			receiver_id,
-			subject,
-			message_body,
-			service_id,
-		]);
-		verboseLogger('Message enregistré avec succès:' + JSON.stringify(result.rows[0]), 'saveMessage')
-		return result.rows[0];
-	} catch (e) {
-		errorLogger('Erreur lors de l\'enregistrement du message:' + e.stack, 'saveMessage')
-		throw e; // Rethrow l'erreur pour le gestionnaire d'erreurs supérieur
-	}
-};
-
-const getMessagesForProfessional = async (receiver_id) => {
-	try {
-		const selectQuery = `
-      SELECT m.*, u.firstName, u.lastName FROM messages m
-      JOIN users u ON m.sender_id = u.users_id
-      WHERE receiver_id = $1
-      ORDER BY sent_at DESC;
-    `;
-		const result = await client.query(selectQuery, [receiver_id]);
-		verboseLogger(`Messages récupérés pour le professionnel ${receiver_id}: ${JSON.stringify(result.rows)}`, 'getMessagesForProfessional')
-		return result.rows;
-	} catch (e) {
-		errorLogger('Erreur lors de la récupération des messages:' + e.stack, 'getMessagesForProfessional')
-		throw e; // Rethrow l'erreur pour le gestionnaire d'erreurs supérieur
-	}
-};
-
 const getClientsCollection = () => {
 	return client;
 };
@@ -360,10 +322,8 @@ module.exports = {
 	createTableService,
 	createTableReservation,
 	createTableAvailability,
-	createTableDefaultAvailability,
+	/*createTableDefaultAvailability,*/
 	createTableMessages,
-	saveMessage,
-	getMessagesForProfessional,
 	getClientsCollection,
 	createTablePreferencePro,
 	createTableImagesServicesProfessionals

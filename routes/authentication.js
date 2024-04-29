@@ -24,62 +24,53 @@ router.get('/auth', requiredAuth, (req, res) =>{
 })
 
 // REGISTRATION
-router.post('/inscription', registrationLimiter,  async (req, res) => {
+router.post('/inscription/utilisateur', registrationLimiter,  async (req, res) => {
 	const { body } = req;
-	const reqValue = req.query['user_type'];
 	const { error } = userValidation(body);
+
+	// Validatin initale des mots de passe
+	if (body.password !== body.confirmPassword) {
+		return res
+			.status(400)
+			.json({ message: 'Les mots de passe ne correspondent pas' });
+	}
 
 	if (error) {
 		errorLogger(`Erreur lors de la validation des données de l'utilisateur ${JSON.stringify(body)}:`, 'authentification.js [POST] /inscription')
 		return sendBadRequest(res, error.details[0].message)
 	}
-	if(reqValue !== constants.STATUT_CLIENT && reqValue !== constants.STATUT_PROFESSIONNEL) {
-		errorLogger(`Le paramètre de requête est incorrect ou manquant (?user_type=): ${reqValue}`, 'authentification.js [POST] /inscription')
-		return sendBadRequest(res, `Le paramètre de requête est incorrect: ${reqValue}`)
-	}
+
 
 	try {
 		const hash = await bcrypt.hash(body.password, saltRounds);
 		const client = getClientsCollection();
-		let insertQuery
 		const values = [
 			body.firstName,
 			body.lastName,
 			hash,
 			body.email,
 			body.phone,
+			body.country,
+			body.city,
+			body.address,
 		];
 
-		if(reqValue === constants.STATUT_PROFESSIONNEL) {
-			// Pour les professionnels, on ajoute aussi company_name et company_address
-			values.push(body.company_name);
-			values.push(body.company_address);
-			insertQuery = `INSERT INTO professionals ("firstName", "lastName", password, email, phone, company_name, company_address)
-       						VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT DO NOTHING RETURNING *`
-		}
-		else {
-			insertQuery = `INSERT INTO users ("firstName", "lastName", password, email, phone)
-       						VALUES($1, $2, $3, $4, $5) RETURNING *`;
-		}
+        const insertQuery = `INSERT INTO users("firstName", "lastName", password, email, phone, country, city, address)
+       VALUES($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT DO NOTHING RETURNING *`;
 
 		const result = await client.query(insertQuery, values);
 
 		// Vérifie si des lignes ont été insérées
 		if (result.rowCount > 0) {
-			logLogger(`${reqValue} inscrit avec succès:` + JSON.stringify(result.rows[0]) , 'authentification.js [POST] /inscription')
+			logLogger(`Utilisateur inscrit avec succès:` + JSON.stringify(result.rows[0]) , 'authentification.js [POST] /inscription')
 			const {email, firstName} = result.rows[0]
-			let id
-			if(reqValue === constants.STATUT_PROFESSIONNEL) {
-				id = result.rows[0].professional_id
-			}
-			else {
-				id = result.rows[0].users_id
-			}
+			let id = result.rows[0].users_id
+
 			/**
 			 * on crée un token qui ne durera que 10 minutes
 			 * @type {string}
 			 */
-			const token = createToken(id, reqValue, constants.CONFIRM_REGISTRATION, REGISTRATION_EXPIRES_IN)
+			const token = createToken(id, constants.STATUT_CLIENT, constants.CONFIRM_REGISTRATION, REGISTRATION_EXPIRES_IN)
 
 			sendSuccess(res, `Votre inscription a bien été prise en compte, un lien de confirmation d'inscription vous a été envoyé à votre adresse mail: ${email}`)
 			await sendRegistrationLink(email, firstName, `${process.env.API_URL}/confirm-registration?token=${token}`)
@@ -90,6 +81,66 @@ router.post('/inscription', registrationLimiter,  async (req, res) => {
 	} catch (e) {
 		errorLogger(`Erreur lors de l'inscription : ${e.stack}`, 'authentification.js [POST] /inscription')
 		return sendInternalServerError(res, "Erreur serveur lors de l'inscription. " + e.message)
+	}
+});
+
+// Inscription pour les professionnels
+router.post('/inscription/professionnel', async (req, res) => {
+	const { body } = req;
+	const { error } = userValidation(body);
+
+	if (body.password !== body.confirmPassword) {
+		return res
+			.status(400)
+			.json({ message: 'Les mots de passe ne correspondent pas' });
+	}
+
+	if (error) {
+		return res.status(400).json(error.details[0].message);
+	}
+
+	try {
+		const hash = await bcrypt.hash(body.password, saltRounds);
+		const client = getClientsCollection();
+
+		const values = [
+			body.firstName,
+			body.lastName,
+			hash,
+			body.email,
+			body.phone,
+			body.company_name,
+			body.company_address,
+			body.country,
+			body.city,
+			body.address,
+		];
+
+		const insertQuery = `INSERT INTO professionals("firstName", "lastName", password, email, phone, company_name, company_address, country, city, address)
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT DO NOTHING RETURNING *`;
+
+		const result = await client.query(insertQuery, values);
+
+		if (result.rowCount > 0) {
+			console.log('Professionnel inscrit avec succès:', result.rows[0]);
+			res.json({ success: true, redirectUrl: '/connexion' });
+		} else {
+			res.status(400).json({
+				success: false,
+				message:
+					'Le compte existe déjà ou une autre erreur est survenue.',
+			});
+		}
+	} catch (e) {
+		console.error(
+			"Erreur lors de l'inscription du professionnel :",
+			e.stack
+		);
+		res.status(500).json({
+			message:
+				"Erreur serveur lors de l'inscription du professionnel. " +
+				e.message,
+		});
 	}
 });
 

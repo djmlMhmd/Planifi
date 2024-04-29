@@ -11,6 +11,7 @@ const router = Router();
 router.use(express.json());
 
 // Côté serveur
+// SUPPRIMER RÉSERVATION
 router.delete('/supprimer-reservation/:reservationId', requiredAuth, async (req, res) => {
 	try {
 		const {reservationId} = req.params;
@@ -23,25 +24,33 @@ router.delete('/supprimer-reservation/:reservationId', requiredAuth, async (req,
 		logLogger(`Reservation ID: ${reservationId}`, 'delete.js [DELETE] /supprimer-reservation/:reservationId')
 		// Récupérez le serviceId en interrogeant la base de données à partir de l'ID de réservation.
 		const client = getClientsCollection();
-		const queryForServiceId = {
-			text: 'SELECT service_id FROM reservations WHERE reservation_id = $1',
-			values: [reservationId],
-		};
+		const queryForServiceId = `
+			SELECT service_id, users_id FROM reservations 
+			WHERE reservation_id = $1;
+		`;
 
-		const service = await client.query(queryForServiceId);
+		const service = await client.query(queryForServiceId, [reservationId]);
 		if (service.rowCount === 0) {
 			warnLogger(`Réservation introuvable.:${reservationId}`, 'delete.js [DELETE] /supprimer-reservation/:reservationId')
 			return sendSuccessWithNoContent(res, 'Réservation introuvable.')
 		}
-		const serviceId = service.rows[0].service_id;
 
-		// Continuez avec la suppression si le serviceId correspond
-		const queryForDelete = {
-			text: 'DELETE FROM reservations WHERE reservation_id = $1 AND service_id = $2 AND users_id = $3',
-			values: [reservationId, serviceId, id],
-		};
+		const { service_id: serviceId, users_id: userId } = service.rows[0];
+		if (userId !== id) {
+            errorLogger(`Vous n'êtes pas autorisé à supprimer cette réservation:${reservationId}, service id: ${serviceId}, client id:${id}`, 'delete.js [DELETE] /supprimer-reservation/:reservationId')
+            return sendUnauthorized(res, "Vous n'êtes pas autorisé à supprimer cette réservation.")
+		}
 
-		const result = await client.query(queryForDelete);
+		// Continuer avec la suppression si le serviceId correspond
+		const queryForDelete = `DELETE FROM reservations 
+			WHERE reservation_id = $1 AND service_id = $2 AND users_id = $3;
+		`;
+
+		const result = await client.query(queryForDelete, [
+			reservationId,
+			serviceId,
+            id,
+		]);
 
 		if (result.rowCount === 1) {
 			logLogger(`La réservation a été supprimée avec succès:${reservationId}, service id: ${serviceId}, client id:${id}`, 'delete.js [DELETE] /supprimer-reservation/:reservationId')
@@ -56,6 +65,7 @@ router.delete('/supprimer-reservation/:reservationId', requiredAuth, async (req,
 	}
 });
 
+// SUPPRIMER SERVICE
 router.delete('/services/delete/:serviceId', requiredAuth, async (req, res) => {
 	try {
 		const serviceId = req.params.serviceId;

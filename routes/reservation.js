@@ -29,11 +29,10 @@ router.post('/reservation', requiredAuth, async (req, res) => {
 
 	const start_time = req.body.start_time;
 	const selectedDate = req.body.day_of_week;
-
 	const day_of_week = moment(selectedDate, 'DD-MM-YYYY').format('DD-MM-YYYY');
-
 	const client = getClientsCollection();
 
+	// Récupère la durée du service depuis la table des services
 	// Vérifie si le créneau horaire est déjà réservé
 	const existingReservation = await client.query(
 		'SELECT * FROM reservations WHERE professional_id = $1 AND start_time = $2 AND service_id = $3 AND day_of_week = $4',
@@ -57,35 +56,53 @@ router.post('/reservation', requiredAuth, async (req, res) => {
 	}
 
 	const duration = service.rows[0].duration; // Durée du service enregistrée dans la table
-
-	// Calcule l'heure de fin en utilisant une simple chaîne de caractères
-	const startDateTime = start_time;
-	const end_time = moment(start_time, 'HH:mm')
+	const startTime = moment(start_time, 'HH:mm');
+	const endTime = startTime
 		.clone()
-		.add(duration)
+		.add(duration, 'minutes')
 		.format('HH:mm:ss');
 
 	// Vérifie si le temps de début est valide
 	if (
-		moment(start_time, 'HH:mm').isBefore('08:00', 'HH:mm') ||
-		moment(start_time, 'HH:mm').isAfter('21:00', 'HH:mm')
+		startTime.isBefore(moment('08:00', 'HH:mm')) ||
+		startTime.isAfter(moment('21:00', 'HH:mm'))
 	) {
 		warnLogger(`Heure de début non valide: ${service_id}, heure: ${start_time}`, 'reservation.js [POST] /reservation')
 		return sendBadRequest(res,  'Heure de début non valide')
 	}
 
-	// Marquer le créneau horaire comme non disponible
-	await client.query(
-		'UPDATE default_availability SET is_available = false WHERE professional_id = $1 AND day_of_week = $2 AND start_time <= $3 AND end_time >= $4',
-		[professional_id, day_of_week, start_time, end_time]
-	);
+	// Vérifie si le créneau horaire chevauche une réservation existante
+	const overlapCheckQuery = `
+        SELECT * FROM reservations
+        WHERE professional_id = $1 AND day_of_week = $2
+        AND NOT (start_time >= $4 OR end_time <= $3);
+    `;
+
+	const overlapCheckResult = await client.query(overlapCheckQuery, [
+		professional_id,
+		day_of_week,
+		startTime.format('HH:mm:ss'),
+		endTime,
+	]);
+
+	if (overlapCheckResult.rows.length > 0) {
+		return res.status(400).json({
+			message: 'Plage horaire déjà réservée.',
+		});
+	}
 
 	// Faire la réservation
 	await client.query(
-		'INSERT INTO reservations (professional_id, start_time, users_id, service_id, day_of_week) VALUES ($1, $2, $3, $4, $5)',
-		[professional_id, start_time, users_id, service_id, day_of_week]
+		'INSERT INTO reservations (professional_id, start_time, end_time, users_id, service_id, day_of_week) VALUES ($1, $2, $3, $4, $5, $6)',
+		[
+			professional_id,
+			start_time,
+			endTime,
+			users_id,
+			service_id,
+			day_of_week,
+		]
 	);
-
 
 	//TODO : recuperer les mails du pro et du client
 	try{
@@ -125,8 +142,10 @@ router.post('/reservation', requiredAuth, async (req, res) => {
 		errorLogger(`Erreur lors de la reservation avec les infos: pro: ${professional_id}, heure début: ${start_time}, service id: ${service_id}, jour de la semaine: ${day_of_week}, user: ${users_id}`, 'reservation.js [POST] /reservation')
 		return sendFailure(res, 'Erreur lors de la reservation' )
 	}
-	logLogger(`Réservation créée avec succès: pro: ${professional_id}, heure début: ${start_time}, service id: ${service_id}, jour de la semaine: ${day_of_week}, user: ${users_id}`, 'reservation.js [POST] /reservation')
-	return sendSuccessfullyCreated(res, 'Réservation créée avec succès' )
+    	logLogger(`Réservation créée avec succès: pro: ${professional_id}, heure début: ${start_time}, service id: ${service_id}, jour de la semaine: ${day_of_week}, user: ${users_id}`, 'reservation.js [POST] /reservation')
+    	return sendSuccessfullyCreated(res, 'Réservation créée avec succès' )
+
+
 });
 
 router.get('/reservations', requiredAuth, async (req, res) => {
@@ -163,7 +182,6 @@ router.get('/reservations', requiredAuth, async (req, res) => {
 			warnLogger(`Aucune réservation trouvée pour le pro: ${id}`, 'reservation.js [GET] /reservations')
 			return sendSuccessWithNoContent(res, 'Aucune réservation trouvée')
 		}
-
 		const reservations = result.rows.map((reservation) => {
 			const serviceDuration = moment.duration(
 				reservation.service_duration

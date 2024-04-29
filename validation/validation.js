@@ -6,9 +6,13 @@ function userValidation(data) {
 		lastName: Joi.string().min(2).max(30).trim().required(),
 		email: Joi.string().email().trim().required(),
 		password: Joi.string().min(8).max(60).required(),
-		phone: Joi.string().min(10).max(12),
-		company_name: Joi.string().min(2).max(100).trim(),
-		company_address: Joi.string().min(5).max(300).trim(),
+		confirmPassword: Joi.string().valid(Joi.ref('password')).required(),
+		phone: Joi.string().min(10).max(15).required(),
+		country: Joi.string().min(2).max(100).required(),
+		city: Joi.string().min(2).max(100).required(),
+		address: Joi.string().min(5).max(300).required(),
+		company_name: Joi.string().min(2).max(100).trim().optional(),
+		company_address: Joi.string().min(5).max(300).trim().optional(),
 	});
 	return userValidationSchema.validate(data);
 }
