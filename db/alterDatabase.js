@@ -19,6 +19,42 @@ const alterInTables = () => {
                                     })
                             }
                         })
+                    checkIfColumnExistInTable(resultTableExists.tableName, 'country')
+                        .then((resultColumnExists) => {
+                            if (!resultColumnExists.exists) {
+                                /* Créer la colonne ici*/
+                                addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'VARCHAR(100)')
+                                    .then(columnAddResult => {
+                                        if (columnAddResult) {
+                                            logLogger(`La colonne 'country' a bien été ajouté dans la table 'USERS`, 'alterInTables')
+                                        }
+                                    })
+                            }
+                        })
+                    checkIfColumnExistInTable(resultTableExists.tableName, 'city')
+                        .then((resultColumnExists) => {
+                            if (!resultColumnExists.exists) {
+                                /* Créer la colonne ici*/
+                                addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'VARCHAR(100)')
+                                    .then(columnAddResult => {
+                                        if (columnAddResult) {
+                                            logLogger(`La colonne 'city' a bien été ajouté dans la table 'USERS`, 'alterInTables')
+                                        }
+                                    })
+                            }
+                        })
+                    checkIfColumnExistInTable(resultTableExists.tableName, 'address')
+                        .then((resultColumnExists) => {
+                            if (!resultColumnExists.exists) {
+                                /* Créer la colonne ici*/
+                                addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'VARCHAR(100)')
+                                    .then(columnAddResult => {
+                                        if (columnAddResult) {
+                                            logLogger(`La colonne 'address' a bien été ajouté dans la table 'USERS`, 'alterInTables')
+                                        }
+                                    })
+                            }
+                        })
                 }
             })
             .catch(e => errorLogger(e, "checkIfTableExist('users')"))
@@ -45,6 +81,42 @@ const alterInTables = () => {
                             if (!resultColumnExists.exists) {
                                 /* Créer la colonne ici*/
                                 addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'BOOLEAN', false, false)
+                                    .then(columnAddResult => {
+                                        if (columnAddResult) {
+                                            logLogger(`La colonne 'est_verifie' a bien été ajouté dans la table 'PROFESSIONALS`, 'alterInTables')
+                                        }
+                                    })
+                            }
+                        })
+                    checkIfColumnExistInTable(resultTableExists.tableName, 'country')
+                        .then((resultColumnExists) => {
+                            if (!resultColumnExists.exists) {
+                                /* Créer la colonne ici*/
+                                addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'VARCHAR(100)')
+                                    .then(columnAddResult => {
+                                        if (columnAddResult) {
+                                            logLogger(`La colonne 'country' a bien été ajouté dans la table 'PROFESSIONALS`, 'alterInTables')
+                                        }
+                                    })
+                            }
+                        })
+                    checkIfColumnExistInTable(resultTableExists.tableName, 'city')
+                        .then((resultColumnExists) => {
+                            if (!resultColumnExists.exists) {
+                                /* Créer la colonne ici*/
+                                addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, ' VARCHAR(100)')
+                                    .then(columnAddResult => {
+                                        if (columnAddResult) {
+                                            logLogger(`La colonne 'city' a bien été ajouté dans la table 'PROFESSIONALS`, 'alterInTables')
+                                        }
+                                    })
+                            }
+                        })
+                    checkIfColumnExistInTable(resultTableExists.tableName, 'address')
+                        .then((resultColumnExists) => {
+                            if (!resultColumnExists.exists) {
+                                /* Créer la colonne ici*/
+                                addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'VARCHAR(100)')
                                     .then(columnAddResult => {
                                         if (columnAddResult) {
                                             logLogger(`La colonne 'est_verifie' a bien été ajouté dans la table 'PROFESSIONALS`, 'alterInTables')
