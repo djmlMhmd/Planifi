@@ -20,7 +20,6 @@ const port = 3000;
 const disconnect = require('./routes/disconnect');
 const routes = require('./routes/authentication');
 const profilRoutes = require('./routes/profil');
-const deleteReservation = require('./routes/delete');
 const services = require('./routes/services');
 const availability = require('./routes/availability');
 const reservation = require('./routes/reservation');
@@ -29,6 +28,7 @@ const EventEmitter = require('events');
 const indexRoutes = require('./routes/index');
 const serviceRouter = require('./routes/services');
 const messagesRoutes = require('./messagerie/message');
+const professionalRoutes = require('./routes/professionalsRoute');
 const {logLogger} = require("./config/winston/winston.config");
 const {alterInTables} = require("./db/alterDatabase");
 
@@ -75,8 +75,8 @@ app.use(profilRoutes);
 app.use(services);
 app.use(availability);
 app.use(reservation);
+app.use(professionalRoutes);
 app.use('/api', require('./routes/reservation'));
-app.use(deleteReservation);
 app.use(express.urlencoded({ extended: true }));
 app.use('/', messagesRoutes);
 
