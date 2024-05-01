@@ -3,6 +3,8 @@ require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
+const http = require('http');
+const socketIo = require('socket.io');
 const router = require('./routes/profil');
 const {
 	connectToDatabase,
@@ -19,6 +21,10 @@ const {
 const { dbConnexion, getDatabase } = require('./db/database');
 const path = require('path');
 const app = express();
+
+const server = http.createServer(app); // Créer le serveur ici
+const io = socketIo(server); // Initialiser Socket.IO avec le serveur
+
 const port = 3000;
 const disconnect = require('./routes/disconnect');
 const routes = require('./routes/authentication');
@@ -78,6 +84,43 @@ app.use(deleteReservation);
 app.use(express.urlencoded({ extended: true }));
 app.use('/', messagesRoutes);
 // dbConnexion();
+
+// Gestion des connexions WebSocket
+io.on('connection', (socket) => {
+	console.log("Un utilisateur s'est connecté");
+
+	socket.on('send_message', async (data) => {
+		const { sender_id, receiver_id, subject, message_body, service_id } =
+			data;
+		const client = getClientsCollection();
+		try {
+			const result = await client.query(
+				`INSERT INTO messages (sender_id, receiver_id, subject, message_body, service_id, sent_at)
+                 VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *;`,
+				[sender_id, receiver_id, subject, message_body, service_id]
+			);
+			const message = result.rows[0];
+			socket.to(receiver_id.toString()).emit('new_message', message);
+			socket.emit('message_sent', {
+				status: 'success',
+				message: message,
+			});
+		} catch (error) {
+			console.error(
+				"Erreur lors de l'envoi du message via Socket.IO:",
+				error
+			);
+			socket.emit('message_error', {
+				status: 'error',
+				message: "Erreur lors de l'envoi du message",
+			});
+		}
+	});
+
+	socket.on('join_room', (room) => {
+		socket.join(room);
+	});
+});
 
 // permet de lancer serveur web
 app.listen(port, () => {
