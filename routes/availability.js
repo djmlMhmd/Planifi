@@ -6,6 +6,7 @@ const {errorLogger, warnLogger, logLogger, verboseLogger} = require("../config/w
 const {requiredAuth} = require("../middleware/authMiddleware");
 const {sendInternalServerError, sendBadRequest, sendSuccessfullyCreated, sendSuccess} = require("../utils/error_message.utils");
 const {isANumber} = require("../utils/methods.utils");
+const {constants} = require("../constants/constants");
 
 router.use(express.json());
 
@@ -27,7 +28,7 @@ router.post('/availability', requiredAuth, async (req, res) => {
 		]);
 
 		if (professionalResult.rows.length === 0) {
-			warnLogger(`Le professionnel avec cet ID n'existe pas":${professional_id}`, 'availability.js [POST] /availability')
+			warnLogger(`Le professionnel avec cet ID n'existe pas":${professional_id}`, '','availability.js' , '/availability', constants.POST_HTTP)
 			return sendBadRequest(res, "Le professionnel avec cet ID n'existe pas")
 		}
 
@@ -38,7 +39,7 @@ router.post('/availability', requiredAuth, async (req, res) => {
 		);
 
 		if (existingAvailability.rows.length > 0) {
-			warnLogger(`Cette disponibilité existe déjà: pro:${professional_id}, jour de la semaine:${day_of_week}, temps du début:${start_time}, temps de fin:${end_time}`, 'availability.js [POST] /availability')
+			warnLogger(`Cette disponibilité existe déjà: pro:${professional_id}, jour de la semaine:${day_of_week}, temps du début:${start_time}, temps de fin:${end_time}`, '','availability.js' , '/availability', constants.POST_HTTP)
 			return sendBadRequest(res, 'Cette disponibilité existe déjà')
 		}
 
@@ -46,19 +47,19 @@ router.post('/availability', requiredAuth, async (req, res) => {
 			`INSERT INTO availability (professional_id, day_of_week, start_time, end_time) VALUES ($1, $2, $3, $4) RETURNING *`,
 			[professional_id, day_of_week, start_time, end_time]
 		);
-		logLogger(`Disponibilité créée avec succès": ${JSON.stringify(result.rows[0])}`, 'availability.js [POST] /availability')
+		logLogger(`Disponibilité créée avec succès": ${JSON.stringify(result.rows[0])}`, '','availability.js' , '/availability', constants.POST_HTTP)
 		return sendSuccessfullyCreated(res, 'Disponibilité créée avec succès' )
 	} catch (e) {
-		errorLogger("Erreur lors de la création de la disponibilité :'" + JSON.stringify(e.stack), 'availability.js [POST] /availability')
+		errorLogger("Erreur lors de la création de la disponibilité :'" + JSON.stringify(e.stack), '','availability.js' , '/availability', constants.POST_HTTP)
 		return sendInternalServerError(res, 'Erreur lors de la création de la disponibilité : ' + e.message)
 	}
 });
 
 // Route pour obtenir les disponibilités d'un professionnel
 router.get('/availability/:professionalId/:dayOfWeek', requiredAuth, async (req, res) => {
+	const { professionalId, dayOfWeek } = req.params;
 	try {
 		const client = getClientsCollection();
-		const { professionalId, dayOfWeek } = req.params;
 
 		if (!isANumber(professionalId) ) {
 			return sendBadRequest(res, "le professionalId doit etre un entier")
@@ -71,10 +72,10 @@ router.get('/availability/:professionalId/:dayOfWeek', requiredAuth, async (req,
 		);
 
 		const availableHours = availability.rows.map((row) => row.start_time);
-		verboseLogger(`Récuperation des disponibilités pour le profesionnel": ${professionalId}, pour le jour de la semaine ${dayOfWeek}`, 'availability.js [GET] /availability/:professionalId/:dayOfWeek')
+		verboseLogger(`Récuperation des disponibilités pour le profesionnel": ${professionalId}, pour le jour de la semaine ${dayOfWeek}`,'', 'availability.js',`/availability/${professionalId}/${dayOfWeek}`, constants.GET_HTTP)
 		return sendSuccess(res, availableHours);
 	} catch (error) {
-		errorLogger("Erreur lors de la récupération des disponibilités" + JSON.stringify(error), 'availability.js [GET] /availability/:professionalId/:dayOfWeek')
+		errorLogger("Erreur lors de la récupération des disponibilités" + JSON.stringify(error),'', 'availability.js',`/availability/${professionalId}/${dayOfWeek}`, constants.GET_HTTP)
 		return sendInternalServerError(res, 'Erreur lors de la récupération des disponibilités')
 	}
 });

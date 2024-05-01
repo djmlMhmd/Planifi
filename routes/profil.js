@@ -10,7 +10,7 @@ const {auth} = require("../config/firebase");
 const {uploadSingle, uploadMultiple, ERROR_MESSAGES} = require("../middleware/multer");
 const UUID  = require("uuid-v4")
 const {sendInternalServerError, sendError, sendBadRequest, sendSuccessfullyCreated, sendUnauthorized, sendSuccess,
-	sendFailure, sendSuccessWithNoContent
+	sendFailure, sendSuccessWithNoContent, sendNonAcceptable
 } = require("../utils/error_message.utils");
 const bcrypt = require("bcrypt");
 const {isANumber, convertToNumber} = require("../utils/methods.utils");
@@ -24,7 +24,7 @@ router.get('/profil/professionnel/:id',requiredAuth, async (req, res) => {
 
 	const { id } = decodeJWT(req.cookies.jwt)
 	if (!id) {
-		warnLogger(`Authentification requise`, 'profil.js [GET] /profil/professionnel/:id')
+		warnLogger(`Authentification requise`, '','profil.js',`/profil/professionnel/${id}`, constants.GET_HTTP)
 		return sendError(res, 'Authentification requise')
 	}
 	try {
@@ -37,7 +37,7 @@ router.get('/profil/professionnel/:id',requiredAuth, async (req, res) => {
 		const result = await client.query(query);
 
 		if (result.rows.length === 0) {
-			warnLogger(`Profil professionnel non trouvé ${id}`, 'profil.js [GET] /profil/professionnel/:id')
+			warnLogger(`Profil professionnel non trouvé ${id}`, '','profil.js',`/profil/professionnel/${id}`, constants.GET_HTTP)
 			return sendError(res, 'Profil professionnel non trouvé')
 		}
 
@@ -45,7 +45,7 @@ router.get('/profil/professionnel/:id',requiredAuth, async (req, res) => {
 			result.rows[0];
 		return sendSuccess(res, professionalProfile)
 	} catch (e) {
-		errorLogger(`Erreur lors de la récupération du profil professionnel: ${JSON.stringify(e.stack)}`, 'profil.js [GET] /profil/professionnel/:id')
+		errorLogger(`Erreur lors de la récupération du profil professionnel: ${JSON.stringify(e.stack)}`, '','profil.js',`/profil/professionnel/${id}`, constants.GET_HTTP)
 		return sendInternalServerError(res, 'Erreur serveur' )
 	}
 });
@@ -69,7 +69,7 @@ router.get('/profil/client/:id', requiredAuth, async (req, res) => {
 	}
 
 	if (!id) {
-        warnLogger(`Authentification requise`, 'profil.js [GET] /profil/client/:id' )
+        warnLogger(`Authentification requise`, '','profil.js', `/profil/client/${id}`, constants.GET_HTTP)
 		return sendError(res, 'Authentification requise')
 	}
 
@@ -83,14 +83,14 @@ router.get('/profil/client/:id', requiredAuth, async (req, res) => {
 		const result = await client.query(query);
 
 		if (result.rows.length === 0) {
-			warnLogger(`Profil client non trouvé ${id}`, 'profil.js [GET] /profil/client/:id')
+			warnLogger(`Profil client non trouvé ${id}`, '','profil.js', `/profil/client/${id}`, constants.GET_HTTP)
 			return sendError(res, 'Profil client non trouvé' )
 		}
 
 		const { password, creation_date, ...clientProfile } = result.rows[0];
 		return sendSuccess(res, clientProfile)
 	} catch (e) {
-		errorLogger(`Erreur lors de la récupération du profil client: ${JSON.stringify(e.stack)}`, 'profil.js [GET] /profil/client/:id')
+		errorLogger(`Erreur lors de la récupération du profil client: ${JSON.stringify(e.stack)}`, '','profil.js', `/profil/client/${id}`, constants.GET_HTTP)
 		return sendInternalServerError(res, 'Erreur serveur' )
 	}
 });
@@ -100,12 +100,12 @@ router.put('/profil/:id/change-password', requiredAuth, async (req, res) => {
 	let { id, statut } = decodeJWT(req.cookies.jwt)
 
 	if (!isANumber(idReq)) {
-		warnLogger(`L'utilisateur ${id} a appelé la route avec le paramètre de requete suivant: ${idReq}`, 'profil.js [PUT] /profil/:id/change-password')
+		warnLogger(`L'utilisateur ${id} a appelé la route avec le paramètre de requete suivant: ${idReq}`, '','profil.js', `/profil/${id}/change-password`, constants.PUT_HTTP)
 		return sendBadRequest(res, "l'id doit etre un entier")
 	}
 
 	if(convertToNumber(idReq) !== id) {
-		warnLogger(`L'utilisateur ${id} a tenté de modifier le mot de passe de l'utilisateur ${idReq}`, 'profil.js [PUT] /profil/:id/change-password')
+		warnLogger(`L'utilisateur ${id} a tenté de modifier le mot de passe de l'utilisateur ${idReq}`, '','profil.js', `/profil/${id}/change-password`, constants.PUT_HTTP)
 		return sendUnauthorized(res, 'Permission non autorisé')
 	}
 	/**
@@ -114,7 +114,7 @@ router.put('/profil/:id/change-password', requiredAuth, async (req, res) => {
 	 */
 	const {previousPassword, newPassword} = req.body
 	if(previousPassword === undefined || newPassword === undefined) {
-		logLogger("Erreur dans les données du body de la requête, l'un des 2 mots de passe n'est pas renseigné", "profil.js [PUT] /profil/:id/change-password")
+		logLogger("Erreur dans les données du body de la requête, l'un des 2 mots de passe n'est pas renseigné", '','profil.js', `/profil/${id}/change-password`, constants.PUT_HTTP)
 		return sendBadRequest(res, 'Erreur dans les données du body')
 	}
 
@@ -156,13 +156,13 @@ router.put('/profil/:id/change-password', requiredAuth, async (req, res) => {
 			}
 
 			if(updatePasswordResult.rowCount === 0){
-				errorLogger(`Echec lors de la mise à jour du mot de passe de l'utilisateur ${getUserQuery.rows[0].email}`, "profil.js [PUT] /profil/:id/change-password")
+				errorLogger(`Echec lors de la mise à jour du mot de passe de l'utilisateur ${getUserQuery.rows[0].email}`, '','profil.js', `/profil/${id}/change-password`, constants.PUT_HTTP)
 				return sendFailure(res, 'Echec de la mise à jour du mot de passe')
 			}
 			return sendSuccessWithNoContent(res)
 		}
 		else{
-			errorLogger(`L'ancien mot de passe fourni ne correspond pas à celui enregistré en base de l'utilisateur ${getUserQuery.rows[0].email}`, "profil.js [PUT] /profil/:id/change-password")
+			errorLogger(`L'ancien mot de passe fourni ne correspond pas à celui enregistré en base de l'utilisateur ${getUserQuery.rows[0].email}`, '','profil.js', `/profil/${id}/change-password`, constants.PUT_HTTP)
 			return sendBadRequest(res,"L'ancien mot de passe fourni ne correspond pas à celui enregistré en base")
 		}
 	}
@@ -205,12 +205,12 @@ router.put('/profil/:id/update-profil-picture', requiredAuth, uploadSingle, asyn
 		})
 
 		blobStream.on("error", err => {
-			errorLogger(`erreur lors de l'upload de l'image ${imageUrl} de l'utilisateur ${id}`, 'profil.js [POST] /profil/:id/update-profil-picture')
+			errorLogger(`erreur lors de l'upload de l'image ${imageUrl} de l'utilisateur ${id}`, '','profil.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
 			errorLogger(err, 'profil.js [POST] /profil/:id/update-profil-picture')
 		})
 
 		blobStream.on("finish", () => {
-			logLogger(`upload de l'image ${imageUrl} de l'utilisateur ${id} a bien été effectuée`, 'profil.js [POST] /profil/:id/update-profil-picture')
+			logLogger(`upload de l'image ${imageUrl} de l'utilisateur ${id} a bien été effectuée`, '','profil.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
 		})
 
 		blobStream.end(req.file.buffer)
@@ -233,7 +233,7 @@ router.put('/profil/:id/update-profil-picture', requiredAuth, uploadSingle, asyn
 		const resultUpdateProfilPicture = await client.query(queryUpdateProfilPicture);
 
 		if (resultUpdateProfilPicture.rowCount === 0) {
-			errorLogger("Erreur lors de la mise à jour de la photo de profil de l'utilisateur", 'profil.js [PUT] /profil/:id/update-profil-picture')
+			errorLogger("Erreur lors de la mise à jour de la photo de profil de l'utilisateur", '','profil.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
 			return sendError(res, "Erreur lors de la mise à jour de la photo de profil de l'utilisateur")
 		}
 
@@ -259,7 +259,7 @@ router.put('/profil/:id/update-profil-picture', requiredAuth, uploadSingle, asyn
 		return sendSuccessfullyCreated(res, proProfile )
 
 	} catch (e) {
-		errorLogger('Erreur lors de la récupération du profil:' + e.stack, ' profil.js [PUT] /profil/:id/update-profile-picture')
+		errorLogger('Erreur lors de la récupération du profil:' + e.stack, '','profil.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
 		return sendInternalServerError(res, 'Erreur serveur' )
 	}
 })
@@ -273,11 +273,10 @@ router.post('/profil/:idPro/upload-service-picture/:serviceId',requiredAuth, asy
 		if(err){
 			switch(err.message) {
 				case ERROR_MESSAGES.LIMIT_FILE_SIZE:
-					return res.status(406 ).json({message: 'certains fichiers sont trop volumineux'}) // TODO: preciser la taille max des fichiers
+					return sendNonAcceptable(res, 'certains fichiers sont trop volumineux') // TODO: preciser la taille max des fichiers
 
 				case ERROR_MESSAGES.LIMIT_FILE_COUNT:
-					return res.status(406 ).json({message: 'Vous avez upload trop de fichiers en même temps, la limite est de 12'}) //TODO: modifier cette valeur dynamiquement
-
+					return sendNonAcceptable(res, 'Vous avez upload trop de fichiers en même temps, la limite est de 12') //TODO: modifier cette valeur dynamiquement
 			}
 		}
 		const files = req.files
@@ -290,12 +289,12 @@ router.post('/profil/:idPro/upload-service-picture/:serviceId',requiredAuth, asy
 		}
 
 		if (!isANumber(idPro) || !isANumber(serviceId) ) {
-			warnLogger(`L'utilisateur ${id} a appelé la route avec le paramètre de requete suivant: idPro:${idPro} et serviceId: ${serviceId}`, 'profil.js [PUT] /profil/:idPro/upload-service-picture/:serviceId')
+			warnLogger(`L'utilisateur ${id} a appelé la route avec le paramètre de requete suivant: idPro:${idPro} et serviceId: ${serviceId}`, '','profil.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
 			return sendBadRequest(res, "le 'idPro' et le 'serviceId' de la requête doivent etre des entiers")
 		}
 
 		if(convertToNumber(idPro) !== id) {
-			warnLogger(`L'utilisateur ${id} a tenté d'upload des images en se faisant passer pour l'utilisateur: ${idPro}`, 'profil.js [PUT] /profil/:idPro/upload-service-picture/:serviceId')
+			warnLogger(`L'utilisateur ${id} a tenté d'upload des images en se faisant passer pour l'utilisateur: ${idPro}`, '','profil.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
 			return sendUnauthorized(res, 'Permission non autorisé')
 		}
 
@@ -331,13 +330,13 @@ router.post('/profil/:idPro/upload-service-picture/:serviceId',requiredAuth, asy
 				})
 
 				blobStream.on("error", err => {
-					errorLogger(`erreur lors de l'upload de l'image ${imageUrl} de l'utilisateur ${id}`, 'profil.js [POST] /profil/:id/upload-service-picture/:serviceId')
+					errorLogger(`erreur lors de l'upload de l'image ${imageUrl} de l'utilisateur ${id}`, '','profil.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
 					tableauEchecs.push(imageUrl)
 					errorLogger(err, 'profil.js [POST] /profil/:id/upload-service-picture/:serviceId')
 				})
 
 				blobStream.on("finish", () => {
-					logLogger(`upload de l'image ${imageUrl} de l'utilisateur ${id} a bien été effectuée`, 'profil.js [POST] /profil/:id/upload-service-picture/:serviceId')
+					logLogger(`upload de l'image ${imageUrl} de l'utilisateur ${id} a bien été effectuée`, '','profil.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
 				})
 
 				blobStream.end(file.buffer)
@@ -360,19 +359,19 @@ router.post('/profil/:idPro/upload-service-picture/:serviceId',requiredAuth, asy
 				const insertImageResult = await client.query(insertImagesQuery)
 
 				if(insertImageResult.rowCount === 0 ) {
-					errorLogger("Erreur lors de l'enregistrement des images en base" + e.stack, 'profil.js [PUT] /profil/:id/upload-service-picture/:serviceId')
+					errorLogger("Erreur lors de l'enregistrement des images en base", '','profil.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
 					return sendFailure(res, "Erreur lors de l'enregistrement des images en base" )
 				}
-				verboseLogger(`Les images du pro ${idPro} ont bien été sauvegarder en base pour le service: ${serviceId} (${dataToInsertString.length} images upload)`, 'profil.js [PUT] /profil/:id/upload-service-picture/:serviceId')
+				verboseLogger(`Les images du pro ${idPro} ont bien été sauvegarder en base pour le service: ${serviceId} (${dataToInsertString.length} images upload)`, '','profil.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
 				return sendSuccessfullyCreated(res, `L'upload des images pour le service ${serviceId} a bien fonctionné`)
 			}
 			catch (e) {
-				errorLogger("Erreur lors de l'enregistrement des images en base" + e.stack, 'profil.js [PUT] /profil/:id/upload-service-picture/:serviceId')
+				errorLogger("Erreur lors de l'enregistrement des images en base" + e.stack, '','profil.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
 				return sendFailure(res, "Erreur lors de l'enregistrement des images en base" )
 			}
 
 		} catch (e) {
-			errorLogger("Erreur lors de l'upload des images" + e.stack, 'profil.js [PUT] /profil/:id/upload-service-picture/:serviceId')
+			errorLogger("Erreur lors de l'upload des images" + e.stack, '','profil.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
 			return sendInternalServerError(res, 'Erreur serveur' )
 		}
 	})
@@ -383,6 +382,7 @@ router.put('/profil/:id/update-preferences', requiredAuth, uploadSingle, async (
 	const { id, statut } = decodeJWT(req.cookies.jwt)
 
 	//TODO: demander à Djamal plus de précisions
+	return res.status(201).end()
 })
 
 
