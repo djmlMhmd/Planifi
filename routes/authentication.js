@@ -160,7 +160,7 @@ router.post('/connexion', authLimiter, async (req, res) => {
 				const {users_id, est_verifie} = clientQueryResult.rows[0]
 
 				if (!est_verifie) {
-					warnLogger(`L'utilisateur ${users_id} (client) essaye de se connecter en étant pas vérifié`, '', 'authentification.js', '/connexion', constants.POST_HTTP)
+					warnLogger(`L'utilisateur ${users_id} (${constants.STATUT_CLIENT}) essaye de se connecter en étant pas vérifié`, '', 'authentification.js', '/connexion', constants.POST_HTTP)
 					return sendUnauthorized(res, 'Veuillez vérifier votre adresse email avant de vous connecter')
 				}
 				const hashedPassword = clientQueryResult.rows[0].password;
@@ -171,49 +171,53 @@ router.post('/connexion', authLimiter, async (req, res) => {
 				if (match) {
 					const token = createToken(users_id, constants.STATUT_CLIENT)
 					res.cookie('jwt', token, {httpOnly: true, maxAge: JWT_COOKIE_EXPIRES_IN})
-					logLogger('Authentification réussie', '', 'authentification.js', '/connexion', constants.POST_HTTP)
+					logLogger(`Authentification réussie en tant que client (${email})`, '', 'authentification.js', '/connexion', constants.POST_HTTP)
 					return sendSuccessWithNoContent(res)
 				}
+			}
+			else {
 				errorLogger("Échec de l'authentification: mot de passe incorrect", '', 'authentification.js', '/connexion', constants.POST_HTTP)
 				return sendError(res, "Échec de l'authentification")
+			}
+		}
+		else {
 
-			} else {
-				const professionalQueryResult = await client.query(
-					'SELECT * FROM professionals WHERE email = $1',
-					[email]
-				);
+			const professionalQueryResult = await client.query(
+				'SELECT * FROM professionals WHERE email = $1',
+				[email]
+			);
 
-				if (professionalQueryResult.rows.length === 1) {
-					const {professional_id, est_verifie} = professionalQueryResult.rows[0];
+			if (professionalQueryResult.rows.length === 1) {
+				const {professional_id, est_verifie} = professionalQueryResult.rows[0];
 
-					if (!est_verifie) {
-						warnLogger(`L'utilisateur ${professional_id} (professionnel) essaye de se connecter en étant pas vérifié`, '', 'authentification.js', '/connexion', constants.POST_HTTP)
-						return sendUnauthorized(res, 'Veuillez vérifier votre adresse email avant de vous connecter')
-					}
+				if (!est_verifie) {
+					warnLogger(`L'utilisateur ${professional_id} (${constants.STATUT_PROFESSIONNEL}) essaye de se connecter en étant pas vérifié`, '', 'authentification.js', '/connexion', constants.POST_HTTP)
+					return sendUnauthorized(res, 'Veuillez vérifier votre adresse email avant de vous connecter')
+				}
 
-					const hashedPassword = professionalQueryResult.rows[0].password;
+				const hashedPassword = professionalQueryResult.rows[0].password;
 
-					const match = await bcrypt.compare(password, hashedPassword);
+				const match = await bcrypt.compare(password, hashedPassword);
 
-					if (match) {
-						const token = createToken(professional_id, constants.STATUT_PROFESSIONNEL)
-						res.cookie('jwt', token, {httpOnly: true, maxAge: JWT_COOKIE_EXPIRES_IN})
-						logLogger('Authentification réussie en tant que professionnel', '', 'authentification.js', '/connexion', constants.POST_HTTP)
-						return sendSuccessWithNoContent(res)
-					} else {
-						errorLogger("Échec de l'authentification en tant que professionnel : mot de passe incorrect", '', 'authentification.js', '/connexion', constants.POST_HTTP)
-						return sendError(res, "Échec de l'authentification")
-					}
+				if (match) {
+					const token = createToken(professional_id, constants.STATUT_PROFESSIONNEL)
+					res.cookie('jwt', token, {httpOnly: true, maxAge: JWT_COOKIE_EXPIRES_IN})
+					logLogger(`Authentification réussie en tant que professionnel (${email})`, '', 'authentification.js', '/connexion', constants.POST_HTTP)
+					return sendSuccessWithNoContent(res)
 				} else {
-					errorLogger("Échec de l'authentification : e-mail non trouvé", '', 'authentification.js', '/connexion', constants.POST_HTTP)
+					errorLogger("Échec de l'authentification en tant que professionnel : mot de passe incorrect", '', 'authentification.js', '/connexion', constants.POST_HTTP)
 					return sendError(res, "Échec de l'authentification")
 				}
+			} else {
+				errorLogger("Échec de l'authentification : e-mail non trouvé", '', 'authentification.js', '/connexion', constants.POST_HTTP)
+				return sendError(res, "Échec de l'authentification")
 			}
 		}
 	} catch (e) {
 		errorLogger("Erreur lors de l'authentification : " + e.stack, '', 'authentification.js', '/connexion', constants.POST_HTTP)
 		return sendInternalServerError(res, "Erreur serveur lors de l'authentification. " + e.message)
 	}
+	return sendInternalServerError(res, 'Erreur serveur')
 });
 
 router.get('/confirm-registration', async (req, res) => {
