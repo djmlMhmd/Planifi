@@ -18,7 +18,7 @@ module.exports.profil_pro_get = async (req, res) => {
 
     const { id } = decodeJWT(req.cookies.jwt)
     if (!id) {
-        warnLogger(`Authentification requise`, '','profil.js',`/profil/professionnel/${id}`, constants.GET_HTTP)
+        warnLogger(`Authentification requise`, '','profilController.js',`/profil/professionnel/${id}`, constants.GET_HTTP)
         return sendError(res, 'Authentification requise')
     }
     try {
@@ -31,7 +31,7 @@ module.exports.profil_pro_get = async (req, res) => {
         const result = await client.query(query);
 
         if (result.rows.length === 0) {
-            warnLogger(`Profil professionnel non trouvé ${id}`, '','profil.js',`/profil/professionnel/${id}`, constants.GET_HTTP)
+            warnLogger(`Profil professionnel non trouvé ${id}`, '','profilController.js',`/profil/professionnel/${id}`, constants.GET_HTTP)
             return sendError(res, 'Profil professionnel non trouvé')
         }
 
@@ -39,7 +39,7 @@ module.exports.profil_pro_get = async (req, res) => {
             result.rows[0];
         return sendSuccess(res, professionalProfile)
     } catch (e) {
-        errorLogger(`Erreur lors de la récupération du profil professionnel: ${JSON.stringify(e.stack)}`, '','profil.js',`/profil/professionnel/${id}`, constants.GET_HTTP)
+        errorLogger(`Erreur lors de la récupération du profil professionnel: ${JSON.stringify(e.stack)}`, '','profilController.js',`/profil/professionnel/${id}`, constants.GET_HTTP)
         return sendInternalServerError(res, 'Erreur serveur' )
     }
 }
@@ -61,7 +61,7 @@ module.exports.profil_client_get =  async (req, res) => {
     }
 
     if (!id) {
-        warnLogger(`Authentification requise`, '','profil.js', `/profil/client/${id}`, constants.GET_HTTP)
+        warnLogger(`Authentification requise`, '','profilController.js', `/profil/client/${id}`, constants.GET_HTTP)
         return sendError(res, 'Authentification requise')
     }
 
@@ -75,14 +75,14 @@ module.exports.profil_client_get =  async (req, res) => {
         const result = await client.query(query);
 
         if (result.rows.length === 0) {
-            warnLogger(`Profil client non trouvé ${id}`, '','profil.js', `/profil/client/${id}`, constants.GET_HTTP)
+            warnLogger(`Profil client non trouvé ${id}`, '','profilController.js', `/profil/client/${id}`, constants.GET_HTTP)
             return sendError(res, 'Profil client non trouvé' )
         }
 
         const { password, creation_date, ...clientProfile } = result.rows[0];
         return sendSuccess(res, clientProfile)
     } catch (e) {
-        errorLogger(`Erreur lors de la récupération du profil client: ${JSON.stringify(e.stack)}`, '','profil.js', `/profil/client/${id}`, constants.GET_HTTP)
+        errorLogger(`Erreur lors de la récupération du profil client: ${JSON.stringify(e.stack)}`, '','profilController.js', `/profil/client/${id}`, constants.GET_HTTP)
         return sendInternalServerError(res, 'Erreur serveur' )
     }
 }
@@ -92,12 +92,12 @@ module.exports.profil_change_password_put = async (req, res) => {
     let { id, statut } = decodeJWT(req.cookies.jwt)
 
     if (!isANumber(idReq)) {
-        warnLogger(`L'utilisateur ${id} a appelé la route avec le paramètre de requete suivant: ${idReq}`, '','profil.js', `/profil/${id}/change-password`, constants.PUT_HTTP)
+        warnLogger(`L'utilisateur ${id} a appelé la route avec le paramètre de requete suivant: ${idReq}`, '','profilController.js', `/profil/${id}/change-password`, constants.PUT_HTTP)
         return sendBadRequest(res, "l'id doit etre un entier")
     }
 
     if(convertToNumber(idReq) !== id) {
-        warnLogger(`L'utilisateur ${id} a tenté de modifier le mot de passe de l'utilisateur ${idReq}`, '','profil.js', `/profil/${id}/change-password`, constants.PUT_HTTP)
+        warnLogger(`L'utilisateur ${id} a tenté de modifier le mot de passe de l'utilisateur ${idReq}`, '','profilController.js', `/profil/${id}/change-password`, constants.PUT_HTTP)
         return sendUnauthorized(res, 'Permission non autorisé')
     }
     /**
@@ -106,7 +106,7 @@ module.exports.profil_change_password_put = async (req, res) => {
      */
     const {previousPassword, newPassword} = req.body
     if(previousPassword === undefined || newPassword === undefined) {
-        logLogger("Erreur dans les données du body de la requête, l'un des 2 mots de passe n'est pas renseigné", '','profil.js', `/profil/${id}/change-password`, constants.PUT_HTTP)
+        logLogger("Erreur dans les données du body de la requête, l'un des 2 mots de passe n'est pas renseigné", '','profilController.js', `/profil/${id}/change-password`, constants.PUT_HTTP)
         return sendBadRequest(res, 'Erreur dans les données du body')
     }
 
@@ -148,13 +148,13 @@ module.exports.profil_change_password_put = async (req, res) => {
             }
 
             if(updatePasswordResult.rowCount === 0){
-                errorLogger(`Echec lors de la mise à jour du mot de passe de l'utilisateur ${getUserQuery.rows[0].email}`, '','profil.js', `/profil/${id}/change-password`, constants.PUT_HTTP)
+                errorLogger(`Echec lors de la mise à jour du mot de passe de l'utilisateur ${getUserQuery.rows[0].email}`, '','profilController.js', `/profil/${id}/change-password`, constants.PUT_HTTP)
                 return sendFailure(res, 'Echec de la mise à jour du mot de passe')
             }
             return sendSuccessWithNoContent(res)
         }
         else{
-            errorLogger(`L'ancien mot de passe fourni ne correspond pas à celui enregistré en base de l'utilisateur ${getUserQuery.rows[0].email}`, '','profil.js', `/profil/${id}/change-password`, constants.PUT_HTTP)
+            errorLogger(`L'ancien mot de passe fourni ne correspond pas à celui enregistré en base de l'utilisateur ${getUserQuery.rows[0].email}`, '','profilController.js', `/profil/${id}/change-password`, constants.PUT_HTTP)
             return sendBadRequest(res,"L'ancien mot de passe fourni ne correspond pas à celui enregistré en base")
         }
     }
@@ -165,7 +165,7 @@ module.exports.update_profile_picture_put = async (req, res) => {
     let { id, statut } = decodeJWT(req.cookies.jwt)
     const file = req.file
     const uuid = UUID();
-    let imageUrl = ""
+
     const dateActuelle = new Date()
 
     if (!file) {
@@ -188,8 +188,8 @@ module.exports.update_profile_picture_put = async (req, res) => {
          * cela n'écrase pas l'image de l'autre
          * .getTime() => renvoie le temps actuelle en millisecondes donc est unique
          */
-        imageUrl = `${process.env.DOWNLOAD_PATH}/${encodeURIComponent(`images/profile-picture/${dateActuelle.getTime()} - ${file.originalname}`)}?alt=media&token=${uuid}`
-
+        let imageUrl = `${process.env.DOWNLOAD_PATH}/${encodeURIComponent(`images/profile-picture/${dateActuelle.getTime()} - ${file.originalname}`)}?alt=media&token=${uuid}`
+        let imagePath = `images/profile-picture/${dateActuelle.getTime()} - ${file.originalname}`
         const blob = bucket.file(`images/profile-picture/${dateActuelle.getTime()} - ${file.originalname}`)
         const blobStream = blob.createWriteStream({
             metadata: metadata,
@@ -197,12 +197,12 @@ module.exports.update_profile_picture_put = async (req, res) => {
         })
 
         blobStream.on("error", err => {
-            errorLogger(`erreur lors de l'upload de l'image ${imageUrl} de l'utilisateur ${id}`, '','profil.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
-            errorLogger(err, 'profil.js [POST] /profil/:id/update-profil-picture')
+            errorLogger(`erreur lors de l'upload de l'image ${imageUrl} de l'utilisateur ${id}`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
+            errorLogger(err, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
         })
 
         blobStream.on("finish", () => {
-            logLogger(`upload de l'image ${imageUrl} de l'utilisateur ${id} a bien été effectuée`, '','profil.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
+            logLogger(`upload de l'image ${imageUrl} de l'utilisateur ${id} a bien été effectuée`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
         })
 
         blobStream.end(req.file.buffer)
@@ -210,22 +210,65 @@ module.exports.update_profile_picture_put = async (req, res) => {
         const client = getClientsCollection();
         let queryUpdateProfilPicture
         if(statut === constants.STATUT_CLIENT) {
+            /** suppression de l'ancienne image en base */
+            let queryUserInfo = await client.query('SELECT * from users where users_id = $1', [id]);
+            const {profile_picture_path}  = queryUserInfo.rows[0]
+            try {
+                if(profile_picture_path !== null){
+                    bucket
+                        .file(profile_picture_path)
+                        .delete()
+                        .then(() => {
+                            logLogger(`l'image ${profile_picture_path} de l'utilisateur ${id} (client) a bien été supprimé`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
+
+                        })
+                        .catch((error) => {
+                            errorLogger(`Erreur lors de la suppression de l'ancienne photo de profil de l'utilisateur ${id} (client): ${error}`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
+                        });
+                }
+            }
+            catch (e) {
+                errorLogger("Erreur lors de la suppression de l'ancienne photo de profil de l'utilisateur", '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
+            }
+
             queryUpdateProfilPicture = {
-                text: 'UPDATE users SET profile_picture = $1 WHERE users_id = $2',
-                values: [imageUrl, id],
+                text: 'UPDATE users SET profile_picture = $1, profile_picture_path = $3 WHERE users_id = $2',
+                values: [imageUrl, id, imagePath],
             };
         }
         else {
+            /** suppression de l'ancienne image en base */
+            let queryUserInfo = await client.query('SELECT * from professionals where professional_id = $1', [id]);
+            const {profile_picture_path}  = queryUserInfo.rows[0]
+            try {
+                if(profile_picture_path !== null){
+                    bucket
+                        .file(profile_picture_path)
+                        .delete()
+                        .then(() => {
+                            logLogger(`l'image ${profile_picture_path} de l'utilisateur ${id} (pro) a bien été supprimé`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
+
+                        })
+                        .catch((error) => {
+                            errorLogger(`Erreur lors de la suppression de l'ancienne photo de profil de l'utilisateur ${id} (pro): ${error}`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
+                        });
+                }
+
+            }
+            catch (e) {
+                errorLogger("Erreur lors de la suppression de l'ancienne photo de profil de l'utilisateur", '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
+            }
+
             queryUpdateProfilPicture = {
-                text: 'UPDATE professionals SET profile_picture = $1 WHERE professional_id = $2',
-                values: [imageUrl, id],
+                text: 'UPDATE professionals SET profile_picture = $1, profile_picture_path = $3 WHERE professional_id = $2',
+                values: [imageUrl, id, imagePath],
             };
         }
 
         const resultUpdateProfilPicture = await client.query(queryUpdateProfilPicture);
 
         if (resultUpdateProfilPicture.rowCount === 0) {
-            errorLogger("Erreur lors de la mise à jour de la photo de profil de l'utilisateur", '','profil.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
+            errorLogger("Erreur lors de la mise à jour de la photo de profil de l'utilisateur", '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
             return sendError(res, "Erreur lors de la mise à jour de la photo de profil de l'utilisateur")
         }
 
@@ -251,7 +294,7 @@ module.exports.update_profile_picture_put = async (req, res) => {
         return sendSuccessfullyCreated(res, proProfile )
 
     } catch (e) {
-        errorLogger('Erreur lors de la récupération du profil:' + e.stack, '','profil.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
+        errorLogger('Erreur lors de la récupération du profil:' + e.stack, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
         return sendInternalServerError(res, 'Erreur serveur' )
     }
 }
@@ -275,17 +318,17 @@ module.exports.upload_images_service_post =  async (req, res) => {
         const { id } = decodeJWT(req.cookies.jwt)
         const { idPro, serviceId } = req.params;
 
-        if (files.length === 0) {
-            sendBadRequest(res, 'Aucun fichier upload')
+        if ( files === undefined ||files.length === 0) {
+            return sendBadRequest(res, 'Aucun fichier upload')
         }
 
         if (!isANumber(idPro) || !isANumber(serviceId) ) {
-            warnLogger(`L'utilisateur ${id} a appelé la route avec le paramètre de requete suivant: idPro:${idPro} et serviceId: ${serviceId}`, '','profil.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
+            warnLogger(`L'utilisateur ${id} a appelé la route avec le paramètre de requete suivant: idPro:${idPro} et serviceId: ${serviceId}`, '','profilController.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
             return sendBadRequest(res, "le 'idPro' et le 'serviceId' de la requête doivent etre des entiers")
         }
 
         if(convertToNumber(idPro) !== id) {
-            warnLogger(`L'utilisateur ${id} a tenté d'upload des images en se faisant passer pour l'utilisateur: ${idPro}`, '','profil.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
+            warnLogger(`L'utilisateur ${id} a tenté d'upload des images en se faisant passer pour l'utilisateur: ${idPro}`, '','profilController.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
             return sendUnauthorized(res, 'Permission non autorisé')
         }
 
@@ -313,7 +356,8 @@ module.exports.upload_images_service_post =  async (req, res) => {
                  * .getTime() => renvoie le temps actuelle en millisecondes donc est unique
                  */
                 let imageUrl = `${process.env.DOWNLOAD_PATH}/${encodeURIComponent(`images/service-images/${dateActuelle.getTime()} - ${file.originalname}`)}?alt=media&token=${uuid}`
-                tableauURL.push(imageUrl)
+                let imagePath = `images/service-images/${dateActuelle.getTime()} - ${file.originalname}`
+                tableauURL.push([imageUrl, imagePath])
                 const blob = bucket.file(`images/service-images/${dateActuelle.getTime()} - ${file.originalname}`)
                 const blobStream = blob.createWriteStream({
                     metadata: metadata,
@@ -321,13 +365,13 @@ module.exports.upload_images_service_post =  async (req, res) => {
                 })
 
                 blobStream.on("error", err => {
-                    errorLogger(`erreur lors de l'upload de l'image ${imageUrl} de l'utilisateur ${id}`, '','profil.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
+                    errorLogger(`erreur lors de l'upload de l'image ${imageUrl} de l'utilisateur ${id}`, '','profilController.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
                     tableauEchecs.push(imageUrl)
-                    errorLogger(err, 'profil.js [POST] /profil/:id/upload-service-picture/:serviceId')
+                    errorLogger(err, '','profilController.js',`/profil/${id}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
                 })
 
                 blobStream.on("finish", () => {
-                    logLogger(`upload de l'image ${imageUrl} de l'utilisateur ${id} a bien été effectuée`, '','profil.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
+                    logLogger(`upload de l'image ${imageUrl} de l'utilisateur ${id} a bien été effectuée`, '','profilController.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
                 })
 
                 blobStream.end(file.buffer)
@@ -338,35 +382,85 @@ module.exports.upload_images_service_post =  async (req, res) => {
             let dataToInsertString
 
             if(tableauEchecs.length > 0){
-                let images_upload =  tableauURL.filter((url) => tableauEchecs.includes(url) === false)
-                dataToInsertString = images_upload.map((url) => [idPro, serviceId, url])
+                let images_upload =  tableauURL.filter((tab) => tableauEchecs.includes(tab[0]) === false)
+                dataToInsertString = images_upload.map((tab) => [idPro, serviceId, tab[0], tab[1]])
             }
             else {
-                dataToInsertString = tableauURL.map((url) => [2, 2, url])
+                dataToInsertString = tableauURL.map((tab) => [idPro, serviceId, tab[0], tab[1]])
             }
 
             try {
-                const insertImagesQuery = format('INSERT INTO images_services_professionals (pro_id, service_id, image_url) VALUES %L', dataToInsertString)
+                const insertImagesQuery = format('INSERT INTO images_services_professionals (pro_id, service_id, image_url, picture_path) VALUES %L', dataToInsertString)
                 const insertImageResult = await client.query(insertImagesQuery)
 
                 if(insertImageResult.rowCount === 0 ) {
-                    errorLogger("Erreur lors de l'enregistrement des images en base", '','profil.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
+                    errorLogger("Erreur lors de l'enregistrement des images en base", '','profilController.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
                     return sendFailure(res, "Erreur lors de l'enregistrement des images en base" )
                 }
-                verboseLogger(`Les images du pro ${idPro} ont bien été sauvegarder en base pour le service: ${serviceId} (${dataToInsertString.length} images upload)`, '','profil.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
+                verboseLogger(`Les images du pro ${idPro} ont bien été sauvegarder en base pour le service: ${serviceId} (${dataToInsertString.length} images upload)`, '','profilController.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
                 return sendSuccessfullyCreated(res, `L'upload des images pour le service ${serviceId} a bien fonctionné`)
             }
             catch (e) {
-                errorLogger("Erreur lors de l'enregistrement des images en base" + e.stack, '','profil.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
+                errorLogger("Erreur lors de l'enregistrement des images en base" + e.stack, '','profilController.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
                 return sendFailure(res, "Erreur lors de l'enregistrement des images en base" )
             }
 
         } catch (e) {
-            errorLogger("Erreur lors de l'upload des images" + e.stack, '','profil.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
+            errorLogger("Erreur lors de l'upload des images" + e.stack, '','profilController.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
             return sendInternalServerError(res, 'Erreur serveur' )
         }
     })
 
+}
+
+module.exports.image_service_delete =  async (req, res) => {
+    const { id, statut } = decodeJWT(req.cookies.jwt)
+    const { imageId } = req.params;
+    
+    if (!isANumber(imageId) ) {
+        warnLogger(`L'utilisateur ${id} a appelé la route avec le paramètre de requete suivant: imageId:${imageId}`, '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
+        return sendBadRequest(res, "le 'idPro' et le 'serviceId' de la requête doivent etre des entiers")
+    }
+
+    if(statut === constants.STATUT_PROFESSIONNEL) {
+        const client = getClientsCollection();
+        let bucket = auth.storage().bucket();
+        /** suppression de l'ancienne image en base */
+        let queryImageInfo = await client.query('SELECT * from images_services_professionals where image_id = $1 and pro_id = $2', [imageId, id]);
+        if(queryImageInfo.rowCount > 0 ) {
+            const {picture_path} = queryImageInfo.rows[0]
+            try {
+                if (picture_path !== null) {
+                    bucket
+                        .file(picture_path)
+                        .delete()
+                        .then(async () => {
+                            /* suppression dans la table */
+                            await client.query('DELETE from images_services_professionals where image_id = $1 and pro_id = $2', [imageId, id]);
+                            logLogger(`l'image ${picture_path} de l'utilisateur ${id} (pro) a bien été supprimé`, '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
+                            return sendSuccess(res, "l'image a bien été supprimé")
+                        })
+                        .catch((error) => {
+                            errorLogger(`Erreur lors de la suppression de la photo ${picture_path} (${imageId}) du service de l'utilisateur ${id} (pro): ${error}`, '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
+                            return sendError(res, `Erreur lors de la suppression de la photo ${picture_path} (${imageId}) du service de l'utilisateur ${id} (pro)`)
+                        });
+                }
+            } catch (e) {
+                errorLogger(`Erreur lors de la suppression de la photo ${picture_path} (${imageId}) du service de l'utilisateur ${id} (pro)`,  '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
+                return sendError(res, `Erreur lors de la suppression de la photo ${picture_path} (${imageId}) du service de l'utilisateur ${id} (pro)`)
+            }
+        }
+        else {
+            errorLogger(`l'image (${imageId}) n'appartient pas à l'utilisateur ${id} (pro)`, '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
+            return sendBadRequest(res, `l'image (${imageId}) n'appartient pas à l'utilisateur ${id} (pro)`)
+        }
+
+    }
+    else {
+        warnLogger(`L'utilisateur ${id} a tenté de supprimer l'image ${imageId}`, '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
+        return sendUnauthorized(res, 'Permission non autorisé')
+    }
+    
 }
 
 module.exports.update_preferences_put = async (req, res) => {
