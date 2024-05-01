@@ -100,12 +100,29 @@ module.exports.service_liste_pro_get = async (req, res) => {
         verboseLogger(`id pro:${professionalId}`, '','servicesController.js', `/service/:professionalId/liste${professionalId}`, constants.GET_HTTP)
 
         const services = await client.query(
-            `SELECT services.service_id, services.service_name, services.service_description, services.service_price, services.duration, 
-            professionals.email, professionals.phone, professionals.company_name, professionals.company_address 
-            FROM services 
-            INNER JOIN professionals 
-            ON services.professional_id = professionals.professional_id
-            WHERE professionals.professional_id = $1`,
+            `SELECT services.service_id,
+                    services.service_name,
+                    services.service_description,
+                    services.service_price,
+                    services.duration,
+                    professionals.email,
+                    professionals.phone,
+                    professionals.company_name,
+                    professionals.company_address,
+                    COUNT(reservations.reservation_id) AS reservations_a_venir
+             FROM services
+                      INNER JOIN professionals
+                                 ON services.professional_id = professionals.professional_id
+                      INNER JOIN reservations
+                                 ON services.service_id = reservations.service_id
+             WHERE professionals.professional_id = $1
+               AND TO_TIMESTAMP(reservations.day_of_week || ' ' || reservations.start_time, 'DD-MM-YYYY HH24:MI:SS') >= CURRENT_TIMESTAMP
+             group by services.service_id, 
+                      professionals.email,
+                      professionals.phone,
+                      professionals.company_name,
+                      professionals.company_address
+            `,
             [professionalId]
         );
         verboseLogger(`Récuperation de la liste des servives du pro: ${professionalId}`, '','servicesController.js', `/service/:professionalId/liste${professionalId}`, constants.GET_HTTP)
