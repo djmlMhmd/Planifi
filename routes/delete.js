@@ -7,6 +7,7 @@ const {warnLogger, logLogger, errorLogger} = require("../config/winston/winston.
 const {sendInternalServerError, sendUnauthorized, sendSuccessWithNoContent, sendBadRequest, sendSuccess, sendFailure} = require("../utils/error_message.utils");
 const {isANumber} = require("../utils/methods.utils");
 const {sendRendezVousAnnuleClient, sendRendezVousAnnulePro} = require("../mail/send-email");
+const {constants} = require("../constants/constants");
 
 const router = Router();
 router.use(express.json());
@@ -14,15 +15,15 @@ router.use(express.json());
 // Côté serveur
 // SUPPRIMER RÉSERVATION
 router.delete('/supprimer-reservation/:reservationId', requiredAuth, async (req, res) => {
+	const {reservationId} = req.params;
 	try {
-		const {reservationId} = req.params;
 
 		if (!isANumber(reservationId) ) {
 			return sendBadRequest(res, "le reservationId doit etre un entier")
 		}
 		const { id } = decodeJWT(req.cookies.jwt)
 
-		logLogger(`Reservation ID: ${reservationId}`, 'delete.js [DELETE] /supprimer-reservation/:reservationId')
+		logLogger(`Reservation ID: ${reservationId}`, '','delete.js',  `/supprimer-reservation/${reservationId}`, constants.DELETE_HTTP)
 		// Récupérez le serviceId en interrogeant la base de données à partir de l'ID de réservation.
 		const client = getClientsCollection();
 		const queryForServiceId = `
@@ -32,13 +33,13 @@ router.delete('/supprimer-reservation/:reservationId', requiredAuth, async (req,
 
 		const service = await client.query(queryForServiceId, [reservationId]);
 		if (service.rowCount === 0) {
-			warnLogger(`Réservation introuvable.:${reservationId}`, 'delete.js [DELETE] /supprimer-reservation/:reservationId')
+			warnLogger(`Réservation introuvable.:${reservationId}`, '','delete.js',  `/supprimer-reservation/${reservationId}`, constants.DELETE_HTTP)
 			return sendSuccessWithNoContent(res, 'Réservation introuvable.')
 		}
 
 		const { service_id: serviceId, users_id: userId, professional_id: proId, day_of_week, start_time } = service.rows[0];
 		if (userId !== id) {
-            errorLogger(`Vous n'êtes pas autorisé à supprimer cette réservation:${reservationId}, service id: ${serviceId}, client id:${id}`, 'delete.js [DELETE] /supprimer-reservation/:reservationId')
+            errorLogger(`Vous n'êtes pas autorisé à supprimer cette réservation:${reservationId}, service id: ${serviceId}, client id:${id}`, '','delete.js',  `/supprimer-reservation/${reservationId}`, constants.DELETE_HTTP)
             return sendUnauthorized(res, "Vous n'êtes pas autorisé à supprimer cette réservation.")
 		}
 
@@ -58,7 +59,7 @@ router.delete('/supprimer-reservation/:reservationId', requiredAuth, async (req,
 		]);
 
 		if (result.rowCount === 1) {
-			logLogger(`La réservation a été supprimée avec succès:${reservationId}, service id: ${serviceId}, client id:${id}`, 'delete.js [DELETE] /supprimer-reservation/:reservationId')
+			logLogger(`La réservation a été supprimée avec succès:${reservationId}, service id: ${serviceId}, client id:${id}`, '','delete.js',  `/supprimer-reservation/${reservationId}`, constants.DELETE_HTTP)
 
 			//TODO : recuperer les mails du pro et du client
 			try{
@@ -92,24 +93,24 @@ router.delete('/supprimer-reservation/:reservationId', requiredAuth, async (req,
 				}
 			}
 			catch (e) {
-				errorLogger(`Erreur lors de la reservation avec les infos: pro: ${proId}, heure début: ${start_time}, service id: ${serviceId}, jour de la semaine: ${day_of_week}, user: ${userId}`, 'delete.js [DELETE] /supprimer-reservation/:reservationId')
+				errorLogger(`Erreur lors de la reservation avec les infos: pro: ${proId}, heure début: ${start_time}, service id: ${serviceId}, jour de la semaine: ${day_of_week}, user: ${userId}`, '','delete.js',  `/supprimer-reservation/${reservationId}`, constants.DELETE_HTTP)
 				return sendFailure(res, 'Erreur lors de la suppresion de la reservation' )
 			}
 			return
 		}
 
-		errorLogger(`Vous n'êtes pas autorisé à supprimer cette réservation:${reservationId}, service id: ${serviceId}, client id:${id}`, 'delete.js [DELETE] /supprimer-reservation/:reservationId')
+		errorLogger(`Vous n'êtes pas autorisé à supprimer cette réservation:${reservationId}, service id: ${serviceId}, client id:${id}`, '','delete.js',  `/supprimer-reservation/${reservationId}`, constants.DELETE_HTTP)
 		return sendUnauthorized(res, "Vous n'êtes pas autorisé à supprimer cette réservation.")
 	} catch (error) {
-		errorLogger(`Erreur lors de la suppression de la réservation:` + JSON.stringify(error), 'delete.js [DELETE] /supprimer-reservation/:reservationId')
+		errorLogger(`Erreur lors de la suppression de la réservation:` + JSON.stringify(error), '','delete.js',  `/supprimer-reservation/${reservationId}`, constants.DELETE_HTTP)
 		return sendInternalServerError(res, 'Erreur lors de la suppression de la réservation : ' + error.message)
 	}
 });
 
 // SUPPRIMER SERVICE
 router.delete('/services/delete/:serviceId', requiredAuth, async (req, res) => {
+	const serviceId = req.params.serviceId;
 	try {
-		const serviceId = req.params.serviceId;
 
 		if (!isANumber(serviceId) ) {
 			return sendBadRequest(res, "le serviceId doit etre un entier")
@@ -128,13 +129,13 @@ router.delete('/services/delete/:serviceId', requiredAuth, async (req, res) => {
 		const service = serviceQuery.rows[0];
 
 		if (!service) {
-			warnLogger(`Service non trouvé: ${JSON.stringify(service)}`, 'delete.js [DELETE] /services/delete/:serviceId')
+			warnLogger(`Service non trouvé: ${JSON.stringify(service)}`, '','delete.js', `/services/delete/${serviceId}`, constants.DELETE_HTTP)
 			return sendBadRequest(res, 'Service non trouvé')
 		}
 
 		// Vérifiez si le professional_id du service correspond à professionalId de la session
 		if (service.professional_id !== id) {
-            warnLogger(`Vous n'êtes pas autorisé à supprimer ce service personne voulant supprimer: ${id} (${statut}), personne pouvant supprimer: ${service.professional_id}`, 'delete.js [DELETE] /services/delete/:serviceId')
+            warnLogger(`Vous n'êtes pas autorisé à supprimer ce service personne voulant supprimer: ${id} (${statut}), personne pouvant supprimer: ${service.professional_id}`, '','delete.js', `/services/delete/${serviceId}`, constants.DELETE_HTTP)
 			return sendUnauthorized(res, "Vous n'êtes pas autorisé à supprimer ce service")
 		}
 
@@ -142,10 +143,10 @@ router.delete('/services/delete/:serviceId', requiredAuth, async (req, res) => {
 		await client.query('DELETE FROM services WHERE service_id = $1', [
 			serviceId,
 		]);
-		logLogger(`Service supprimé avec succès : ${serviceId}` , 'delete.js [DELETE] /services/delete/:serviceId')
+		logLogger(`Service supprimé avec succès : ${serviceId}` , '','delete.js', `/services/delete/${serviceId}`, constants.DELETE_HTTP)
 		return sendSuccess(res, 'Service supprimé avec succès' )
 	} catch (e) {
-		errorLogger(`Erreur lors de la suppression du service :` + e.stack, 'delete.js [DELETE] /services/delete/:serviceId')
+		errorLogger(`Erreur lors de la suppression du service :` + e.stack, '','delete.js', `/services/delete/${serviceId}`, constants.DELETE_HTTP)
 		return sendInternalServerError(res, 'Erreur lors de la suppression du service :' + e.message)
 	}
 });

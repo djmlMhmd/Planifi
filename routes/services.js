@@ -7,6 +7,7 @@ const {decodeJWT} = require("../utils/auth.utils");
 const {verboseLogger, errorLogger, warnLogger, logLogger} = require("../config/winston/winston.config");
 const {sendInternalServerError, sendFailure, sendSuccess, sendBadRequest} = require("../utils/error_message.utils");
 const {isANumber} = require("../utils/methods.utils");
+const {constants} = require("../constants/constants");
 
 router.use(express.json());
 
@@ -15,7 +16,7 @@ router.use(express.json());
 router.post('/service/create', requiredAuth, async (req, res) => {
 	const { service_name, service_description, service_price, duration } =
 		req.body;
-	verboseLogger(`Données reçues du formulaire :${req.body}`, 'services.js [POST] /service/create');
+	verboseLogger(`Données reçues du formulaire :${req.body}`, '','services.js', '/service/create', constants.POST_HTTP);
 	const durationText = duration;
 
     const { id } = decodeJWT(req.cookies.jwt)
@@ -32,10 +33,10 @@ router.post('/service/create', requiredAuth, async (req, res) => {
 				id,
 			]
 		);
-		verboseLogger(`Service créé avec succès: nom: ${service_name}, description: ${service_description}, prix ${service_price}, durée: ${duration}`, 'services.js [POST] /service/create')
+		verboseLogger(`Service créé avec succès: nom: ${service_name}, description: ${service_description}, prix ${service_price}, durée: ${duration}`, '','services.js', '/service/create', constants.POST_HTTP);
 		return sendSuccess(res, 'Service créer')
 	} catch (e) {
-		errorLogger(`Erreur lors la création du service : ${ e.stack}`, 'services.js [POST] /service/create')
+		errorLogger(`Erreur lors la création du service : ${ e.stack}`, '','services.js', '/service/create', constants.POST_HTTP);
 		return sendFailure(res, 'Erreur lors la création du service :' + e.message)
 	}
 });
@@ -52,10 +53,10 @@ router.get('/service', requiredAuth, async (req, res) => {
             INNER JOIN professionals 
             ON services.professional_id = professionals.professional_id;`
 		);
-		verboseLogger(`Recuperation de l'ensemble des services`, 'services.js [GET] /service')
+		verboseLogger(`Recuperation de l'ensemble des services`, '','services.js', '/service', constants.GET_HTTP);
 		return sendSuccess(res, services.rows)
 	} catch (e) {
-		errorLogger(`Erreur lors la récupération de la liste des services:` + e.stack, 'services.js [GET] /service')
+		errorLogger(`Erreur lors la récupération de la liste des services:` + e.stack, '','services.js', '/service', constants.GET_HTTP);
 		return sendInternalServerError(res, 'Erreur lors la création de la liste des services :' + e.message)
 	}
 });
@@ -66,13 +67,13 @@ router.get('/liste-services/:professionalId', requiredAuth, async (req, res) => 
 	const { id } = decodeJWT(req.cookies.jwt)
 
 	if (!isANumber(professionalId)  ) {
-		warnLogger(`L'utilisateur ${id} a appelé la route avec les paramètres de requete suivants: professionalId:${professionalId}`, 'reservation.js [GET] /liste-services/:professionalId')
+		warnLogger(`L'utilisateur ${id} a appelé la route avec les paramètres de requete suivants: professionalId:${professionalId}`, '','reservation.js', `/liste-services/${professionalId}`, constants.GET_HTTP)
 		return sendBadRequest(res, "le 'professionalId' de la requête doit etre un entier")
 	}
 
 	try {
 		const client = getClientsCollection();
-		verboseLogger(`id pro:${professionalId}`, 'services.js [GET} /liste-services/:professionalId');
+		verboseLogger(`id pro:${professionalId}`, '','reservation.js', `/liste-services/${professionalId}`, constants.GET_HTTP)
 
 		const services = await client.query(
 			`SELECT services.service_id, services.service_name, services.service_description, services.service_price, services.duration, 
@@ -83,10 +84,10 @@ router.get('/liste-services/:professionalId', requiredAuth, async (req, res) => 
             WHERE professionals.professional_id = $1`,
 			[professionalId]
 		);
-		verboseLogger(`Récuperation de la liste des servives du pro: ${professionalId}`, 'services.js [GET] /liste-services/:professionalId')
+		verboseLogger(`Récuperation de la liste des servives du pro: ${professionalId}`, '','reservation.js', `/liste-services/${professionalId}`, constants.GET_HTTP)
 		return sendSuccess(res, services.rows)
 	} catch (e) {
-		errorLogger(`Erreur lors de la récupération des services pro id: ${professionalId} : ` + e.stack, 'services.js [GET] /liste-services/:professionalId')
+		errorLogger(`Erreur lors de la récupération des services pro id: ${professionalId} : ` + e.stack, '','reservation.js', `/liste-services/${professionalId}`, constants.GET_HTTP)
 		return sendInternalServerError(res, 'Erreur lors de la récupération des services :' + e.message)
 	}
 });
@@ -98,10 +99,10 @@ router.get('/professionals', requiredAuth, async (req, res) => {
 		const professionals = await client.query(
 			'SELECT professional_id, company_name FROM professionals'
 		);
-		verboseLogger(`Récuperation de la liste des pro`, 'services.js [GET] /professionals')
+		verboseLogger(`Récuperation de la liste des pro`, '','reservation.js', `/professionals`, constants.GET_HTTP)
 		return sendSuccess(res, professionals.rows);
 	} catch (e) {
-		errorLogger(`Erreur lors de la récupération des professionnels: ${e.stack}`, 'services.js [GET] /professionals')
+		errorLogger(`Erreur lors de la récupération des professionnels: ${e.stack}`, '','reservation.js', `professionals`, constants.GET_HTTP)
 		return sendInternalServerError(res, 'Erreur lors de la récupération des professionnels :' + e.message)
 	}
 });
@@ -113,7 +114,7 @@ router.get('/reservation/:serviceId', requiredAuth, async (req, res) => {
 	const { id } = decodeJWT(req.cookies.jwt)
 
 	if (!isANumber(serviceId)  ) {
-		warnLogger(`L'utilisateur ${id} a appelé la route avec les paramètres de requete suivants: serviceId:${serviceId}`, 'reservation.js [GET] /reservation/:serviceId')
+		warnLogger(`L'utilisateur ${id} a appelé la route avec les paramètres de requete suivants: serviceId:${serviceId}`, '','reservation.js', `/reservation/${serviceId}`, constants.GET_HTTP)
 		return sendBadRequest(res, "le 'serviceId' de la requête doit etre un entier")
 	}
 
@@ -127,16 +128,16 @@ router.get('/reservation/:serviceId', requiredAuth, async (req, res) => {
 		);
 
 		if (service.rows.length === 0) {
-			warnLogger(`Service non trouvé: ${serviceId}`, 'services.js [GET] /reservation/:serviceId')
+			warnLogger(`Service non trouvé: ${serviceId}`, '','reservation.js', `/reservation/${serviceId}`, constants.GET_HTTP)
 			return sendBadRequest(res, 'Service non trouvé' )
 		}
 
 		const serviceInfo = service.rows[0];
 		res.cookie('selectedServiceID', serviceId, { maxAge: 3600000 });
-		logLogger(`Récupération des infos du service: ${serviceId}`, 'services.js [GET] /reservation/:serviceId')
+		logLogger(`Récupération des infos du service: ${serviceId}`, '','reservation.js', `/reservation/${serviceId}`, constants.GET_HTTP)
 		return sendSuccess(res, serviceInfo)
 	} catch (e) {
-		errorLogger(`Erreur lors de la récupération des informations du service: ${serviceId}: ${e.stack}`, 'services.js [GET] /reservation/:serviceId')
+		errorLogger(`Erreur lors de la récupération des informations du service: ${serviceId}: ${e.stack}`, '','reservation.js', `/reservation/${serviceId}`, constants.GET_HTTP)
 		return sendInternalServerError(res, 'Erreur lors de la récupération des informations du service : ' + e.message)
 	}
 });
@@ -155,10 +156,9 @@ router.get('/search-services', requiredAuth, async (req, res) => {
             WHERE LOWER(services.service_name) ILIKE $1`,
 			[`%${searchTerm.toLowerCase()}%`]
 		);
-		verboseLogger(`Récuperation des services ayant un nom ressemblant à : ${searchTerm.toLowerCase()}`, 'services.js [GET] /search-services')
-		return sendSuccess(res, services.rows)
+		verboseLogger(`Récuperation des services ayant un nom ressemblant à : ${searchTerm.toLowerCase()}`, '','reservation.js', `/search-services`, constants.GET_HTTP)
 	} catch (e) {
-		verboseLogger(`Erreur lors de la recherche de services :: ${e.stack}`, 'services.js [GET] /search-services')
+		verboseLogger(`Erreur lors de la recherche de services :: ${e.stack}`, '','reservation.js', `/search-services`, constants.GET_HTTP)
 		return sendInternalServerError(res, 'Erreur lors de la recherche de services : ' + e.message)
 	}
 });

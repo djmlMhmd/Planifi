@@ -89,6 +89,22 @@ const sendUnauthorized = (res, message, status = 403) => {
 }
 
 /**
+ * Case for Not Acceptable
+ *
+ * @param res objet résultat de la requete
+ * @param error message
+ * @param status status de la requete
+ */
+const sendNonAcceptable = (res, error, status = 404) => {
+    res.status(status).json({
+        code: status,
+        message: error,
+        error: true
+    })
+}
+
+
+/**
  * Case for update,created,deleted failed
  *
  * @param res objet résultat de la requete
@@ -142,5 +158,6 @@ module.exports = {
     sendInternalServerError,
     sendBadRequest,
     sendSuccessWithNoContent,
-    sendTooManyRequest
+    sendTooManyRequest,
+    sendNonAcceptable
 }

@@ -30,13 +30,12 @@ router.post('/inscription/utilisateur', registrationLimiter,  async (req, res) =
 
 	// Validatin initale des mots de passe
 	if (body.password !== body.confirmPassword) {
-		return res
-			.status(400)
-			.json({ message: 'Les mots de passe ne correspondent pas' });
+		errorLogger(`Les mots de passe ne correspondent pas`, '', 'authentification.js', '/inscription/utilisateur', constants.POST_HTTP)
+		return sendBadRequest(res, 'Les mots de passe ne correspondent pas')
 	}
 
 	if (error) {
-		errorLogger(`Erreur lors de la validation des données de l'utilisateur ${JSON.stringify(body)}:`, 'authentification.js [POST] /inscription')
+		errorLogger(`Erreur lors de la validation des données de l'utilisateur ${JSON.stringify(body.email)}:`, '', 'authentification.js', '/inscription/utilisateur', constants.POST_HTTP)
 		return sendBadRequest(res, error.details[0].message)
 	}
 
@@ -62,7 +61,7 @@ router.post('/inscription/utilisateur', registrationLimiter,  async (req, res) =
 
 		// Vérifie si des lignes ont été insérées
 		if (result.rowCount > 0) {
-			logLogger(`Utilisateur inscrit avec succès:` + JSON.stringify(result.rows[0]) , 'authentification.js [POST] /inscription')
+			logLogger(`Utilisateur inscrit avec succès:` + JSON.stringify(result.rows[0]) , '', 'authentification.js', '/inscription/utilisateur', constants.POST_HTTP)
 			const {email, firstName} = result.rows[0]
 			let id = result.rows[0].users_id
 
@@ -75,11 +74,11 @@ router.post('/inscription/utilisateur', registrationLimiter,  async (req, res) =
 			sendSuccess(res, `Votre inscription a bien été prise en compte, un lien de confirmation d'inscription vous a été envoyé à votre adresse mail: ${email}`)
 			await sendRegistrationLink(email, firstName, `${process.env.API_URL}/confirm-registration?token=${token}`)
 		} else {
-			errorLogger('Le compte existe déjà ou une autre erreur est survenue.', 'authentification.js [POST] /inscription')
+			errorLogger('Le compte existe déjà ou une autre erreur est survenue.', '', 'authentification.js', '/inscription/utilisateur', constants.POST_HTTP)
 			return sendBadRequest(res, 'Le compte existe déjà ou une autre erreur est survenue.')
 		}
 	} catch (e) {
-		errorLogger(`Erreur lors de l'inscription : ${e.stack}`, 'authentification.js [POST] /inscription')
+		errorLogger(`Erreur lors de l'inscription : ${e.stack}`, '', 'authentification.js', '/inscription/utilisateur', constants.POST_HTTP)
 		return sendInternalServerError(res, "Erreur serveur lors de l'inscription. " + e.message)
 	}
 });
@@ -90,13 +89,13 @@ router.post('/inscription/professionnel', async (req, res) => {
 	const { error } = userValidation(body);
 
 	if (body.password !== body.confirmPassword) {
-		return res
-			.status(400)
-			.json({ message: 'Les mots de passe ne correspondent pas' });
+		errorLogger(`Les mots de passe ne correspondent pas`, '', 'authentification.js', '/inscription/professionnel', constants.POST_HTTP)
+		return sendBadRequest(res, 'Les mots de passe ne correspondent pas')
 	}
 
 	if (error) {
-		return res.status(400).json(error.details[0].message);
+		errorLogger(`Erreur lors de la validation des données de l'utilisateur ${JSON.stringify(body.email)}:`, '', 'authentification.js', '/inscription/professionnel', constants.POST_HTTP)
+		return sendBadRequest(res, error.details[0].message)
 	}
 
 	try {
@@ -122,25 +121,15 @@ router.post('/inscription/professionnel', async (req, res) => {
 		const result = await client.query(insertQuery, values);
 
 		if (result.rowCount > 0) {
-			console.log('Professionnel inscrit avec succès:', result.rows[0]);
-			res.json({ success: true, redirectUrl: '/connexion' });
+			logLogger(`Professionnel inscrit avec succès:` + JSON.stringify(result.rows[0]) , '', 'authentification.js', '/inscription/professionnel', constants.POST_HTTP)
+			sendSuccess(res, `Votre inscription a bien été prise en compte, un lien de confirmation d'inscription vous a été envoyé à votre adresse mail: ${result.rows[0].email}`)
 		} else {
-			res.status(400).json({
-				success: false,
-				message:
-					'Le compte existe déjà ou une autre erreur est survenue.',
-			});
+			errorLogger('Le compte existe déjà ou une autre erreur est survenue.', '', 'authentification.js', '/inscription/professionnel', constants.POST_HTTP)
+			return sendBadRequest(res, 'Le compte existe déjà ou une autre erreur est survenue.')
 		}
 	} catch (e) {
-		console.error(
-			"Erreur lors de l'inscription du professionnel :",
-			e.stack
-		);
-		res.status(500).json({
-			message:
-				"Erreur serveur lors de l'inscription du professionnel. " +
-				e.message,
-		});
+		errorLogger(`Erreur lors de l'inscription du professionnel: ${e.stack}`, '', 'authentification.js', '/inscription/professionnel', constants.POST_HTTP)
+		return sendInternalServerError(res, "Erreur serveur lors de l'inscription du professionnel." + e.message)
 	}
 });
 
@@ -151,12 +140,12 @@ router.post('/connexion', authLimiter, async (req, res) => {
 	const reqValue = req.query['user_type'];
 
 	if (isUndefinedOrEmpty(email) || isUndefinedOrEmpty(password)) {
-		errorLogger(`Le champ "email" et le champ "password" doivent être renseignés`, 'authentification.js [POST] /connexion')
+		errorLogger(`Le champ "email" et le champ "password" doivent être renseignés`, '', 'authentification.js', '/connexion', constants.POST_HTTP)
 		return sendBadRequest(res, "Les données envoyées sont incorrectes")
 	}
 
 	if(reqValue !== constants.STATUT_CLIENT && reqValue !== constants.STATUT_PROFESSIONNEL) {
-		errorLogger(`Le paramètre de requête est incorrect ou manquant (?user_type=): ${reqValue}`, 'authentification.js [POST] /inscription')
+		errorLogger(`Le paramètre de requête est incorrect ou manquant (?user_type=): ${reqValue}`, '', 'authentification.js', '/connexion', constants.POST_HTTP)
 		return sendBadRequest(res, `Le paramètre de requête est incorrect (?user_type=): ${reqValue}`)
 	}
 
@@ -171,7 +160,7 @@ router.post('/connexion', authLimiter, async (req, res) => {
 				const {users_id, est_verifie} = clientQueryResult.rows[0]
 
 				if (!est_verifie) {
-					warnLogger(`L'utilisateur ${users_id} (client) essaye de se connecter en étant pas vérifié`, 'authentification.js [POST] /connexion')
+					warnLogger(`L'utilisateur ${users_id} (client) essaye de se connecter en étant pas vérifié`, '', 'authentification.js', '/connexion', constants.POST_HTTP)
 					return sendUnauthorized(res, 'Veuillez vérifier votre adresse email avant de vous connecter')
 				}
 				const hashedPassword = clientQueryResult.rows[0].password;
@@ -182,10 +171,10 @@ router.post('/connexion', authLimiter, async (req, res) => {
 				if (match) {
 					const token = createToken(users_id, constants.STATUT_CLIENT)
 					res.cookie('jwt', token, {httpOnly: true, maxAge: JWT_COOKIE_EXPIRES_IN})
-					logLogger('Authentification réussie', 'authentification.js [POST] /connexion')
+					logLogger('Authentification réussie', '', 'authentification.js', '/connexion', constants.POST_HTTP)
 					return sendSuccessWithNoContent(res)
 				}
-				errorLogger("Échec de l'authentification: mot de passe incorrect", 'authentification.js [POST] /connexion')
+				errorLogger("Échec de l'authentification: mot de passe incorrect", '', 'authentification.js', '/connexion', constants.POST_HTTP)
 				return sendError(res, "Échec de l'authentification")
 
 			} else {
@@ -198,7 +187,7 @@ router.post('/connexion', authLimiter, async (req, res) => {
 					const {professional_id, est_verifie} = professionalQueryResult.rows[0];
 
 					if (!est_verifie) {
-						warnLogger(`L'utilisateur ${professional_id} (professionnel) essaye de se connecter en étant pas vérifié`, 'authentification.js [POST] /connexion')
+						warnLogger(`L'utilisateur ${professional_id} (professionnel) essaye de se connecter en étant pas vérifié`, '', 'authentification.js', '/connexion', constants.POST_HTTP)
 						return sendUnauthorized(res, 'Veuillez vérifier votre adresse email avant de vous connecter')
 					}
 
@@ -209,20 +198,20 @@ router.post('/connexion', authLimiter, async (req, res) => {
 					if (match) {
 						const token = createToken(professional_id, constants.STATUT_PROFESSIONNEL)
 						res.cookie('jwt', token, {httpOnly: true, maxAge: JWT_COOKIE_EXPIRES_IN})
-						logLogger('Authentification réussie en tant que professionnel', 'authentification.js /connexion')
+						logLogger('Authentification réussie en tant que professionnel', '', 'authentification.js', '/connexion', constants.POST_HTTP)
 						return sendSuccessWithNoContent(res)
 					} else {
-						errorLogger("Échec de l'authentification en tant que professionnel : mot de passe incorrect", 'authentification.js /connexion')
+						errorLogger("Échec de l'authentification en tant que professionnel : mot de passe incorrect", '', 'authentification.js', '/connexion', constants.POST_HTTP)
 						return sendError(res, "Échec de l'authentification")
 					}
 				} else {
-					errorLogger("Échec de l'authentification : e-mail non trouvé", 'authentification.js /connexion')
+					errorLogger("Échec de l'authentification : e-mail non trouvé", '', 'authentification.js', '/connexion', constants.POST_HTTP)
 					return sendError(res, "Échec de l'authentification")
 				}
 			}
 		}
 	} catch (e) {
-		errorLogger("Erreur lors de l'authentification : " + e.stack, 'authentification.js /connexion')
+		errorLogger("Erreur lors de l'authentification : " + e.stack, '', 'authentification.js', '/connexion', constants.POST_HTTP)
 		return sendInternalServerError(res, "Erreur serveur lors de l'authentification. " + e.message)
 	}
 });
@@ -254,7 +243,7 @@ router.get('/confirm-registration', async (req, res) => {
 					[ true, id]
 				);
 			}
-			logLogger(`L'inscription de l'utilisateur: ${id} a bien été confirmée`, 'Authentification.js [GET] /confirm-registration')
+			logLogger(`L'inscription de l'utilisateur: ${id} a bien été confirmée`, '','Authentification.js', '/confirm-registration', constants.GET_HTTP)
 			return sendSuccess(res, 'Votre inscription a bien été confirmée')
 		}
 		catch (e) {
@@ -270,12 +259,12 @@ router.post('/resend-registration-mail', sendMailConfirmRegistrationLimiter,  as
 	const { email } = req.body;
 
 	if (isUndefinedOrEmpty(email)) {
-		errorLogger(`Le champ "email" doit être renseigné`, 'authentification.js [POST] /resend-registration-mail')
+		errorLogger(`Le champ "email" doit être renseigné`, '','authentification.js', '/resend-registration-mail', constants.POST_HTTP)
 		return sendBadRequest(res, "Les données envoyées sont incorrectes")
 	}
 
 	if(user_type !== constants.STATUT_CLIENT && user_type !== constants.STATUT_PROFESSIONNEL) {
-		errorLogger(`Le paramètre de requête est incorrect ou manquant (?user_type=): ${user_type}`, 'authentification.js [POST] /resend-registration-mail')
+		errorLogger(`Le paramètre de requête est incorrect ou manquant (?user_type=): ${user_type}`, '','authentification.js', '/resend-registration-mail', constants.POST_HTTP)
 		return sendBadRequest(res, `Le paramètre de requête est incorrect (?user_type=): ${user_type}`)
 	}
 
@@ -295,7 +284,7 @@ router.post('/resend-registration-mail', sendMailConfirmRegistrationLimiter,  as
 			const {email, firstName, est_verifie} = userQueryresult.rows[0]
 
 			if(est_verifie) {
-				warnLogger(`L'utilisateur ${email} essaye de renvoyer un mail de confirmation d'inscription en étant vérifié`, 'authentification.js [POST] /resend-registration-mail')
+				warnLogger(`L'utilisateur ${email} essaye de renvoyer un mail de confirmation d'inscription en étant vérifié`, '','authentification.js', '/resend-registration-mail', constants.POST_HTTP)
 				return sendUnauthorized(res, 'Veuillez votre compte est déjà vérifié, veuillez vous connecter')
 			}
 
@@ -315,7 +304,7 @@ router.post('/resend-registration-mail', sendMailConfirmRegistrationLimiter,  as
 			sendSuccess(res, `Un lien de confirmation d'inscription a bien été renvoyé votre adresse mail: ${email}`)
 			await sendRegistrationLink(email, firstName, `${process.env.API_URL}/confirm-registration?token=${token}`)
 		} else {
-			errorLogger("Échec de l'authentification : e-mail non trouvé", 'authentification.js /resend-registration-mail')
+			errorLogger("Échec de l'authentification : e-mail non trouvé", '','authentification.js', '/resend-registration-mail', constants.POST_HTTP)
 			return sendError(res, "Échec de l'authentification : e-mail non trouvé")
 		}
 	}
@@ -328,7 +317,7 @@ router.post('/forgot-password', sendMailResetPasswordLimiter, async (req, res) =
 	const { email } = req.body;
 
 	if (isUndefinedOrEmpty(email)) {
-		errorLogger(`Le champ "email" doit être renseigné`, 'authentification.js [POST] /forgot-password')
+		errorLogger(`Le champ "email" doit être renseigné`, '','authentification.js', '/forgot-password', constants.POST_HTTP)
 		return sendBadRequest(res, "Les données envoyées sont incorrectes")
 	}
 
@@ -371,7 +360,7 @@ router.post('/forgot-password', sendMailResetPasswordLimiter, async (req, res) =
 			await sendResetPassword(email, firstName, `${process.env.API_URL}/forgot-password-reset'?token=${token}&user_type=${constants.STATUT_PROFESSIONNEL}`)
 		}
 		else {
-			errorLogger("Échec de l'authentification : e-mail non trouvé", 'authentification.js /forgot-password')
+			errorLogger("Échec de l'authentification : e-mail non trouvé", '','authentification.js', '/forgot-password', constants.POST_HTTP)
 			return sendError(res, "Échec de l'authentification : e-mail non trouvé")
 		}
 	}
@@ -385,18 +374,18 @@ router.put('/forgot-password-reset', async (req, res) => {
 	const { password, passwordConfirm } = req.body;
 
 	if (isUndefinedOrEmpty(password) || isUndefinedOrEmpty(passwordConfirm)) {
-		errorLogger(`Les champs "password" et "passwordConfirm" doivent être renseignés`, 'authentification.js [PUT] /forgot-password-reset')
+		errorLogger(`Les champs "password" et "passwordConfirm" doivent être renseignés`, '','authentification.js', '/forgot-password-reset', constants.PUT_HTTP)
 		return sendBadRequest(res, "Les données envoyées sont incorrectes")
 	}
 
 	if(isUndefinedOrEmpty(token)) {
-		errorLogger(`Le paramètre de requête est incorrect ou manquant (?token=): ${token}`, 'authentification.js [PUT] /forgot-password-reset')
+		errorLogger(`Le paramètre de requête est incorrect ou manquant (?token=): ${token}`, '','authentification.js', '/forgot-password-reset', constants.PUT_HTTP)
 		return sendBadRequest(res, `Le paramètre de requête est incorrect (?token=): ${token}`)
 	}
 
 	const infosUser = verifyJWT(token)
 	if(infosUser === null){
-		warnLogger(`Ce token n'est pas valide: ${token}`, 'authentification.js [PUT] /forgot-password-reset')
+		warnLogger(`Ce token n'est pas valide: ${token}`, '','authentification.js', '/forgot-password-reset', constants.PUT_HTTP)
 		return sendBadRequest(res, `Le token n'est plus  valide: ${token}`)
 	}
 	const { id, statut, type } = infosUser
@@ -405,7 +394,7 @@ router.put('/forgot-password-reset', async (req, res) => {
 		const client = getClientsCollection();
 		try {
 			if(password !== passwordConfirm) {
-				errorLogger(`Les mots de passe ne correspondent pas`, 'authentification.js [PUT] /forgot-password-reset')
+				errorLogger(`Les mots de passe ne correspondent pas`, '','authentification.js', '/forgot-password-reset', constants.PUT_HTTP)
 				return sendBadRequest(res, "Les mots de passe ne correspondent pas")
 			}
 			const hash = await bcrypt.hash(password, saltRounds);
@@ -424,13 +413,13 @@ router.put('/forgot-password-reset', async (req, res) => {
 				);
 			}
 			if(updatePasswordResult.rowCount === 0){
-				errorLogger(`Echec lors de la mise à jour du mot de passe de l'utilisateur ${id} (${statut})`, "authentification.js [PUT] /forgot-password-reset")
+				errorLogger(`Echec lors de la mise à jour du mot de passe de l'utilisateur ${id} (${statut})`, '','authentification.js', '/forgot-password-reset', constants.PUT_HTTP)
 				return sendFailure(res, 'Echec de la mise à jour du mot de passe')
 			}
 			return sendSuccessWithNoContent(res)
 		}
 		catch (e) {
-			errorLogger(`Echec lors de la mise à jour du mot de passe de l'utilisateur ${id} (${statut}): ${e}`, "authentification.js [PUT] /forgot-password-reset")
+			errorLogger(`Echec lors de la mise à jour du mot de passe de l'utilisateur ${id} (${statut}): ${e}`, '','authentification.js', '/forgot-password-reset', constants.PUT_HTTP)
 			return sendInternalServerError(res, `Echec lors de la mise à jour du mot de passe de l'utilisateur ${id} (${statut})`)
 		}
 	}
