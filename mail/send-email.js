@@ -2,6 +2,10 @@ const nodeMailer = require('nodemailer')
 const {templateResetPassword} = require("./templates/reset-password-template");
 const {logLogger, errorLogger} = require("../config/winston/winston.config");
 const {confirmRegistrationTemplate} = require("./templates/confirm-registration");
+const {confirmationRDVClientTemplate} = require("./templates/confirmation-rendez-vous-client");
+const {confirmationRDVProTemplate} = require("./templates/confirmation-rendez-vous-pro");
+const {annulationRDVClientTemplate} = require("./templates/annulation-rendez-vous-client");
+const {annulationRDVProTemplate} = require("./templates/annulation-rendez-vous-pro");
 
 
 const transporter = nodeMailer.createTransport( {
@@ -63,7 +67,6 @@ const sendRegistrationLink = async (userEmail, name, linkRegistration) => {
             subject: "Activation de votre compte",
             html: template
         })
-        logLogger(`Message envoyé: ${info.messageId}`, "sendRegistrationLink")
         logLogger(`Un mail de confirmation d'inscription a bien été envoyé à: ${userEmail} avec l'id: ${info.messageId}`, "sendRegistrationLink")
     }
     catch (e) {
@@ -76,22 +79,37 @@ const sendRegistrationLink = async (userEmail, name, linkRegistration) => {
  *
  * @param userEmail mail de l'utilisateur
  * @param name prénom de l'utilisateur
- * @param rdvInfos objet avec nom du pro, date et heure du rendez, nom du service
+ * @param rdvInfos
+ * => {
+ *      date: date du rdv,
+ *      heure: heure du rdv,
+ *      nom_pro: NOM_FAMILLE Prénom,
+ *      service_nom: nom du service du pro
+ * }
+ * objet avec nom du pro, date et heure du rendez, nom du service
  * @returns {Promise<void>}
  */
 const sendConfirmationRendezVousClient = async (userEmail, name, rdvInfos) => {
     try{
         /**
          * [prenom]
+         * [date_rdv]
+         * [heure_rdv]
+         * [nom_pro]
+         * [nom_service]
          */
+        let template = confirmationRDVClientTemplate.replace('[prenom]', name)
+        template = template.replace('[date_rdv]', rdvInfos.date)
+        template = template.replace('[heure_rdv]', rdvInfos.heure)
+        template = template.replace('[nom_pro]', rdvInfos.nom_pro)
+        template = template.replace('[nom_service]', rdvInfos.service_nom)
         const info = await transporter.sendMail({
             from: `Planifi <${process.env.MAIL_USERNAME}>`,
             to: userEmail,
             subject: "Confirmation de rendez-vous",
-            html: `<h3>Bonjour, ${name} nous confirmons votre rendez-vous le ${rdvInfos.date} à ${rdvInfos.heure} avec ${rdvInfos.nom_pro} pour le service ${rdvInfos.service_nom}</h3>`
+            html: template
         })
-        logLogger(`Message envoyé: ${info.messageId}`, "sendConfirmationRendezVous")
-        logLogger(`Un mail de confirmation de rendez-vous a bien été envoyé à: ${userEmail} avec l'id: ${info.messageId}`, "sendConfirmationRendezVous")
+        logLogger(`Un mail de confirmation de rendez-vous a bien été envoyé à: ${userEmail} avec l'id: ${info.messageId}`, "sendConfirmationRendezVousClient")
     }
     catch (e) {
         errorLogger(`Erreur lors de l'envoi du mail à ${userEmail}` + e, "sendConfirmationRendezVous")
@@ -103,21 +121,35 @@ const sendConfirmationRendezVousClient = async (userEmail, name, rdvInfos) => {
  *
  * @param userEmail mail de l'utilisateur
  * @param name prénom de l'utilisateur
- * @param rdvInfos objet avec nom du pro, date et heure du rendez, nom du service
+ * @param rdvInfos
+ * => {
+ *      date: date du rdv,
+ *      heure: heure du rdv,
+ *      nom_client: NOM_FAMILLE Prénom,
+ *      service_nom: nom du service du pro
+ * }
  * @returns {Promise<void>}
  */
 const sendRendezVousPrisPro = async (userEmail, name, rdvInfos) => {
     try{
         /**
          * [prenom]
+         * [date_rdv]
+         * [heure_rdv]
+         * [nom_client]
+         * [nom_service]
          */
+        let template = confirmationRDVProTemplate.replace('[prenom]', name)
+        template = template.replace('[date_rdv]', rdvInfos.date)
+        template = template.replace('[heure_rdv]', rdvInfos.heure)
+        template = template.replace('[nom_client]', rdvInfos.nom_client)
+        template = template.replace('[nom_service]', rdvInfos.service_nom)
         const info = await transporter.sendMail({
             from: `Planifi <${process.env.MAIL_USERNAME}>`,
             to: userEmail,
             subject: "Nouveau Rendez-vous",
-            html: `<h3>Bonjour, ${name} un rendez-vous à été pris par ${rdvInfos.nom_client} le ${rdvInfos.date} à ${rdvInfos.heure} pour le service ${rdvInfos.service_nom}</h3>`
+            html: template
         })
-        logLogger(`Message envoyé: ${info.messageId}`, "sendRendezVousPrisPro")
         logLogger(`Un mail de nouveau de rendez-vous a bien été envoyé à: ${userEmail} avec l'id: ${info.messageId}`, "sendRendezVousPrisPro")
     }
     catch (e) {
@@ -130,21 +162,35 @@ const sendRendezVousPrisPro = async (userEmail, name, rdvInfos) => {
  *
  * @param userEmail mail de l'utilisateur
  * @param name prénom de l'utilisateur
- * @param proInfos objet avec nom du pro, date et heure du rendez, nom du service
+ * @param rdvInfos
+ * => {
+ *      date: date du rdv,
+ *      heure: heure du rdv,
+ *      nom_client: NOM_FAMILLE Prénom,
+ *      service_nom: nom du service du pro
+ * }
  * @returns {Promise<void>}
  */
-const sendRendezVousAnnuleClient = async (userEmail, name, proInfos) => {
+const sendRendezVousAnnuleClient = async (userEmail, name, rdvInfos) => {
     try{
         /**
          * [prenom]
+         * [date_rdv]
+         * [heure_rdv]
+         * [nom_pro]
+         * [nom_service]
          */
+        let template = annulationRDVClientTemplate.replace('[prenom]', name)
+        template = template.replace('[date_rdv]', rdvInfos.date)
+        template = template.replace('[heure_rdv]', rdvInfos.heure)
+        template = template.replace('[nom_pro]', rdvInfos.nom_pro)
+        template = template.replace('[nom_service]', rdvInfos.service_nom)
         const info = await transporter.sendMail({
             from: `Planifi <${process.env.MAIL_USERNAME}>`,
             to: userEmail,
             subject: "Annulation rendez-vous",
-            html: `<h3>Bonjour, ${name} votre rendez-vous du ${proInfos.date} à été annulé par ${proInfos.nom_client} pour le service ${proInfos.service_nom}</h3>`
+            html: template
         })
-        logLogger(`Message envoyé: ${info.messageId}`, "sendRendezVousAnnuleClient")
         logLogger(`Un mail de rendez-vous annulé a bien été envoyé à: ${userEmail} avec l'id: ${info.messageId}`, "sendRendezVousAnnuleClient")
     }
     catch (e) {
@@ -157,25 +203,39 @@ const sendRendezVousAnnuleClient = async (userEmail, name, proInfos) => {
  *
  * @param userEmail mail de l'utilisateur
  * @param name prénom de l'utilisateur
- * @param proInfos objet avec nom du pro, date et heure du rendez, nom du service
+ * @param rdvInfos
+ * => {
+ *      date: date du rdv,
+ *      heure: heure du rdv,
+ *      nom_client: NOM_FAMILLE Prénom,
+ *      service_nom: nom du service du pro
+ * }
  * @returns {Promise<void>}
  */
-const sendConfirmationRendezVousAnnulePro = async (userEmail, name, proInfos) => {
+const sendRendezVousAnnulePro = async (userEmail, name, rdvInfos) => {
     try{
         /**
          * [prenom]
+         * [date_rdv]
+         * [heure_rdv]
+         * [nom_client]
+         * [nom_service]
          */
+        let template = annulationRDVProTemplate.replace('[prenom]', name)
+        template = template.replace('[date_rdv]', rdvInfos.date)
+        template = template.replace('[heure_rdv]', rdvInfos.heure)
+        template = template.replace('[nom_client]', rdvInfos.nom_client)
+        template = template.replace('[nom_service]', rdvInfos.service_nom)
         const info = await transporter.sendMail({
             from: `Planifi <${process.env.MAIL_USERNAME}>`,
             to: userEmail,
-            subject: "Confirmation annulation rendez-vous",
-            html: `<h3>Bonjour, ${name} votre rendez-vous du ${proInfos.date} à bien été annulé pour le client ${proInfos.nom_client} pour le service ${proInfos.service_nom}</h3>`
+            subject: "Annulation rendez-vous",
+            html: template
         })
-        logLogger(`Message envoyé: ${info.messageId}`, "sendConfirmationRendezVousAnnulePro")
-        logLogger(`Un mail de rendez-vous annulé a bien été envoyé à: ${userEmail} avec l'id: ${info.messageId}`, "sendConfirmationRendezVousAnnulePro")
+        logLogger(`Un mail de rendez-vous annulé a bien été envoyé à: ${userEmail} avec l'id: ${info.messageId}`, "sendRendezVousAnnulePro")
     }
     catch (e) {
-        errorLogger(`Erreur lors de l'envoi du mail à ${userEmail}` + e, "sendConfirmationRendezVousAnnulePro")
+        errorLogger(`Erreur lors de l'envoi du mail à ${userEmail}` + e, "sendRendezVousAnnulePro")
     }
 }
 
@@ -203,5 +263,5 @@ module.exports = {
     sendConfirmationRendezVousClient,
     sendRendezVousPrisPro,
     sendRendezVousAnnuleClient,
-    sendConfirmationRendezVousAnnulePro
+    sendRendezVousAnnulePro
 }

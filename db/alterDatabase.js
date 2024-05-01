@@ -119,7 +119,7 @@ const alterInTables = () => {
                                 addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'VARCHAR(100)')
                                     .then(columnAddResult => {
                                         if (columnAddResult) {
-                                            logLogger(`La colonne 'est_verifie' a bien été ajouté dans la table 'PROFESSIONALS`, 'alterInTables')
+                                            logLogger(`La colonne 'address' a bien été ajouté dans la table 'PROFESSIONALS`, 'alterInTables')
                                         }
                                     })
                             }
@@ -139,9 +139,30 @@ const alterInTables = () => {
                 }
             })
             .catch(e => errorLogger(e, " checkIfTableExist('professionals')"))
+        checkIfTableExist('reservations')
+            .then((resultTableExists) => {
+                if (resultTableExists.exists) {
+                    checkIfColumnExistInTable(resultTableExists.tableName, 'end_time')
+                        .then((resultColumnExists) => {
+                            if (!resultColumnExists.exists) {
+                                /* Créer la colonne ici*/
+                                addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'TIME')
+                                    .then(columnAddResult => {
+                                        if (columnAddResult) {
+                                            logLogger(`La colonne 'end_time' a bien été ajoutée dans la table 'RESERVATIIONS`, 'alterInTables')
+                                        }
+                                    })
+                            }
+                        })
+                }
+            })
+            .catch(e => errorLogger(e, "checkIfTableExist('reservations')"))
+
     } catch (e) {
        errorLogger(e, 'alterInTables')
     }
+
+
 }
 
 
