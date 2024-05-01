@@ -11,10 +11,9 @@ const {
 	getClientsCollection,
 	createTableReservation,
 	createTableAvailability,
-	createTableMessages,
+	createTableMessages, createTablePreferencePro, createTableImagesServicesProfessionals,
 	/*createTableDefaultAvailability,*/
 } = require('./db/database');
-const { dbConnexion, getDatabase } = require('./db/database');
 const path = require('path');
 const app = express();
 const port = 3000;
@@ -30,6 +29,8 @@ const EventEmitter = require('events');
 const indexRoutes = require('./routes/index');
 const serviceRouter = require('./routes/services');
 const messagesRoutes = require('./messagerie/message');
+const {logLogger} = require("./config/winston/winston.config");
+const {alterInTables} = require("./db/alterDatabase");
 
 getClientsCollection();
 connectToDatabase().then( ()=> {

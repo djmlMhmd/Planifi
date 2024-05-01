@@ -86,9 +86,8 @@ router.post('/reservation', requiredAuth, async (req, res) => {
 	]);
 
 	if (overlapCheckResult.rows.length > 0) {
-		return res.status(400).json({
-			message: 'Plage horaire déjà réservée.',
-		});
+		errorLogger(`Plage horaire déjà réservée: ${service_id}, heure: ${start_time}`, 'reservation.js [POST] /reservation')
+		return sendBadRequest(res,  'Plage horaire déjà réservée')
 	}
 
 	// Faire la réservation
@@ -104,12 +103,13 @@ router.post('/reservation', requiredAuth, async (req, res) => {
 		]
 	);
 
+	logLogger(`Réservation créée avec succès: pro: ${professional_id}, heure début: ${start_time}, service id: ${service_id}, jour de la semaine: ${day_of_week}, user: ${users_id}`, 'reservation.js [POST] /reservation')
+	sendSuccessfullyCreated(res, 'Réservation créée avec succès' )
 	//TODO : recuperer les mails du pro et du client
 	try{
 		const clientResultQuery = await client.query('select * from users where users_id = $1', [users_id])
 		const proResultQuery = await client.query('select * from professionals where professional_id = $1', [professional_id])
 		const serviceResultQuery = await client.query('select * from services where service_id = $1', [service_id])
-
 		if(clientResultQuery.rowCount > 0 && proResultQuery.rowCount > 0 && serviceResultQuery.rowCount > 0) {
 			const emailClient = clientResultQuery.rows[0].email
 			const prenom_client = clientResultQuery.rows[0].firstName
@@ -142,10 +142,6 @@ router.post('/reservation', requiredAuth, async (req, res) => {
 		errorLogger(`Erreur lors de la reservation avec les infos: pro: ${professional_id}, heure début: ${start_time}, service id: ${service_id}, jour de la semaine: ${day_of_week}, user: ${users_id}`, 'reservation.js [POST] /reservation')
 		return sendFailure(res, 'Erreur lors de la reservation' )
 	}
-    	logLogger(`Réservation créée avec succès: pro: ${professional_id}, heure début: ${start_time}, service id: ${service_id}, jour de la semaine: ${day_of_week}, user: ${users_id}`, 'reservation.js [POST] /reservation')
-    	return sendSuccessfullyCreated(res, 'Réservation créée avec succès' )
-
-
 });
 
 router.get('/reservations', requiredAuth, async (req, res) => {

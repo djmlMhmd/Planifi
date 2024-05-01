@@ -4,8 +4,9 @@ const { getClientsCollection } = require('../db/database');
 const {requiredAuth} = require("../middleware/authMiddleware");
 const {decodeJWT} = require("../utils/auth.utils");
 const {warnLogger, logLogger, errorLogger} = require("../config/winston/winston.config");
-const {sendInternalServerError, sendUnauthorized, sendSuccessWithNoContent, sendBadRequest, sendSuccess} = require("../utils/error_message.utils");
+const {sendInternalServerError, sendUnauthorized, sendSuccessWithNoContent, sendBadRequest, sendSuccess, sendFailure} = require("../utils/error_message.utils");
 const {isANumber} = require("../utils/methods.utils");
+const {sendRendezVousAnnuleClient, sendRendezVousAnnulePro} = require("../mail/send-email");
 
 const router = Router();
 router.use(express.json());
@@ -25,7 +26,7 @@ router.delete('/supprimer-reservation/:reservationId', requiredAuth, async (req,
 		// Récupérez le serviceId en interrogeant la base de données à partir de l'ID de réservation.
 		const client = getClientsCollection();
 		const queryForServiceId = `
-			SELECT service_id, users_id FROM reservations 
+			SELECT service_id, users_id, professional_id, day_of_week, start_time FROM reservations 
 			WHERE reservation_id = $1;
 		`;
 
@@ -35,11 +36,15 @@ router.delete('/supprimer-reservation/:reservationId', requiredAuth, async (req,
 			return sendSuccessWithNoContent(res, 'Réservation introuvable.')
 		}
 
-		const { service_id: serviceId, users_id: userId } = service.rows[0];
+		const { service_id: serviceId, users_id: userId, professional_id: proId, day_of_week, start_time } = service.rows[0];
 		if (userId !== id) {
             errorLogger(`Vous n'êtes pas autorisé à supprimer cette réservation:${reservationId}, service id: ${serviceId}, client id:${id}`, 'delete.js [DELETE] /supprimer-reservation/:reservationId')
             return sendUnauthorized(res, "Vous n'êtes pas autorisé à supprimer cette réservation.")
 		}
+
+		const clientResultQuery = await client.query('select * from users where users_id = $1', [userId])
+		const proResultQuery = await client.query('select * from professionals where professional_id = $1', [proId])
+		const serviceResultQuery = await client.query('select * from services where service_id = $1', [serviceId])
 
 		// Continuer avec la suppression si le serviceId correspond
 		const queryForDelete = `DELETE FROM reservations 
@@ -54,11 +59,47 @@ router.delete('/supprimer-reservation/:reservationId', requiredAuth, async (req,
 
 		if (result.rowCount === 1) {
 			logLogger(`La réservation a été supprimée avec succès:${reservationId}, service id: ${serviceId}, client id:${id}`, 'delete.js [DELETE] /supprimer-reservation/:reservationId')
-			return sendSuccessWithNoContent(res)
-		} else {
-			errorLogger(`Vous n'êtes pas autorisé à supprimer cette réservation:${reservationId}, service id: ${serviceId}, client id:${id}`, 'delete.js [DELETE] /supprimer-reservation/:reservationId')
-			return sendUnauthorized(res, "Vous n'êtes pas autorisé à supprimer cette réservation.")
+
+			//TODO : recuperer les mails du pro et du client
+			try{
+				if(clientResultQuery.rowCount > 0 && proResultQuery.rowCount > 0 && serviceResultQuery.rowCount > 0) {
+					const emailClient = clientResultQuery.rows[0].email
+					const prenom_client = clientResultQuery.rows[0].firstName
+					const nom_client = clientResultQuery.rows[0].lastName
+
+					const emailPro = proResultQuery.rows[0].email
+					const prenom_pro = proResultQuery.rows[0].firstName
+					const nom_pro = proResultQuery.rows[0].lastName
+
+					const nom_service = serviceResultQuery.rows[0].service_name
+
+					const rdvInfosClient = {
+						nom_pro: `${nom_pro.toUpperCase()} ${prenom_pro}`,
+						service_nom: nom_service,
+						date: day_of_week,
+						heure: start_time,
+					}
+
+					const rdvInfosPro = {
+						nom_client: `${nom_client.toUpperCase()} ${prenom_client}`,
+						service_nom: nom_service,
+						date: day_of_week,
+						heure: start_time,
+					}
+					sendSuccessWithNoContent(res)
+					await sendRendezVousAnnuleClient(emailClient, prenom_client, rdvInfosClient)
+					await sendRendezVousAnnulePro(emailPro, prenom_pro, rdvInfosPro)
+				}
+			}
+			catch (e) {
+				errorLogger(`Erreur lors de la reservation avec les infos: pro: ${proId}, heure début: ${start_time}, service id: ${serviceId}, jour de la semaine: ${day_of_week}, user: ${userId}`, 'delete.js [DELETE] /supprimer-reservation/:reservationId')
+				return sendFailure(res, 'Erreur lors de la suppresion de la reservation' )
+			}
+			return
 		}
+
+		errorLogger(`Vous n'êtes pas autorisé à supprimer cette réservation:${reservationId}, service id: ${serviceId}, client id:${id}`, 'delete.js [DELETE] /supprimer-reservation/:reservationId')
+		return sendUnauthorized(res, "Vous n'êtes pas autorisé à supprimer cette réservation.")
 	} catch (error) {
 		errorLogger(`Erreur lors de la suppression de la réservation:` + JSON.stringify(error), 'delete.js [DELETE] /supprimer-reservation/:reservationId')
 		return sendInternalServerError(res, 'Erreur lors de la suppression de la réservation : ' + error.message)
