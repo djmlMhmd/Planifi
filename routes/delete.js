@@ -134,9 +134,21 @@ router.delete('/services/delete/:serviceId', requiredAuth, async (req, res) => {
 		}
 
 		// Vérifiez si le professional_id du service correspond à professionalId de la session
-		if (service.professional_id !== id) {
+		if (service.professional_id !== id && statut !== constants.STATUT_PROFESSIONNEL) {
             warnLogger(`Vous n'êtes pas autorisé à supprimer ce service personne voulant supprimer: ${id} (${statut}), personne pouvant supprimer: ${service.professional_id}`, '','delete.js', `/services/delete/${serviceId}`, constants.DELETE_HTTP)
 			return sendUnauthorized(res, "Vous n'êtes pas autorisé à supprimer ce service")
+		}
+
+		// Requête pour le nombre de réservations en cours sur le service
+		const reservationQuery = await client.query(
+			'SELECT count(*) FROM reservations WHERE service_id = $1',
+			[serviceId]
+		);
+		const nbReservationsEnCours = reservationQuery.rows[0].count
+		// s'il y a des réservations en cours sur ce service, on renvoie une Failure en disant qu'il y a des réservations encore en cours dessus
+		if( nbReservationsEnCours > 0 ){
+			warnLogger(`L'utilisateur ${id} (${statut}) tente de supprimer le service ${serviceId} alors qu'il y a ${nbReservationsEnCours > 1 ? `${nbReservationsEnCours} réservations encore en cours`: `${nbReservationsEnCours} réservation encore en cours`}`, '','delete.js', `/services/delete/${serviceId}`, constants.DELETE_HTTP)
+			return sendFailure(res, `Vous ne pouvez pas supprimer un service ayant des réservations en cours (${nbReservationsEnCours})`)
 		}
 
 		// Supprimez le service s'il appartient au professionnel
