@@ -55,6 +55,18 @@ const alterInTables = () => {
                                     })
                             }
                         })
+                    checkIfColumnExistInTable(resultTableExists.tableName, 'profile_picture_path')
+                        .then((resultColumnExists) => {
+                            if (!resultColumnExists.exists) {
+                                /* Créer la colonne ici*/
+                                addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'VARCHAR')
+                                    .then(columnAddResult => {
+                                        if (columnAddResult) {
+                                            logLogger(`La colonne 'profile_picture_path' a bien été ajouté dans la table 'USERS`, 'alterInTables')
+                                        }
+                                    })
+                            }
+                        })
                 }
             })
             .catch(e => errorLogger(e, "checkIfTableExist('users')"))
@@ -131,7 +143,19 @@ const alterInTables = () => {
                                 addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'VARCHAR', false, 'NULL')
                                     .then(columnAddResult => {
                                         if (columnAddResult) {
-                                            logLogger(`La colonne 'profile_picture' a bien été ajouté dans la table 'PROFESSIONALS`, 'alterInTables')
+                                            logLogger(`La colonne 'profile_picture' a bien été ajouté dans la table 'PROFESSIONALS'`, 'alterInTables')
+                                        }
+                                    })
+                            }
+                        })
+                    checkIfColumnExistInTable(resultTableExists.tableName, 'profile_picture_path')
+                        .then((resultColumnExists) => {
+                            if (!resultColumnExists.exists) {
+                                /* Créer la colonne ici*/
+                                addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'VARCHAR')
+                                    .then(columnAddResult => {
+                                        if (columnAddResult) {
+                                            logLogger(`La colonne 'profile_picture_path' a bien été ajouté dans la table 'PROFESSIONALS'`, 'alterInTables')
                                         }
                                     })
                             }
@@ -139,24 +163,25 @@ const alterInTables = () => {
                 }
             })
             .catch(e => errorLogger(e, " checkIfTableExist('professionals')"))
-        checkIfTableExist('reservations')
+        checkIfTableExist('images_services_professionals')
             .then((resultTableExists) => {
                 if (resultTableExists.exists) {
-                    checkIfColumnExistInTable(resultTableExists.tableName, 'end_time')
+                    checkIfColumnExistInTable(resultTableExists.tableName, 'picture_path')
                         .then((resultColumnExists) => {
                             if (!resultColumnExists.exists) {
                                 /* Créer la colonne ici*/
-                                addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'TIME')
+                                addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'VARCHAR')
                                     .then(columnAddResult => {
                                         if (columnAddResult) {
-                                            logLogger(`La colonne 'end_time' a bien été ajoutée dans la table 'RESERVATIIONS`, 'alterInTables')
+                                            logLogger(`La colonne 'picture_path' a bien été ajoutée dans la table 'images_services_professionals'`, 'alterInTables')
                                         }
                                     })
                             }
                         })
                 }
             })
-            .catch(e => errorLogger(e, "checkIfTableExist('reservations')"))
+            .catch(e => errorLogger(e, "checkIfTableExist('images_services_professionals')"))
+
 
     } catch (e) {
        errorLogger(e, 'alterInTables')
