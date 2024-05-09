@@ -1,4 +1,4 @@
-const admin = require("firebase-admin");
+/*const admin = require("firebase-admin");
 
 const serviceAccount = require("./admin.json");
 
@@ -11,4 +11,4 @@ module.exports = {
     auth
 }
 // images@planifi.com
-// Pl@nifi-753148921
+// Pl@nifi-753148921*/

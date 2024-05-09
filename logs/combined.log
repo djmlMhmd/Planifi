@@ -1,0 +1,511 @@
+Thursday 09/05/24 03:55:21 info: [App] : App listening port 3000 
+Thursday 09/05/24 03:55:21 error: [connectToDatabase] : Erreur lors de la connexion à la base de données PostgreSQL:error: role "user" does not exist
+    at Parser.parseErrorMessage (/Users/djamaldine/Projets/Planifi/node_modules/pg-protocol/dist/parser.js:283:98)
+    at Parser.handlePacket (/Users/djamaldine/Projets/Planifi/node_modules/pg-protocol/dist/parser.js:122:29)
+    at Parser.parse (/Users/djamaldine/Projets/Planifi/node_modules/pg-protocol/dist/parser.js:35:38)
+    at Socket.<anonymous> (/Users/djamaldine/Projets/Planifi/node_modules/pg-protocol/dist/index.js:11:42)
+    at Socket.emit (node:events:519:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:190:23) 
+Thursday 09/05/24 03:55:21 error: [createTableUser] : Erreur lors de la création/verification de la table [USERS]:Error: Connection terminated unexpectedly
+    at /Users/djamaldine/Projets/Planifi/node_modules/pg/lib/client.js:526:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTableImagesServicesProfessionals (/Users/djamaldine/Projets/Planifi/db/database.js:291:18) 
+Thursday 09/05/24 03:55:21 error: [createTableProfessional] : Erreur lors de la création/verification de la table [professionnels]:Error: Connection terminated unexpectedly
+    at /Users/djamaldine/Projets/Planifi/node_modules/pg/lib/client.js:526:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTableImagesServicesProfessionals (/Users/djamaldine/Projets/Planifi/db/database.js:291:18) 
+Thursday 09/05/24 03:55:21 error: [createTableService] : Erreur lors de la création/verification de la table [SERVICE]:Error: Connection terminated unexpectedly
+    at /Users/djamaldine/Projets/Planifi/node_modules/pg/lib/client.js:526:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTableImagesServicesProfessionals (/Users/djamaldine/Projets/Planifi/db/database.js:291:18) 
+Thursday 09/05/24 03:55:21 error: [createTableAvailability] : Erreur lors de la création/verification de la table [availability]:Error: Connection terminated unexpectedly
+    at /Users/djamaldine/Projets/Planifi/node_modules/pg/lib/client.js:526:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTableImagesServicesProfessionals (/Users/djamaldine/Projets/Planifi/db/database.js:291:18) 
+Thursday 09/05/24 03:55:21 error: [createTableReservation] : Erreur lors de la création/mise à jour de la table [reservation]:Error: Connection terminated unexpectedly
+    at /Users/djamaldine/Projets/Planifi/node_modules/pg/lib/client.js:526:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTableImagesServicesProfessionals (/Users/djamaldine/Projets/Planifi/db/database.js:291:18) 
+Thursday 09/05/24 03:55:21 error: [createTableMessages] : Erreur lors de la création/verification de la table [MESSAGES]:Error: Connection terminated unexpectedly
+    at /Users/djamaldine/Projets/Planifi/node_modules/pg/lib/client.js:526:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTableImagesServicesProfessionals (/Users/djamaldine/Projets/Planifi/db/database.js:291:18) 
+Thursday 09/05/24 03:55:21 error: [checkIfTableExist] : Erreur lors de la verification l'existence dans la table users:{} 
+Thursday 09/05/24 03:55:21 error: [checkIfTableExist] : Erreur lors de la verification l'existence dans la table professionals:{} 
+Thursday 09/05/24 03:55:21 error: [checkIfTableExist] : Erreur lors de la verification l'existence dans la table reservations:{} 
+Thursday 09/05/24 03:55:21 error: [createTablePreferencePro] : Erreur lors de la création/verification de la table [PREFERENCE_PRO]:Error: Connection terminated unexpectedly
+    at /Users/djamaldine/Projets/Planifi/node_modules/pg/lib/client.js:526:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTableImagesServicesProfessionals (/Users/djamaldine/Projets/Planifi/db/database.js:291:18) 
+Thursday 09/05/24 03:55:21 error: [createTableImagesServicesProfessionals] : Erreur lors de la création/verification de la table [images_services_professionals]:Error: Connection terminated unexpectedly
+    at /Users/djamaldine/Projets/Planifi/node_modules/pg/lib/client.js:526:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTableImagesServicesProfessionals (/Users/djamaldine/Projets/Planifi/db/database.js:291:18) 
+Thursday 09/05/24 03:55:21 error: [checkIfTableExist('users')] : TypeError: Cannot read properties of undefined (reading 'exists') 
+Thursday 09/05/24 03:55:21 error: [ checkIfTableExist('professionals')] : TypeError: Cannot read properties of undefined (reading 'exists') 
+Thursday 09/05/24 03:55:21 error: [checkIfTableExist('reservations')] : TypeError: Cannot read properties of undefined (reading 'exists') 
+Thursday 09/05/24 04:09:46 info: [App] : App listening port 3000 
+Thursday 09/05/24 04:09:46 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 04:09:46 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 04:09:46 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 04:09:46 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 04:09:46 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 04:09:46 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 04:09:46 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 04:09:46 info: [createTablePreferencePro] : Table [PREFERENCE_PRO] créée avec succès 
+Thursday 09/05/24 04:09:46 info: [createTableImagesServicesProfessionals] : Table [images_services_professionals] créée avec succès 
+Thursday 09/05/24 04:09:46 info: [alterInTables] : La colonne 'est_verifie' a bien été ajouté dans la table 'USERS 
+Thursday 09/05/24 04:09:46 info: [alterInTables] : La colonne 'banner_profile' a bien été ajouté dans la table 'PROFESSIONALS 
+Thursday 09/05/24 04:09:46 info: [alterInTables] : La colonne 'est_verifie' a bien été ajouté dans la table 'PROFESSIONALS 
+Thursday 09/05/24 04:09:46 info: [alterInTables] : La colonne 'profile_picture' a bien été ajouté dans la table 'PROFESSIONALS 
+Thursday 09/05/24 04:15:27 info: [App] : App listening port 3000 
+Thursday 09/05/24 04:15:27 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 04:15:27 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 04:15:27 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 04:15:27 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 04:15:27 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 04:15:27 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 04:15:27 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 04:15:27 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 04:15:27 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 04:26:55 info: [App] : App listening port 3000 
+Thursday 09/05/24 04:26:55 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 04:26:55 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 04:26:55 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 04:26:55 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 04:26:55 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 04:26:55 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 04:26:55 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 04:26:55 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 04:26:55 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 04:33:57 info: [App] : App listening port 3000 
+Thursday 09/05/24 04:33:57 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 04:33:57 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 04:33:57 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 04:33:57 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 04:33:57 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 04:33:57 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 04:33:57 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 04:33:57 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 04:33:57 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 04:46:58 info: [App] : App listening port 3000 
+Thursday 09/05/24 04:46:58 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 04:46:58 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 04:46:58 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 04:46:58 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 04:46:58 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 04:46:58 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 04:46:58 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 04:46:58 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 04:46:58 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 04:47:18 info: [App] : App listening port 3000 
+Thursday 09/05/24 04:47:18 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 04:47:18 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 04:47:18 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 04:47:18 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 04:47:18 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 04:47:18 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 04:47:18 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 04:47:18 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 04:47:18 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 04:57:39 info: [App] : App listening port 3000 
+Thursday 09/05/24 04:57:39 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 04:57:39 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 04:57:39 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 04:57:39 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 04:57:39 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 04:57:39 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 04:57:39 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 04:57:39 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 04:57:39 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 04:57:54 info: [App] : App listening port 3000 
+Thursday 09/05/24 04:57:54 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 04:57:54 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 04:57:54 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 04:57:54 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 04:57:54 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 04:57:54 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 04:57:54 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 04:57:54 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 04:57:54 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 04:58:10 info: [App] : App listening port 3000 
+Thursday 09/05/24 04:58:10 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 04:58:10 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 04:58:10 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 04:58:10 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 04:58:10 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 04:58:10 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 04:58:10 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 04:58:10 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 04:58:10 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 04:58:23 info: [App] : App listening port 3000 
+Thursday 09/05/24 04:58:24 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 04:58:24 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 04:58:24 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 04:58:24 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 04:58:24 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 04:58:24 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 04:58:24 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 04:58:24 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 04:58:24 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 15:47:39 info: [App] : App listening port 3000 
+Thursday 09/05/24 15:47:39 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 15:47:39 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 15:47:39 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 15:47:39 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 15:47:39 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 15:47:39 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 15:47:39 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 15:47:39 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 15:47:39 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 15:50:38 info: [App] : App listening port 3000 
+Thursday 09/05/24 15:50:38 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 15:50:38 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 15:50:38 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 15:50:38 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 15:50:38 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 15:50:38 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 15:50:38 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 15:50:38 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 15:50:38 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 15:55:12 info: [App] : App listening port 3000 
+Thursday 09/05/24 15:55:12 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 15:55:12 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 15:55:12 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 15:55:12 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 15:55:12 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 15:55:12 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 15:55:12 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 15:55:12 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 15:55:12 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 15:55:38 info: [App] : App listening port 3000 
+Thursday 09/05/24 15:55:38 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 15:55:38 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 15:55:38 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 15:55:38 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 15:55:38 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 15:55:38 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 15:55:38 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 15:55:38 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 15:55:38 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 15:55:52 info: [App] : App listening port 3000 
+Thursday 09/05/24 15:55:52 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 15:55:52 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 15:55:52 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 15:55:52 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 15:55:52 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 15:55:52 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 15:55:52 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 15:55:52 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 15:55:52 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 15:56:01 info: [App] : App listening port 3000 
+Thursday 09/05/24 15:56:01 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 15:56:01 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 15:56:01 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 15:56:01 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 15:56:01 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 15:56:01 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 15:56:01 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 15:56:01 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 15:56:01 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 15:57:36 info: [App] : App listening port 3000 
+Thursday 09/05/24 15:57:36 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 15:57:36 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 15:57:36 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 15:57:36 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 15:57:36 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 15:57:36 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 15:57:36 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 15:57:36 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 15:57:36 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 15:58:00 info: [App] : App listening port 3000 
+Thursday 09/05/24 15:58:00 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 15:58:00 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 15:58:00 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 15:58:00 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 15:58:00 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 15:58:00 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 15:58:00 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 15:58:00 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 15:58:00 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:00:44 info: [App] : App listening port 3000 
+Thursday 09/05/24 16:00:44 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:00:44 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:00:44 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:00:44 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:00:44 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:00:44 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:00:44 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:00:44 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:00:44 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:03:34 info: [App] : App listening port 3000 
+Thursday 09/05/24 16:03:34 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:03:34 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:03:34 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:03:34 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:03:34 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:03:34 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:03:34 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:03:34 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:03:34 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:15:44 info: [App] : App listening port 3000 
+Thursday 09/05/24 16:15:44 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:15:44 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:15:44 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:15:44 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:15:44 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:15:44 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:15:44 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:15:44 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:15:44 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:16:34 info: [App] : App listening port 3000 
+Thursday 09/05/24 16:16:34 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:16:34 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:16:34 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:16:34 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:16:34 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:16:34 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:16:34 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:16:34 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:16:34 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:23:45 info: [App] : App listening port 3000 
+Thursday 09/05/24 16:23:45 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:23:45 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:23:45 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:23:45 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:23:45 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:23:45 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:23:45 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:23:45 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:23:45 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:24:19 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:24:19 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:24:19 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:24:19 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:24:19 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:24:19 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:24:19 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:24:19 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:24:19 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:25:26 info: [App] : App listening port 3000 
+Thursday 09/05/24 16:25:26 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:25:26 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:25:26 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:25:26 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:25:26 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:25:26 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:25:26 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:25:26 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:25:26 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:25:40 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:25:40 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:25:40 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:25:40 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:25:40 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:25:40 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:25:40 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:25:40 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:25:40 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:25:44 info: [App] : App listening port 3000 
+Thursday 09/05/24 16:25:44 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:25:44 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:25:44 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:25:44 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:25:44 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:25:44 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:25:44 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:25:44 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:25:44 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:32:49 info: [App] : App listening port 3000 
+Thursday 09/05/24 16:32:49 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:32:49 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:32:49 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:32:49 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:32:49 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:32:49 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:32:49 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:32:49 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:32:49 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:35:26 info: [App] : App listening port 3000 
+Thursday 09/05/24 16:35:26 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:35:26 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:35:26 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:35:26 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:35:26 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:35:26 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:35:26 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:35:26 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:35:26 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:42:50 info: [App] : App listening port 3000 
+Thursday 09/05/24 16:42:50 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:42:50 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:42:50 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:42:50 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:42:50 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:42:50 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:42:50 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:42:50 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:42:50 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:43:02 info: [App] : App listening port 3000 
+Thursday 09/05/24 16:43:02 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:43:02 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:43:02 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:43:02 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:43:02 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:43:02 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:43:02 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:43:02 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:43:02 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:43:15 info: [App] : App listening port 3000 
+Thursday 09/05/24 16:43:15 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:43:15 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:43:15 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:43:15 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:43:15 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:43:15 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:43:15 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:43:15 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:43:15 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:43:20 info: [App] : App listening port 3000 
+Thursday 09/05/24 16:43:20 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:43:20 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:43:20 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:43:20 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:43:20 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:43:20 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:43:20 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:43:20 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:43:20 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:43:56 info: [App] : App listening port 3000 
+Thursday 09/05/24 16:43:56 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:43:56 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:43:56 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:43:56 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:43:56 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:43:56 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:43:56 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:43:56 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:43:56 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:58:10 info: [App] : App listening port 3000 
+Thursday 09/05/24 16:58:10 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:58:10 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:58:10 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:58:10 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:58:10 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:58:10 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:58:10 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:58:10 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:58:10 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:58:13 info: [App] : App listening port 3000 
+Thursday 09/05/24 16:58:13 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:58:13 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:58:13 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:58:13 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:58:13 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:58:13 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:58:13 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:58:13 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:58:13 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:58:22 info: [App] : App listening port 3000 
+Thursday 09/05/24 16:58:22 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:58:22 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:58:22 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:58:22 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:58:22 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:58:22 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:58:22 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:58:22 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:58:22 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:58:23 info: [App] : App listening port 3000 
+Thursday 09/05/24 16:58:24 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:58:24 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:58:24 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:58:24 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:58:24 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:58:24 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:58:24 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:58:24 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:58:24 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 16:58:34 info: [App] : App listening port 3000 
+Thursday 09/05/24 16:58:34 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 16:58:34 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 16:58:34 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 16:58:34 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 16:58:34 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 16:58:34 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 16:58:34 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 16:58:34 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 16:58:34 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 20:55:14 info: [App] : App listening port 3000 
+Thursday 09/05/24 20:55:14 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 20:55:14 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 20:55:14 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 20:55:14 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 20:55:14 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 20:55:14 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 20:55:14 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 20:55:14 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 20:55:14 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 21:48:38 info: [App] : App listening port 3000 
+Thursday 09/05/24 21:48:38 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 21:48:38 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 21:48:38 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 21:48:38 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 21:48:38 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 21:48:38 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 21:48:38 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 21:48:38 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 21:48:38 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 21:51:48 info: [App] : App listening port 3000 
+Thursday 09/05/24 21:51:48 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 21:51:48 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 21:51:48 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 21:51:48 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 21:51:48 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 21:51:48 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 21:51:48 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 21:51:48 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 21:51:48 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 21:52:04 info: [App] : App listening port 3000 
+Thursday 09/05/24 21:52:04 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 21:52:04 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 21:52:04 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 21:52:04 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 21:52:04 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 21:52:04 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 21:52:04 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 21:52:04 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 21:52:04 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 22:01:31 info: [App] : App listening port 3000 
+Thursday 09/05/24 22:01:31 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 22:01:31 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 22:01:31 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 22:01:31 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 22:01:31 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 22:01:31 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 22:01:31 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 22:01:31 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 22:01:31 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 22:01:54 info: [App] : App listening port 3000 
+Thursday 09/05/24 22:01:54 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 22:01:54 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 22:01:54 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 22:01:54 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 22:01:54 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 22:01:54 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 22:01:54 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 22:01:54 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 22:01:54 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 
+Thursday 09/05/24 22:02:13 info: [App] : App listening port 3000 
+Thursday 09/05/24 22:02:13 info: [connectToDatabase] : Connecté avec succès à la base de données PostgreSQL 
+Thursday 09/05/24 22:02:13 verbose: [createTableUser] : La table [USERS] existe déjà. 
+Thursday 09/05/24 22:02:13 verbose: [createTableProfessional] : La table [professionals] existe déjà. 
+Thursday 09/05/24 22:02:13 verbose: [createTableService] : La table [SERVICE] existe déjà. 
+Thursday 09/05/24 22:02:13 verbose: [createTableAvailability] : La table [availability] existe déjà. 
+Thursday 09/05/24 22:02:13 verbose: [createTableReservation] : La table [reservation] existe déjà. 
+Thursday 09/05/24 22:02:13 verbose: [createTableMessages] : La table [MESSAGES] existe déjà. 
+Thursday 09/05/24 22:02:13 verbose: [createTablePreferencePro] : La table [PREFERENCE_PRO] existe déjà. 
+Thursday 09/05/24 22:02:13 verbose: [createTableImagesServicesProfessionals] : La table [images_services_professionals] existe déjà. 

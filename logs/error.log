@@ -1,0 +1,48 @@
+Thursday 09/05/24 03:55:21 error: [connectToDatabase] : Erreur lors de la connexion à la base de données PostgreSQL:error: role "user" does not exist
+    at Parser.parseErrorMessage (/Users/djamaldine/Projets/Planifi/node_modules/pg-protocol/dist/parser.js:283:98)
+    at Parser.handlePacket (/Users/djamaldine/Projets/Planifi/node_modules/pg-protocol/dist/parser.js:122:29)
+    at Parser.parse (/Users/djamaldine/Projets/Planifi/node_modules/pg-protocol/dist/parser.js:35:38)
+    at Socket.<anonymous> (/Users/djamaldine/Projets/Planifi/node_modules/pg-protocol/dist/index.js:11:42)
+    at Socket.emit (node:events:519:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:190:23) 
+Thursday 09/05/24 03:55:21 error: [createTableUser] : Erreur lors de la création/verification de la table [USERS]:Error: Connection terminated unexpectedly
+    at /Users/djamaldine/Projets/Planifi/node_modules/pg/lib/client.js:526:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTableImagesServicesProfessionals (/Users/djamaldine/Projets/Planifi/db/database.js:291:18) 
+Thursday 09/05/24 03:55:21 error: [createTableProfessional] : Erreur lors de la création/verification de la table [professionnels]:Error: Connection terminated unexpectedly
+    at /Users/djamaldine/Projets/Planifi/node_modules/pg/lib/client.js:526:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTableImagesServicesProfessionals (/Users/djamaldine/Projets/Planifi/db/database.js:291:18) 
+Thursday 09/05/24 03:55:21 error: [createTableService] : Erreur lors de la création/verification de la table [SERVICE]:Error: Connection terminated unexpectedly
+    at /Users/djamaldine/Projets/Planifi/node_modules/pg/lib/client.js:526:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTableImagesServicesProfessionals (/Users/djamaldine/Projets/Planifi/db/database.js:291:18) 
+Thursday 09/05/24 03:55:21 error: [createTableAvailability] : Erreur lors de la création/verification de la table [availability]:Error: Connection terminated unexpectedly
+    at /Users/djamaldine/Projets/Planifi/node_modules/pg/lib/client.js:526:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTableImagesServicesProfessionals (/Users/djamaldine/Projets/Planifi/db/database.js:291:18) 
+Thursday 09/05/24 03:55:21 error: [createTableReservation] : Erreur lors de la création/mise à jour de la table [reservation]:Error: Connection terminated unexpectedly
+    at /Users/djamaldine/Projets/Planifi/node_modules/pg/lib/client.js:526:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTableImagesServicesProfessionals (/Users/djamaldine/Projets/Planifi/db/database.js:291:18) 
+Thursday 09/05/24 03:55:21 error: [createTableMessages] : Erreur lors de la création/verification de la table [MESSAGES]:Error: Connection terminated unexpectedly
+    at /Users/djamaldine/Projets/Planifi/node_modules/pg/lib/client.js:526:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTableImagesServicesProfessionals (/Users/djamaldine/Projets/Planifi/db/database.js:291:18) 
+Thursday 09/05/24 03:55:21 error: [checkIfTableExist] : Erreur lors de la verification l'existence dans la table users:{} 
+Thursday 09/05/24 03:55:21 error: [checkIfTableExist] : Erreur lors de la verification l'existence dans la table professionals:{} 
+Thursday 09/05/24 03:55:21 error: [checkIfTableExist] : Erreur lors de la verification l'existence dans la table reservations:{} 
+Thursday 09/05/24 03:55:21 error: [createTablePreferencePro] : Erreur lors de la création/verification de la table [PREFERENCE_PRO]:Error: Connection terminated unexpectedly
+    at /Users/djamaldine/Projets/Planifi/node_modules/pg/lib/client.js:526:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTableImagesServicesProfessionals (/Users/djamaldine/Projets/Planifi/db/database.js:291:18) 
+Thursday 09/05/24 03:55:21 error: [createTableImagesServicesProfessionals] : Erreur lors de la création/verification de la table [images_services_professionals]:Error: Connection terminated unexpectedly
+    at /Users/djamaldine/Projets/Planifi/node_modules/pg/lib/client.js:526:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async createTableImagesServicesProfessionals (/Users/djamaldine/Projets/Planifi/db/database.js:291:18) 
+Thursday 09/05/24 03:55:21 error: [checkIfTableExist('users')] : TypeError: Cannot read properties of undefined (reading 'exists') 
+Thursday 09/05/24 03:55:21 error: [ checkIfTableExist('professionals')] : TypeError: Cannot read properties of undefined (reading 'exists') 
+Thursday 09/05/24 03:55:21 error: [checkIfTableExist('reservations')] : TypeError: Cannot read properties of undefined (reading 'exists') 

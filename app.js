@@ -14,7 +14,9 @@ const {
 	getClientsCollection,
 	createTableReservation,
 	createTableAvailability,
-	createTableMessages, createTablePreferencePro, createTableImagesServicesProfessionals,
+	createTableMessages,
+	createTablePreferencePro,
+	createTableImagesServicesProfessionals,
 	/*createTableDefaultAvailability,*/
 } = require('./db/database');
 const path = require('path');
@@ -36,11 +38,11 @@ const indexRoutes = require('./routes/index');
 const serviceRouter = require('./routes/services');
 const messagesRoutes = require('./messagerie/message');
 const professionalRoutes = require('./routes/professionalsRoute');
-const {logLogger} = require("./config/winston/winston.config");
-const {alterInTables} = require("./db/alterDatabase");
+const { logLogger } = require('./config/winston/winston.config');
+const { alterInTables } = require('./db/alterDatabase');
 
 getClientsCollection();
-connectToDatabase().then( ()=> {
+connectToDatabase().then(() => {
 	createTableUser();
 	createTableProfessional();
 	createTableService();
@@ -51,8 +53,8 @@ connectToDatabase().then( ()=> {
 	//deleteInTables()
 	alterInTables();
 	createTablePreferencePro();
-	createTableImagesServicesProfessionals()
-})
+	createTableImagesServicesProfessionals();
+});
 // Increase the listener limit for an EventEmitter object
 const bus = new EventEmitter();
 bus.setMaxListeners(30);
@@ -87,23 +89,35 @@ app.use('/api', require('./routes/reservation'));
 app.use(express.urlencoded({ extended: true }));
 app.use('/', messagesRoutes);
 
-
+// permet de lancer serveur web
+server.listen(port, () => {
+	logLogger(`App listening port ${port}`, 'App');
+});
 
 // Gestion des connexions WebSocket
 io.on('connection', (socket) => {
 	console.log("Un utilisateur s'est connecté");
 
 	socket.on('send_message', async (data) => {
+		console.log(
+			`Tentative d'envoi d'un message avec les données: ${JSON.stringify(
+				data
+			)}`
+		);
 		const { sender_id, receiver_id, subject, message_body, service_id } =
 			data;
 		const client = getClientsCollection();
 		try {
+			console.log('Exécution de la requête SQL pour insérer un message');
 			const result = await client.query(
 				`INSERT INTO messages (sender_id, receiver_id, subject, message_body, service_id, sent_at)
                  VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *;`,
 				[sender_id, receiver_id, subject, message_body, service_id]
 			);
 			const message = result.rows[0];
+			console.log(
+				`Message inséré avec succès: ${JSON.stringify(message)}`
+			);
 			socket.to(receiver_id.toString()).emit('new_message', message);
 			socket.emit('message_sent', {
 				status: 'success',
@@ -124,11 +138,6 @@ io.on('connection', (socket) => {
 	socket.on('join_room', (room) => {
 		socket.join(room);
 	});
-});
-
-// permet de lancer serveur web
-app.listen(port, () => {
-	logLogger(`App listening port ${port}`, 'App');
 });
 
 app.use(
