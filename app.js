@@ -118,11 +118,20 @@ io.on('connection', (socket) => {
 			console.log(
 				`Message inséré avec succès: ${JSON.stringify(message)}`
 			);
-			socket.to(receiver_id.toString()).emit('new_message', message);
+
+			socket.broadcast.emit('join_new_room', {
+				sender_id,
+				receiver_id,
+			});
+			console.log('ici');
+			socket
+				.to(`${sender_id.toString()}-${receiver_id.toString()}`)
+				.emit('new_message', message);
 			socket.emit('message_sent', {
 				status: 'success',
 				message: message,
 			});
+			console.log('là');
 		} catch (error) {
 			console.error(
 				"Erreur lors de l'envoi du message via Socket.IO:",
@@ -136,7 +145,8 @@ io.on('connection', (socket) => {
 	});
 
 	socket.on('join_room', (room) => {
-		socket.join(room);
+		socket.join(room.nom);
+		console.log(socket.adapter.rooms);
 	});
 });
 

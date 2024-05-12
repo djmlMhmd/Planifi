@@ -5,14 +5,14 @@
 		<title>Test de Socket.IO</title>
 		<script src="/socket.io/socket.io.js"></script>
 		<script>
-			/*document.addEventListener('DOMContentLoaded', function () {
-				const userId = '1'; // Assurez-vous de définir cet ID correctement
+			document.addEventListener('DOMContentLoaded', function () {
+				const userId = '2'; // Assurez-vous de définir cet ID correctement
 				const socket = io('http://localhost:3000');
 
 				socket.on('connect', () => {
 					console.log('Connecté au serveur Socket.IO');
 					// Joindre une room spécifique pour recevoir des messages
-					socket.emit('join_room', 'user_room_' + userId);
+					//socket.emit('join_room', 'user_room_' + userId);
 				});
 
 				document
@@ -60,7 +60,16 @@
 				socket.on('disconnect', () => {
 					console.log('Déconnecté du serveur Socket.IO');
 				});
-			});*/
+
+				socket.on('join_new_room', (info) => {
+					console.log(info);
+					if (info.receiver_id == userId) {
+						socket.emit('join_room', {
+							nom: `${info.sender_id}-${info.receiver_id}`,
+						});
+					}
+				});
+			});
 		</script>
 	</head>
 	<body>
