@@ -34,6 +34,13 @@ module.exports.register_client_post = async (req, res) => {
     try {
         const hash = await bcrypt.hash(body.password, saltRounds);
         const client = getClientsCollection();
+        const queryExistingAccount = `SELECT email from professionals where email = $1`
+        const resultExistUser = await client.query(queryExistingAccount,  body.email);
+        if (resultExistUser.rows.length === 1) {
+            errorLogger(`Un compte (pro) existe déjà avec cette adresse mail ${body.email}:`, '', 'authentification.js', '/inscription/utilisateur', constants.POST_HTTP)
+            return sendFailure(res, `Vous possedez déjà un compte à cette adresse mail`)
+        }
+
         const values = [
             body.firstName,
             body.lastName,
@@ -91,6 +98,13 @@ module.exports.register_pro_post = async (req, res) => {
     try {
         const hash = await bcrypt.hash(body.password, saltRounds);
         const client = getClientsCollection();
+
+        const queryExistingAccount = `SELECT email from users where email = $1`
+        const resultExistUser = await client.query(queryExistingAccount,  body.email);
+        if (resultExistUser.rows.length === 1) {
+            errorLogger(`Un compte (client) existe déjà avec cette adresse mail ${body.email}:`, '', 'authentification.js', '/inscription/professionnel', constants.POST_HTTP)
+            return sendFailure(res, `Vous possedez déjà un compte à cette adresse mail`)
+        }
 
         const values = [
             body.firstName,
