@@ -6,82 +6,149 @@
 		<script src="/socket.io/socket.io.js"></script>
 		<script>
 			document.addEventListener('DOMContentLoaded', function () {
-				const userId = '2'; // Assurez-vous de définir cet ID correctement
-				const socket = io('http://localhost:3000');
+				const userId = '1'; // ID de l'utilisateur
+				const userName = 'Votre Nom'; // Nom de l'utilisateur
+				const socket = io();
+
+				let currentConversation = {
+					receiverId: null,
+					receiverName: '',
+					subject: '',
+				};
+
+				function fetchMessages() {
+					fetch(`/api/conversations/${userId}`)
+						.then((response) => response.json())
+						.then((data) => {
+							data.forEach((message) => displayMessage(message));
+							if (data.length > 0) {
+								const lastMessage = data[0];
+								currentConversation = {
+									receiverId: lastMessage.receiver_id,
+									receiverName: lastMessage.sender_name,
+									subject: lastMessage.subject,
+								};
+								updateUI();
+							}
+						})
+						.catch((error) =>
+							console.error('Error fetching messages:', error)
+						);
+				}
+
+				function updateUI() {
+					document.getElementById(
+						'conversation-subject'
+					).textContent = `Sujet: ${
+						currentConversation.subject
+							? currentConversation.subject
+							: 'Chat Général'
+					}`;
+					document.getElementById(
+						'conversation-partner'
+					).textContent = `Conversation avec: ${
+						currentConversation.receiverName
+							? currentConversation.receiverName
+							: 'Inconnu'
+					}`;
+				}
 
 				socket.on('connect', () => {
 					console.log('Connecté au serveur Socket.IO');
-					// Joindre une room spécifique pour recevoir des messages
-					//socket.emit('join_room', 'user_room_' + userId);
+					fetchMessages(); // Récupère les messages dès la connexion
 				});
 
 				document
 					.getElementById('send-message')
 					.addEventListener('click', function () {
-						const subject =
-							document.getElementById('message-subject').value;
 						const body =
 							document.getElementById('message-body').value;
-						const serviceId =
-							document.getElementById('service-select').value;
-						const receiverId =
-							document.getElementById('receiver-id').value;
-
-						socket.emit('send_message', {
-							subject,
+						if (!body.trim() || !currentConversation.receiverId)
+							return; // Éviter d'envoyer des messages vides ou lorsque receiverId est null
+						const messageData = {
+							subject: currentConversation.subject,
 							message_body: body,
-							service_id: serviceId,
-							sender_id: userId,
-							receiver_id: receiverId,
+							sender_id: userId, // ID de l'utilisateur
+							receiver_id: currentConversation.receiverId, // ID du professionnel
+							fromSelf: true,
+						};
+
+						// Afficher immédiatement le message dans l'UI
+						displayMessage({
+							...messageData,
+							sender_name: userName, // Nom de l'utilisateur
+							fromSelf: true,
+							sent_at: new Date(),
 						});
+
+						socket.emit('send_message', messageData);
+						document.getElementById('message-body').value = '';
 					});
 
 				socket.on('new_message', (message) => {
 					console.log('Nouveau message reçu:', message);
-					const messagesContainer =
-						document.getElementById('messages');
-					const msgElement = document.createElement('div');
-					msgElement.innerHTML = `<strong>${message.subject}</strong>: ${message.message_body}`;
-					messagesContainer.appendChild(msgElement);
+					displayMessage(message);
 				});
 
-				socket.on('message_sent', (response) => {
-					console.log('Message envoyé avec succès:', response);
-					alert('Message envoyé avec succès');
-				});
+				socket.on('message_sent', (response) =>
+					console.log('Message envoyé avec succès:', response)
+				);
 
-				socket.on('message_error', (error) => {
+				socket.on('message_error', (error) =>
 					console.error(
 						"Erreur lors de l'envoi du message:",
 						error.message
-					);
-				});
+					)
+				);
 
-				socket.on('disconnect', () => {
-					console.log('Déconnecté du serveur Socket.IO');
-				});
+				socket.on('disconnect', () =>
+					console.log('Déconnecté du serveur Socket.IO')
+				);
 
 				socket.on('join_new_room', (info) => {
-					console.log(info);
+					console.log('Info on joining new room:', info);
 					if (info.receiver_id == userId) {
 						socket.emit('join_room', {
 							nom: `${info.sender_id}-${info.receiver_id}`,
 						});
 					}
 				});
+
+				function displayMessage(message) {
+					const messagesContainer =
+						document.getElementById('messages');
+					const msgElement = document.createElement('div');
+					const date = new Date(message.sent_at || Date.now());
+					const options = {
+						weekday: 'long',
+						year: 'numeric',
+						month: 'long',
+						day: 'numeric',
+						hour: '2-digit',
+						minute: '2-digit',
+					};
+					const formattedDate = date.toLocaleDateString(
+						'fr-FR',
+						options
+					);
+					msgElement.innerHTML = `<strong>${
+						message.fromSelf ? 'Vous' : message.sender_name // Afficher le nom de l'expéditeur
+					}</strong>: ${
+						message.message_body
+					} <span style="font-size:0.8em;color:gray;">(${formattedDate})</span>`;
+					messagesContainer.appendChild(msgElement);
+				}
 			});
 		</script>
 	</head>
 	<body>
 		<h1>Test de Socket.IO</h1>
-		<input
-			type="text"
-			id="message-subject"
-			placeholder="Sujet du message"
-		/>
-		<textarea id="message-body" placeholder="Corps du message"></textarea>
-		<input type="text" id="service-select" placeholder="ID du service" />
-		<input type="text" id="receiver-id" placeholder="ID du destinataire" />
+		<div id="conversation-subject"></div>
+		<div id="conversation-partner"></div>
+		<textarea
+			id="message-body"
+			placeholder="Écrivez votre réponse ici..."
+		></textarea>
 		<button id="send-message">Envoyer Message</button>
 		<div id="messages"></div>
 	</body>

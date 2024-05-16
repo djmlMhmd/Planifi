@@ -104,17 +104,17 @@ io.on('connection', (socket) => {
 				data
 			)}`
 		);
-		const { sender_id, receiver_id, subject, message_body, service_id } =
-			data;
+		const { sender_id, receiver_id, subject, message_body } = data;
+
 		const client = getClientsCollection();
 		try {
-			console.log('Exécution de la requête SQL pour insérer un message');
 			const result = await client.query(
-				`INSERT INTO messages (sender_id, receiver_id, subject, message_body, service_id, sent_at)
-                 VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *;`,
-				[sender_id, receiver_id, subject, message_body, service_id]
+				`INSERT INTO messages (sender_id, receiver_id, subject, message_body, sent_at)
+                 VALUES ($1, $2, $3, $4, NOW()) RETURNING *;`,
+				[sender_id, receiver_id, subject, message_body]
 			);
 			const message = result.rows[0];
+			message.sent_at = new Date().toISOString();
 			console.log(
 				`Message inséré avec succès: ${JSON.stringify(message)}`
 			);
@@ -123,7 +123,7 @@ io.on('connection', (socket) => {
 				sender_id,
 				receiver_id,
 			});
-			console.log('ici');
+
 			socket
 				.to(`${sender_id.toString()}-${receiver_id.toString()}`)
 				.emit('new_message', message);
@@ -131,7 +131,6 @@ io.on('connection', (socket) => {
 				status: 'success',
 				message: message,
 			});
-			console.log('là');
 		} catch (error) {
 			console.error(
 				"Erreur lors de l'envoi du message via Socket.IO:",
@@ -147,6 +146,7 @@ io.on('connection', (socket) => {
 	socket.on('join_room', (room) => {
 		socket.join(room.nom);
 		console.log(socket.adapter.rooms);
+		console.log(`Utilisateur ${socket.id} a rejoint la salle ${room.nom}`);
 	});
 });
 
