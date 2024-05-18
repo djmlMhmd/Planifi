@@ -67,6 +67,18 @@ const alterInTables = () => {
                                     })
                             }
                         })
+                    checkIfColumnExistInTable(resultTableExists.tableName, 'est_pro')
+                        .then((resultColumnExists) => {
+                            if (!resultColumnExists.exists) {
+                                /* Créer la colonne ici*/
+                                addColumInTable(resultColumnExists.tableName, resultColumnExists.columnName, 'BOOLEAN', false, 'FALSE')
+                                    .then(columnAddResult => {
+                                        if (columnAddResult) {
+                                            logLogger(`La colonne 'est_pro' a bien été ajouté dans la table 'USERS`, 'alterInTables')
+                                        }
+                                    })
+                            }
+                        })
                 }
             })
             .catch(e => errorLogger(e, "checkIfTableExist('users')"))
