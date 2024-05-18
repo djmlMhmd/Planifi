@@ -106,16 +106,12 @@ module.exports.reservation_post = async (req, res) => {
     sendSuccessfullyCreated(res, 'Réservation créée avec succès' )
     try{
         const clientResultQuery = await client.query('select * from users where users_id = $1', [users_id])
-        const proResultQuery = await client.query('select * from professionals where professional_id = $1', [professional_id])
+        const proResultQuery = await client.query('select * from users where users_id = $1', [professional_id])
         const serviceResultQuery = await client.query('select * from services where service_id = $1', [service_id])
         if(clientResultQuery.rowCount > 0 && proResultQuery.rowCount > 0 && serviceResultQuery.rowCount > 0) {
-            const emailClient = clientResultQuery.rows[0].email
-            const prenom_client = clientResultQuery.rows[0].firstName
-            const nom_client = clientResultQuery.rows[0].lastName
+            const {email: emailClient, firstName: prenom_client, lastName: nom_client  } = clientResultQuery.rows[0]
+            const {email: emailPro, firstName: prenom_pro, lastName: nom_pro  } = proResultQuery.rows[0]
 
-            const emailPro = proResultQuery.rows[0].email
-            const prenom_pro = proResultQuery.rows[0].firstName
-            const nom_pro = proResultQuery.rows[0].lastName
 
             const nom_service = serviceResultQuery.rows[0].service_name
 
@@ -147,6 +143,7 @@ module.exports.reservation_pro_get = async (req, res) => {
     const { id } = decodeJWT(req.cookies.jwt)
     try {
         const client = getClientsCollection();
+        //
         const query = {
             text: `
                 SELECT
@@ -154,7 +151,7 @@ module.exports.reservation_pro_get = async (req, res) => {
                     services.service_name,
                     services.duration AS service_duration, -- Ajoutez cette ligne pour récupérer la durée du service
                     CONCAT(users."firstName", ' ', users."lastName") AS user_name,
-                    CONCAT(professionals."firstName", ' ', professionals."lastName") AS professional_name,
+                    CONCAT(pro."firstName", ' ', pro."lastName") AS professional_name,
                     reservations.day_of_week
                 FROM
                     reservations
@@ -163,7 +160,7 @@ module.exports.reservation_pro_get = async (req, res) => {
                 JOIN
                     users ON reservations.users_id = users.users_id
                 JOIN
-                    professionals ON reservations.professional_id = professionals.professional_id
+                    users as pro ON reservations.professional_id = users.users_id
                 WHERE
                     reservations.professional_id = $1
             `,
@@ -221,13 +218,13 @@ module.exports.reservation_client_get =  async (req, res) => {
                     reservations.reservation_id,
                     reservations.start_time,
                     services.service_name,
-                    CONCAT(professionals."firstName", ' ', professionals."lastName") AS professional_name
+                    CONCAT(pro."firstName", ' ', pro."lastName") AS professional_name
                 FROM
                     reservations
                 JOIN
                     services ON reservations.service_id = services.service_id
                 JOIN
-                    professionals ON reservations.professional_id = professionals.professional_id
+                    users as pro ON reservations.professional_id = pro.users_id
                 WHERE
                     reservations.users_id = $1
             `,
@@ -326,13 +323,9 @@ module.exports.reservation_delete = async (req, res) => {
 
             try{
                 if(clientResultQuery.rowCount > 0 && proResultQuery.rowCount > 0 && serviceResultQuery.rowCount > 0) {
-                    const emailClient = clientResultQuery.rows[0].email
-                    const prenom_client = clientResultQuery.rows[0].firstName
-                    const nom_client = clientResultQuery.rows[0].lastName
-
-                    const emailPro = proResultQuery.rows[0].email
-                    const prenom_pro = proResultQuery.rows[0].firstName
-                    const nom_pro = proResultQuery.rows[0].lastName
+                    //TODO: créer une fonction pour le code dupliqué
+                    const {email: emailClient, firstName: prenom_client, lastName: nom_client  } = clientResultQuery.rows[0]
+                    const {email: emailPro, firstName: prenom_pro, lastName: nom_pro  } = proResultQuery.rows[0]
 
                     const nom_service = serviceResultQuery.rows[0].service_name
 

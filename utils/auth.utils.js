@@ -2,7 +2,6 @@ const jwt = require("jsonwebtoken");
 const {errorLogger, logLogger} = require("../config/winston/winston.config");
 const limiter = require("express-rate-limit");
 const {sendTooManyRequest} = require("./error_message.utils");
-const {json} = require("express");
 
 /**
  * Durée d'expiration du token JWT
@@ -41,7 +40,7 @@ const JWT_COOKIE_EXPIRES_IN = 5 * 24 * 60 * 60 * 1000;
  * @param duration durée d'expiration du token
  * @returns {string} le JWT crée
  */
-const createToken = (id, statut, type = '', duration = EXPIRES_IN) =>{
+const createToken = (id, statut = '', type = '', duration = EXPIRES_IN) =>{
     return jwt.sign({ id, statut, type }, process.env.JWT_SECRET, {
         expiresIn: duration
     })

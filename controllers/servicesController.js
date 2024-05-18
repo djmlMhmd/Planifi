@@ -38,11 +38,12 @@ module.exports.service_all_get =  async (req, res) => {
     try {
         const client = getClientsCollection();
         const services = await client.query(
-            `SELECT services.service_id, services.service_name,services.service_description,services.service_price, services.duration, 
-            professionals.email, professionals.phone, professionals.company_name, professionals.company_address 
+            `SELECT services.service_id, services.service_name,services.service_description,services.service_price, services.duration,
+                    pro.email, pro.phone, pa.company_name, pa.company_address 
             FROM services 
-            INNER JOIN professionals 
-            ON services.professional_id = professionals.professional_id;`
+            INNER JOIN users as pro 
+            ON services.professional_id = pro.users_id
+            JOIN public.pro_account pa on pro.users_id = pa.user_id;`
         );
         verboseLogger(`Recuperation de l'ensemble des services`, '','servicesController.js', '/service', constants.GET_HTTP);
         return sendSuccess(res, services.rows)
@@ -91,13 +92,13 @@ module.exports.service_liste_pro_get = async (req, res) => {
     const { id } = decodeJWT(req.cookies.jwt)
 
     if (!isANumber(professionalId)  ) {
-        warnLogger(`L'utilisateur ${id} a appelé la route avec les paramètres de requete suivants: professionalId:${professionalId}`, '','servicesController.js', `/service/:professionalId/liste${professionalId}`, constants.GET_HTTP)
+        warnLogger(`L'utilisateur ${id} a appelé la route avec les paramètres de requete suivants: professionalId:${professionalId}`, '','servicesController.js', `/service/${professionalId}/liste`, constants.GET_HTTP)
         return sendBadRequest(res, "le 'professionalId' de la requête doit etre un entier")
     }
 
     try {
         const client = getClientsCollection();
-        verboseLogger(`id pro:${professionalId}`, '','servicesController.js', `/service/:professionalId/liste${professionalId}`, constants.GET_HTTP)
+        verboseLogger(`id pro:${professionalId}`, '','servicesController.js', `/service/${professionalId}/liste`, constants.GET_HTTP)
 
         const services = await client.query(
             `SELECT services.service_id,
@@ -105,30 +106,31 @@ module.exports.service_liste_pro_get = async (req, res) => {
                     services.service_description,
                     services.service_price,
                     services.duration,
-                    professionals.email,
-                    professionals.phone,
-                    professionals.company_name,
-                    professionals.company_address,
+                    pro.email,
+                    pro.phone,
+                    pa.company_name,
+                    pa.company_address,
                     COUNT(reservations.reservation_id) AS reservations_a_venir
              FROM services
-                      INNER JOIN professionals
-                                 ON services.professional_id = professionals.professional_id
+                      INNER JOIN users as pro
+                                 ON services.professional_id = pro.users_id
                       INNER JOIN reservations
                                  ON services.service_id = reservations.service_id
-             WHERE professionals.professional_id = $1
+                     join public.pro_account pa on pro.users_id = pa.user_id
+             WHERE pro.users_id = $1
                AND TO_TIMESTAMP(reservations.day_of_week || ' ' || reservations.start_time, 'DD-MM-YYYY HH24:MI:SS') >= CURRENT_TIMESTAMP
-             group by services.service_id, 
-                      professionals.email,
-                      professionals.phone,
-                      professionals.company_name,
-                      professionals.company_address
+             group by services.service_id,
+                      pro.email,
+                      pro.phone,
+                      pa.company_name,
+                      pa.company_address
             `,
             [professionalId]
         );
-        verboseLogger(`Récuperation de la liste des servives du pro: ${professionalId}`, '','servicesController.js', `/service/:professionalId/liste${professionalId}`, constants.GET_HTTP)
+        verboseLogger(`Récuperation de la liste des servives du pro: ${professionalId}`, '','servicesController.js', `/service/${professionalId}/liste`, constants.GET_HTTP)
         return sendSuccess(res, services.rows)
     } catch (e) {
-        errorLogger(`Erreur lors de la récupération des services pro id: ${professionalId} : ` + e.stack, '','servicesController.js', `/service/:professionalId/liste${professionalId}`, constants.GET_HTTP)
+        errorLogger(`Erreur lors de la récupération des services pro id: ${professionalId} : ` + e.stack, '','servicesController.js', `/service/${professionalId}/liste`, constants.GET_HTTP)
         return sendInternalServerError(res, 'Erreur lors de la récupération des services :' + e.message)
     }
 }
@@ -139,11 +141,12 @@ module.exports.search_service_get =  async (req, res) => {
         const client = getClientsCollection();
 
         const services = await client.query(
-            `SELECT services.service_id, services.service_name, services.service_description, services.service_price, services.duration, 
-            professionals.email, professionals.phone, professionals.company_name, professionals.company_address 
+            `SELECT services.service_id, services.service_name, services.service_description, services.service_price, services.duration,
+                    pro.email, pro.phone, pa.company_name, pa.company_address 
             FROM services 
-            INNER JOIN professionals 
-            ON services.professional_id = professionals.professional_id
+            INNER JOIN users pro
+            ON services.professional_id = pro.users_id
+            join public.pro_account pa on pro.users_id = pa.user_id
             WHERE LOWER(services.service_name) ILIKE $1`,
             [`%${searchTerm.toLowerCase()}%`]
         );
@@ -162,7 +165,7 @@ module.exports.service_delete = async (req, res) => {
             return sendBadRequest(res, "le serviceId doit etre un entier")
         }
 
-        const { id, statut } = decodeJWT(req.cookies.jwt)
+        const { id } = decodeJWT(req.cookies.jwt)
 
         const client = getClientsCollection();
 
@@ -180,8 +183,8 @@ module.exports.service_delete = async (req, res) => {
         }
 
         // Vérifiez si le professional_id du service correspond à professionalId de la session
-        if (service.professional_id !== id && statut !== constants.STATUT_PROFESSIONNEL) {
-            warnLogger(`Vous n'êtes pas autorisé à supprimer ce service personne voulant supprimer: ${id} (${statut}), personne pouvant supprimer: ${service.professional_id}`, '','servicesController.js', `/services/delete/${serviceId}`, constants.DELETE_HTTP)
+        if (service.professional_id !== id) {
+            warnLogger(`Vous n'êtes pas autorisé à supprimer ce service personne voulant supprimer: ${id}, personne pouvant supprimer: ${service.professional_id}`, '','servicesController.js', `/services/delete/${serviceId}`, constants.DELETE_HTTP)
             return sendUnauthorized(res, "Vous n'êtes pas autorisé à supprimer ce service")
         }
 
@@ -193,7 +196,7 @@ module.exports.service_delete = async (req, res) => {
         const nbReservationsEnCours = reservationQuery.rows[0].count
         // s'il y a des réservations en cours sur ce service, on renvoie une Failure en disant qu'il y a des réservations encore en cours dessus
         if( nbReservationsEnCours > 0 ){
-            warnLogger(`L'utilisateur ${id} (${statut}) tente de supprimer le service ${serviceId} alors qu'il y a ${nbReservationsEnCours > 1 ? `${nbReservationsEnCours} réservations encore en cours`: `${nbReservationsEnCours} réservation encore en cours`}`, '','servicesController.js', `/services/delete/${serviceId}`, constants.DELETE_HTTP)
+            warnLogger(`L'utilisateur ${id} tente de supprimer le service ${serviceId} alors qu'il y a ${nbReservationsEnCours > 1 ? `${nbReservationsEnCours} réservations encore en cours`: `${nbReservationsEnCours} réservation encore en cours`}`, '','servicesController.js', `/services/delete/${serviceId}`, constants.DELETE_HTTP)
             return sendFailure(res, `Vous ne pouvez pas supprimer un service ayant des réservations en cours (${nbReservationsEnCours})`)
         }
 

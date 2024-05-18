@@ -17,6 +17,14 @@ function userValidation(data) {
 	return userValidationSchema.validate(data);
 }
 
+function proValidation(data) {
+	const proValidationSchema = Joi.object({
+		company_name: Joi.string().min(2).max(100).trim().required(),
+		company_address: Joi.string().min(5).max(300).trim().required(),
+	});
+	return proValidationSchema.validate(data);
+}
+
 function serviceValidation(data) {
 	const serviceValidationSchema = Joi.object({
 		service_name: Joi.string().min(2).max(30).trim().required(),
@@ -41,4 +49,4 @@ function availabilityValidation(data) {
 	return availabilityValidationSchema.validate(data);
 }
 
-module.exports = { userValidation, serviceValidation, availabilityValidation };
+module.exports = { userValidation, serviceValidation, availabilityValidation, proValidation };

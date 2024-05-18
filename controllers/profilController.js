@@ -6,7 +6,7 @@ const {sendError, sendSuccess, sendInternalServerError, sendBadRequest, sendUnau
     sendSuccessWithNoContent, sendSuccessfullyCreated, sendNonAcceptable
 } = require("../utils/error_message.utils");
 const {getClientsCollection} = require("../db/database");
-const {isANumber, convertToNumber} = require("../utils/methods.utils");
+const {isANumber, convertToNumber, isUndefined} = require("../utils/methods.utils");
 const bcrypt = require("bcrypt");
 const UUID = require("uuid-v4");
 const {auth} = require("../config/firebase");
@@ -24,7 +24,7 @@ module.exports.profil_pro_get = async (req, res) => {
     try {
         const client = getClientsCollection();
         const query = {
-            text: 'SELECT * FROM professionals WHERE professional_id = $1',
+            text: 'SELECT * FROM users inner join public.pro_account pa on users.users_id = pa.user_id WHERE users_id = $1',
             values: [id],
         };
 
@@ -35,7 +35,7 @@ module.exports.profil_pro_get = async (req, res) => {
             return sendError(res, 'Profil professionnel non trouvé')
         }
 
-        const { password, creation_date, ...professionalProfile } =
+        const { password, creation_date, user_id, professional_id, ...professionalProfile } =
             result.rows[0];
         return sendSuccess(res, professionalProfile)
     } catch (e) {
@@ -49,19 +49,10 @@ module.exports.profil_client_get =  async (req, res) => {
      * en principe si on a passé le middleware "requiredAuth"
      * on est forcément authentifié et donc le cookie "JWT" existe
      */
-    let idReq  = req.params['id'];
     let { id } = decodeJWT(req.cookies.jwt)
 
-    if (!isANumber(idReq)) {
-        return sendBadRequest(res, "l'id doit etre un entier")
-    }
-
-    if(convertToNumber(idReq) !== id) {
-        return sendUnauthorized(res, 'Permission non autorisé')
-    }
-
     if (!id) {
-        warnLogger(`Authentification requise`, '','profilController.js', `/profil/client/${id}`, constants.GET_HTTP)
+        warnLogger(`Authentification requise ${id}`, '','profilController.js', `/profil`, constants.GET_HTTP)
         return sendError(res, 'Authentification requise')
     }
 
@@ -75,21 +66,21 @@ module.exports.profil_client_get =  async (req, res) => {
         const result = await client.query(query);
 
         if (result.rows.length === 0) {
-            warnLogger(`Profil client non trouvé ${id}`, '','profilController.js', `/profil/client/${id}`, constants.GET_HTTP)
-            return sendError(res, 'Profil client non trouvé' )
+            warnLogger(`Profil  non trouvé ${id}`, '','profilController.js', `/profil`, constants.GET_HTTP)
+            return sendError(res, 'Profil non trouvé' )
         }
 
         const { password, creation_date, ...clientProfile } = result.rows[0];
         return sendSuccess(res, clientProfile)
     } catch (e) {
-        errorLogger(`Erreur lors de la récupération du profil client: ${JSON.stringify(e.stack)}`, '','profilController.js', `/profil/client/${id}`, constants.GET_HTTP)
+        errorLogger(`Erreur lors de la récupération du profil client: ${JSON.stringify(e.stack)}`, '','profilController.js', `/profil`, constants.GET_HTTP)
         return sendInternalServerError(res, 'Erreur serveur' )
     }
 }
 
 module.exports.profil_change_password_put = async (req, res) => {
     let idReq  = req.params['id'];
-    let { id, statut } = decodeJWT(req.cookies.jwt)
+    let { id } = decodeJWT(req.cookies.jwt)
 
     if (!isANumber(idReq)) {
         warnLogger(`L'utilisateur ${id} a appelé la route avec le paramètre de requete suivant: ${idReq}`, '','profilController.js', `/profil/${id}/change-password`, constants.PUT_HTTP)
@@ -105,25 +96,16 @@ module.exports.profil_change_password_put = async (req, res) => {
      * afin d'eviter les traitement inutiles dans le back
      */
     const {previousPassword, newPassword} = req.body
-    if(previousPassword === undefined || newPassword === undefined) {
+    if(isUndefined(previousPassword) || isUndefined(newPassword)) {
         logLogger("Erreur dans les données du body de la requête, l'un des 2 mots de passe n'est pas renseigné", '','profilController.js', `/profil/${id}/change-password`, constants.PUT_HTTP)
         return sendBadRequest(res, 'Erreur dans les données du body')
     }
 
     const client = getClientsCollection();
-    let getUserQuery
-    if(statut === constants.STATUT_PROFESSIONNEL) {
-        getUserQuery = await client.query(
-            'SELECT * FROM professionals WHERE professional_id = $1',
-            [id]
-        );
-    }
-    else {
-        getUserQuery = await client.query(
-            'SELECT * FROM users WHERE users_id = $1',
-            [id]
-        );
-    }
+    let getUserQuery = await client.query(
+        'SELECT * FROM users WHERE users_id = $1',
+        [id]
+    );
 
     if (getUserQuery.rows.length === 1) {
         const hashedPassword = getUserQuery.rows[0].password;
@@ -133,19 +115,10 @@ module.exports.profil_change_password_put = async (req, res) => {
 
         if (match){
             const hash = await bcrypt.hash(newPassword, saltRounds);
-            let updatePasswordResult
-            if(statut === constants.STATUT_PROFESSIONNEL) {
-                updatePasswordResult = await client.query(
-                    'UPDATE professionals SET password = $1 WHERE professional_id = $2',
-                    [ hash, id]
-                );
-            }
-            else {
-                updatePasswordResult = await client.query(
-                    'UPDATE users SET password = $1 WHERE users_id = $2',
-                    [ hash, id]
-                );
-            }
+            let updatePasswordResult = await client.query(
+                'UPDATE users SET password = $1 WHERE users_id = $2',
+                [ hash, id]
+            );
 
             if(updatePasswordResult.rowCount === 0){
                 errorLogger(`Echec lors de la mise à jour du mot de passe de l'utilisateur ${getUserQuery.rows[0].email}`, '','profilController.js', `/profil/${id}/change-password`, constants.PUT_HTTP)
@@ -162,7 +135,7 @@ module.exports.profil_change_password_put = async (req, res) => {
 }
 
 module.exports.update_profile_picture_put = async (req, res) => {
-    let { id, statut } = decodeJWT(req.cookies.jwt)
+    let { id } = decodeJWT(req.cookies.jwt)
     const file = req.file
     const uuid = UUID();
 
@@ -209,61 +182,33 @@ module.exports.update_profile_picture_put = async (req, res) => {
 
         const client = getClientsCollection();
         let queryUpdateProfilPicture
-        if(statut === constants.STATUT_CLIENT) {
-            /** suppression de l'ancienne image en base */
-            let queryUserInfo = await client.query('SELECT * from users where users_id = $1', [id]);
-            const {profile_picture_path}  = queryUserInfo.rows[0]
-            try {
-                if(profile_picture_path !== null){
-                    bucket
-                        .file(profile_picture_path)
-                        .delete()
-                        .then(() => {
-                            logLogger(`l'image ${profile_picture_path} de l'utilisateur ${id} (client) a bien été supprimé`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
 
-                        })
-                        .catch((error) => {
-                            errorLogger(`Erreur lors de la suppression de l'ancienne photo de profil de l'utilisateur ${id} (client): ${error}`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
-                        });
-                }
-            }
-            catch (e) {
-                errorLogger("Erreur lors de la suppression de l'ancienne photo de profil de l'utilisateur", '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
-            }
+        /** suppression de l'ancienne image en base */
+        let queryUserInfo = await client.query('SELECT profile_picture_path from users where users_id = $1', [id]);
+        const {profile_picture_path}  = queryUserInfo.rows[0]
+        try {
+            if(profile_picture_path !== null){
+                bucket
+                    .file(profile_picture_path)
+                    .delete()
+                    .then(() => {
+                        logLogger(`l'image ${profile_picture_path} de l'utilisateur ${id} (client) a bien été supprimé`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
 
-            queryUpdateProfilPicture = {
-                text: 'UPDATE users SET profile_picture = $1, profile_picture_path = $3 WHERE users_id = $2',
-                values: [imageUrl, id, imagePath],
-            };
+                    })
+                    .catch((error) => {
+                        errorLogger(`Erreur lors de la suppression de l'ancienne photo de profil de l'utilisateur ${id} (client): ${error}`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
+                    });
+            }
         }
-        else {
-            /** suppression de l'ancienne image en base */
-            let queryUserInfo = await client.query('SELECT * from professionals where professional_id = $1', [id]);
-            const {profile_picture_path}  = queryUserInfo.rows[0]
-            try {
-                if(profile_picture_path !== null){
-                    bucket
-                        .file(profile_picture_path)
-                        .delete()
-                        .then(() => {
-                            logLogger(`l'image ${profile_picture_path} de l'utilisateur ${id} (pro) a bien été supprimé`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
-
-                        })
-                        .catch((error) => {
-                            errorLogger(`Erreur lors de la suppression de l'ancienne photo de profil de l'utilisateur ${id} (pro): ${error}`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
-                        });
-                }
-
-            }
-            catch (e) {
-                errorLogger("Erreur lors de la suppression de l'ancienne photo de profil de l'utilisateur", '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
-            }
-
-            queryUpdateProfilPicture = {
-                text: 'UPDATE professionals SET profile_picture = $1, profile_picture_path = $3 WHERE professional_id = $2',
-                values: [imageUrl, id, imagePath],
-            };
+        catch (e) {
+            errorLogger("Erreur lors de la suppression de l'ancienne photo de profil de l'utilisateur", '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
         }
+
+        queryUpdateProfilPicture = {
+            text: 'UPDATE users SET profile_picture = $1, profile_picture_path = $3 WHERE users_id = $2',
+            values: [imageUrl, id, imagePath],
+        };
+
 
         const resultUpdateProfilPicture = await client.query(queryUpdateProfilPicture);
 
@@ -272,26 +217,16 @@ module.exports.update_profile_picture_put = async (req, res) => {
             return sendError(res, "Erreur lors de la mise à jour de la photo de profil de l'utilisateur")
         }
 
-        if(statut === constants.STATUT_CLIENT) {
-            const queryGetUser = {
-                text: 'SELECT * FROM users WHERE users_id = $1',
-                values: [id],
-            };
 
-            const resultGetUser = await client.query(queryGetUser);
-
-
-            const { password, creation_date, ...clientProfile} = resultGetUser.rows[0];
-            return sendSuccessfullyCreated(res, clientProfile )
-        }
         const queryGetUser = {
-            text: 'SELECT * FROM professionals WHERE professional_id = $1',
+            text: 'SELECT * FROM users WHERE users_id = $1',
             values: [id],
         };
 
         const resultGetUser = await client.query(queryGetUser);
-        const { password, creation_date, ...proProfile} = resultGetUser.rows[0];
-        return sendSuccessfullyCreated(res, proProfile )
+
+        const { password, creation_date, ...clientProfile} = resultGetUser.rows[0];
+        return sendSuccessfullyCreated(res, clientProfile )
 
     } catch (e) {
         errorLogger('Erreur lors de la récupération du profil:' + e.stack, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
@@ -414,7 +349,7 @@ module.exports.upload_images_service_post =  async (req, res) => {
 }
 
 module.exports.image_service_delete =  async (req, res) => {
-    const { id, statut } = decodeJWT(req.cookies.jwt)
+    const { id } = decodeJWT(req.cookies.jwt)
     const { imageId } = req.params;
     
     if (!isANumber(imageId) ) {
@@ -422,44 +357,45 @@ module.exports.image_service_delete =  async (req, res) => {
         return sendBadRequest(res, "le 'idPro' et le 'serviceId' de la requête doivent etre des entiers")
     }
 
-    if(statut === constants.STATUT_PROFESSIONNEL) {
-        const client = getClientsCollection();
-        let bucket = auth.storage().bucket();
-        /** suppression de l'ancienne image en base */
-        let queryImageInfo = await client.query('SELECT * from images_services_professionals where image_id = $1 and pro_id = $2', [imageId, id]);
-        if(queryImageInfo.rowCount > 0 ) {
-            const {picture_path} = queryImageInfo.rows[0]
-            try {
-                if (picture_path !== null) {
-                    bucket
-                        .file(picture_path)
-                        .delete()
-                        .then(async () => {
-                            /* suppression dans la table */
-                            await client.query('DELETE from images_services_professionals where image_id = $1 and pro_id = $2', [imageId, id]);
-                            logLogger(`l'image ${picture_path} de l'utilisateur ${id} (pro) a bien été supprimé`, '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
-                            return sendSuccess(res, "l'image a bien été supprimé")
-                        })
-                        .catch((error) => {
-                            errorLogger(`Erreur lors de la suppression de la photo ${picture_path} (${imageId}) du service de l'utilisateur ${id} (pro): ${error}`, '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
-                            return sendError(res, `Erreur lors de la suppression de la photo ${picture_path} (${imageId}) du service de l'utilisateur ${id} (pro)`)
-                        });
-                }
-            } catch (e) {
-                errorLogger(`Erreur lors de la suppression de la photo ${picture_path} (${imageId}) du service de l'utilisateur ${id} (pro)`,  '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
-                return sendError(res, `Erreur lors de la suppression de la photo ${picture_path} (${imageId}) du service de l'utilisateur ${id} (pro)`)
-            }
-        }
-        else {
-            errorLogger(`l'image (${imageId}) n'appartient pas à l'utilisateur ${id} (pro)`, '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
-            return sendBadRequest(res, `l'image (${imageId}) n'appartient pas à l'utilisateur ${id} (pro)`)
-        }
+    //TODO: ajouter une vérification
 
+    const client = getClientsCollection();
+    let bucket = auth.storage().bucket();
+    /** suppression de l'ancienne image en base */
+    let queryImageInfo = await client.query('SELECT * from images_services_professionals where image_id = $1 and pro_id = $2', [imageId, id]);
+    if(queryImageInfo.rowCount > 0 ) {
+        const {picture_path} = queryImageInfo.rows[0]
+        try {
+            if (picture_path !== null) {
+                bucket
+                    .file(picture_path)
+                    .delete()
+                    .then(async () => {
+                        /* suppression dans la table */
+                        await client.query('DELETE from images_services_professionals where image_id = $1 and pro_id = $2', [imageId, id]);
+                        logLogger(`l'image ${picture_path} de l'utilisateur ${id} (pro) a bien été supprimé`, '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
+                        return sendSuccess(res, "l'image a bien été supprimé")
+                    })
+                    .catch((error) => {
+                        errorLogger(`Erreur lors de la suppression de la photo ${picture_path} (${imageId}) du service de l'utilisateur ${id} (pro): ${error}`, '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
+                        return sendError(res, `Erreur lors de la suppression de la photo ${picture_path} (${imageId}) du service de l'utilisateur ${id} (pro)`)
+                    });
+            }
+        } catch (e) {
+            errorLogger(`Erreur lors de la suppression de la photo ${picture_path} (${imageId}) du service de l'utilisateur ${id} (pro)`,  '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
+            return sendError(res, `Erreur lors de la suppression de la photo ${picture_path} (${imageId}) du service de l'utilisateur ${id} (pro)`)
+        }
     }
     else {
-        warnLogger(`L'utilisateur ${id} a tenté de supprimer l'image ${imageId}`, '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
-        return sendUnauthorized(res, 'Permission non autorisé')
+        errorLogger(`l'image (${imageId}) n'appartient pas à l'utilisateur ${id} (pro)`, '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
+        return sendBadRequest(res, `l'image (${imageId}) n'appartient pas à l'utilisateur ${id} (pro)`)
     }
+
+
+    // else {
+    //     warnLogger(`L'utilisateur ${id} a tenté de supprimer l'image ${imageId}`, '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
+    //     return sendUnauthorized(res, 'Permission non autorisé')
+    // }
     
 }
 

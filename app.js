@@ -5,7 +5,6 @@ const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const http = require('http');
 const socketIo = require('socket.io');
-const router = require('./routes/profil');
 const {
 	connectToDatabase,
 	createTableUser,
@@ -15,7 +14,6 @@ const {
 	createTableReservation,
 	createTableAvailability,
 	createTableMessages,
-	createTablePreferencePro,
 	createTableImagesServicesProfessionals,
 } = require('./db/database');
 const path = require('path');
@@ -49,7 +47,6 @@ connectToDatabase().then( ()=> {
 	createTableReservation();
 	createTableMessages();
 	alterInTables();
-	createTablePreferencePro();
 	createTableImagesServicesProfessionals()
 })
 // Increase the listener limit for an EventEmitter object
