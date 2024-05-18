@@ -39,9 +39,10 @@ const createTableUser = async () => {
 		  city VARCHAR(100),
 		  address VARCHAR(100),
 		  phone VARCHAR(20),
-		  creation_date DATE NOT NULL DEFAULT CURRENT_DATE,
+		  creation_date TIMESTAMP NULL DEFAULT (timezone('Europe/Paris', now())),
 		  profile_picture VARCHAR,
-		  est_verifie BOOLEAN DEFAULT false
+		  est_verifie BOOLEAN DEFAULT false,
+          est_pro BOOLEAN DEFAULT false
         );
       `;
 
@@ -55,40 +56,33 @@ const createTableUser = async () => {
 	}
 };
 
-const createTableProfessional = async () => {
+const createTableProAccount = async () => {
 	try {
 		const checkTableQuery = `
-      SELECT to_regclass('professionals') as table_exists;
+      SELECT to_regclass('pro_account') as table_exists;
     `;
 
 		const result = await client.query(checkTableQuery);
 		if (result.rows[0].table_exists === null) {
 			const createTableQuery = `
-        CREATE TABLE professionals (
-          professional_id SERIAL PRIMARY KEY,
-          "firstName" VARCHAR(100),
-          "lastName" VARCHAR(100),
-          password VARCHAR(100),
-          email VARCHAR(100) UNIQUE NOT NULL,
-		  country VARCHAR(100),
-		  city VARCHAR(100),
-		  address VARCHAR(100),
-          phone VARCHAR(20),
-          company_name VARCHAR(100),
-          company_address VARCHAR(300),
-          creation_date DATE NOT NULL DEFAULT CURRENT_DATE,
-		  profile_picture VARCHAR,
-		  est_verifie BOOLEAN DEFAULT false
-        );
-      `;
+        CREATE TABLE pro_account (
+		  professional_id SERIAL PRIMARY KEY,
+		  company_name VARCHAR(100),
+		  company_address VARCHAR(300),
+		  user_id INT UNIQUE NOT NULL,
+		  creation_date TIMESTAMP NULL DEFAULT (timezone('Europe/Paris', now())),
+		  CONSTRAINT FK_user_id FOREIGN KEY(user_id)
+		  REFERENCES users(users_id)
+		  );
+		  `;
 
 			await client.query(createTableQuery);
-			logLogger('Table [professionals] créée avec succès', 'createTableProfessional')
+			logLogger('Table [PRO_ACCOUNT] créée avec succès', 'createTableProAccount')
 		} else {
-			verboseLogger('La table [professionals] existe déjà.', 'createTableProfessional')
+			verboseLogger('La table [PRO_ACCOUNT] existe déjà.', 'createTableProAccount')
 		}
 	} catch (e) {
-		errorLogger('Erreur lors de la création/verification de la table [professionnels]:' + e.stack, 'createTableProfessional')
+		errorLogger('Erreur lors de la création/verification de la table [PRO_ACCOUNT]:' + e.stack, 'createTableProAccount')
 	}
 };
 
@@ -320,7 +314,7 @@ const getClientsCollection = () => {
 module.exports = {
 	connectToDatabase,
 	createTableUser,
-	createTableProfessional,
+	createTableProAccount,
 	createTableService,
 	createTableReservation,
 	createTableAvailability,

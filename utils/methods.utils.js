@@ -27,8 +27,21 @@ const isUndefinedOrEmpty = (value)  => {
     return value === undefined || value === ""
 }
 
+/**
+ * return vrai si la variable est indéfini ou vide
+ *
+ * @param value
+ * @returns {boolean}
+ */
+const isUndefined = (value)  => {
+    return value === undefined
+}
+
+
+
 module.exports ={
     isANumber,
     convertToNumber,
-    isUndefinedOrEmpty
+    isUndefinedOrEmpty,
+    isUndefined
 }

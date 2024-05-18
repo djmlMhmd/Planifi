@@ -9,13 +9,14 @@ const router = require('./routes/profil');
 const {
 	connectToDatabase,
 	createTableUser,
-	createTableProfessional,
+	createTableProAccount,
 	createTableService,
 	getClientsCollection,
 	createTableReservation,
 	createTableAvailability,
-	createTableMessages, createTablePreferencePro, createTableImagesServicesProfessionals,
-	/*createTableDefaultAvailability,*/
+	createTableMessages,
+	createTablePreferencePro,
+	createTableImagesServicesProfessionals,
 } = require('./db/database');
 const path = require('path');
 const app = express();
@@ -42,13 +43,11 @@ const {alterInTables} = require("./db/alterDatabase");
 getClientsCollection();
 connectToDatabase().then( ()=> {
 	createTableUser();
-	createTableProfessional();
+	createTableProAccount();
 	createTableService();
 	createTableAvailability();
 	createTableReservation();
-	//createTableDefaultAvailability();
 	createTableMessages();
-	//deleteInTables()
 	alterInTables();
 	createTablePreferencePro();
 	createTableImagesServicesProfessionals()
