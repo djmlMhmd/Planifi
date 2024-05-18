@@ -69,8 +69,10 @@ const createTableProAccount = async () => {
 		  professional_id SERIAL PRIMARY KEY,
 		  company_name VARCHAR(100),
 		  company_address VARCHAR(300),
-		  user_id INT UNIQUE NOT NULL,
 		  creation_date TIMESTAMP NULL DEFAULT (timezone('Europe/Paris', now())),
+		  show_mobile BOOLEAN DEFAULT TRUE,
+		  show_adress BOOLEAN DEFAULT TRUE,
+		  user_id INT UNIQUE NOT NULL,
 		  CONSTRAINT FK_user_id FOREIGN KEY(user_id)
 		  REFERENCES users(users_id)
 		  );
@@ -102,8 +104,8 @@ const createTableService = async () => {
           service_price DECIMAL(10, 2),
           duration INTERVAL,
 		  professional_id INT,
-		  CONSTRAINT FK_professional_id FOREIGN KEY(professional_id)
-		  REFERENCES professionals(professional_id)
+		  CONSTRAINT FK_pro_id FOREIGN KEY(professional_id)
+		  REFERENCES users(users_id)
 		  );
 		  `;
 
@@ -129,8 +131,8 @@ const createTableAvailability = async () => {
                 CREATE TABLE availability (
                     availability_id SERIAL PRIMARY KEY,
                     professional_id INT,
-					CONSTRAINT FK_professional_id FOREIGN KEY(professional_id)
-					REFERENCES professionals(professional_id),
+					CONSTRAINT FK_pro_id FOREIGN KEY(professional_id)
+					REFERENCES users(users_id),
                     day_of_week VARCHAR(10),
                     start_time TIME,
                     end_time TIME
@@ -160,8 +162,8 @@ const createTableReservation = async () => {
                 CREATE TABLE reservations (
                     reservation_id SERIAL PRIMARY KEY,
                     professional_id INT,
-                    CONSTRAINT FK_professional_id FOREIGN KEY (professional_id)
-                        REFERENCES professionals(professional_id),
+					CONSTRAINT FK_pro_id FOREIGN KEY(professional_id)
+						REFERENCES users(users_id),
                     users_id INT,
                     CONSTRAINT FK_users_id FOREIGN KEY (users_id)
                         REFERENCES users(users_id),
@@ -234,7 +236,7 @@ const createTableMessages = async () => {
           CONSTRAINT FK_sender_id FOREIGN KEY (sender_id)
             REFERENCES users(users_id),
           CONSTRAINT FK_receiver_id FOREIGN KEY (receiver_id)
-            REFERENCES professionals(professional_id),
+            REFERENCES users(users_id),
           CONSTRAINT FK_service_id FOREIGN KEY (service_id)
             REFERENCES services(service_id)
         );
@@ -250,31 +252,6 @@ const createTableMessages = async () => {
 	}
 };
 
-const createTablePreferencePro = async () => {
-	try {
-		const checkTableQuery = `
-      		SELECT to_regclass('public.preference_pro') as table_exists;`;
-		const createTableQuery = `
-			CREATE TABLE preference_pro (
-			  preference_id SERIAL PRIMARY KEY,
-			  show_mobile BOOLEAN DEFAULT TRUE,
-			  show_adress BOOLEAN DEFAULT TRUE,
-			  pro_id INT,
-			  CONSTRAINT FK_sender_id FOREIGN KEY (pro_id)
-				  REFERENCES professionals(professional_id)
-			);`;
-
-		const result = await client.query(checkTableQuery);
-		if (result.rows[0].table_exists === null) {
-			await client.query(createTableQuery);
-			logLogger('Table [PREFERENCE_PRO] créée avec succès', 'createTablePreferencePro')
-		} else {
-			verboseLogger('La table [PREFERENCE_PRO] existe déjà.', 'createTablePreferencePro')
-		}
-	} catch (e) {
-		errorLogger('Erreur lors de la création/verification de la table [PREFERENCE_PRO]:' + e.stack, 'createTablePreferencePro')
-	}
-};
 
 const createTableImagesServicesProfessionals = async () => {
 	try {
@@ -291,7 +268,7 @@ const createTableImagesServicesProfessionals = async () => {
 		  service_id INT,
 		  image_URL VARCHAR,
 		  CONSTRAINT FK_pro_id FOREIGN KEY (pro_id)
-			  REFERENCES professionals(professional_id),
+			  REFERENCES users(users_id),
 		  CONSTRAINT FK_service_id FOREIGN KEY (service_id)
 			  REFERENCES services(service_id)
         );
@@ -321,6 +298,5 @@ module.exports = {
 	/*createTableDefaultAvailability,*/
 	createTableMessages,
 	getClientsCollection,
-	createTablePreferencePro,
 	createTableImagesServicesProfessionals
 };

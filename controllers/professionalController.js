@@ -7,7 +7,7 @@ module.exports.professionals_get = async (req, res) => {
     try {
         const client = getClientsCollection();
         const professionals = await client.query(
-            'SELECT professional_id, company_name FROM professionals'
+            'SELECT users_id, company_name FROM users INNER JOIN public.pro_account pa on users.users_id = pa.user_id'
         );
         verboseLogger(`Récuperation de la liste des pro`, '','reservation.js', `/professionals`, constants.GET_HTTP)
         return sendSuccess(res, professionals.rows);

@@ -23,26 +23,26 @@ router.get('/connexion/', (req, res) => {
 	res.sendFile(path.join(__dirname, '..', 'views', 'login.html'));
 });
 
-router.get('/profil/:id', requiredAuth, (req, res) => {
-	// Checks whether it is a customer or a connected professional
-	if (req.cookies.clientID) {
-		'..',
-			// If it's a customer, return the customer profile
-			res.sendFile(
-				path.join(__dirname, '..', 'views', 'profil-client.html')
-			);
-	} else if (req.cookies.professionalID) {
-		// If it's a professional, return the professional's profile
-		res.sendFile(path.join(__dirname, '..', 'views', 'profil-pro.html'));
-	} else {
-		// If no one is logged in, return an error message or redirect to the login page
-		res.status(401).send('Authentification requise');
-	}
-});
+// router.get('/profil/:id', requiredAuth, (req, res) => {
+// 	// Checks whether it is a customer or a connected professional
+// 	if (req.cookies.clientID) {
+// 		'..',
+// 			// If it's a customer, return the customer profile
+// 			res.sendFile(
+// 				path.join(__dirname, '..', 'views', 'profil-client.html')
+// 			);
+// 	} else if (req.cookies.professionalID) {
+// 		// If it's a professional, return the professional's profile
+// 		res.sendFile(path.join(__dirname, '..', 'views', 'profil-pro.html'));
+// 	} else {
+// 		// If no one is logged in, return an error message or redirect to the login page
+// 		res.status(401).send('Authentification requise d');
+// 	}
+// });
 
-router.get('/reservation', requiredAuth, (req, res) => {
-	res.sendFile(path.join(__dirname, '..', 'views', 'reservations.html'));
-});
+// router.get('/reservation', requiredAuth, (req, res) => {
+// 	res.sendFile(path.join(__dirname, '..', 'views', 'reservations.html'));
+// });
 
 router.get('/navigation', requiredAuth, (req, res) => {
 	res.sendFile(path.join(__dirname, '..', 'views', 'navigation.html'));

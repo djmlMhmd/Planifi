@@ -9,11 +9,11 @@ const profilController = require('../controllers/profilController')
 
 // PROFESSIONAL PROFILE
 
-router.get('/profil/professionnel/:id',requiredAuth, profilController.profil_pro_get);
+router.get('/profil/professionnel/',requiredAuth, profilController.profil_pro_get);
 
 // CLIENT PROFILE
 
-router.get('/profil/client/:id', requiredAuth, profilController.profil_client_get);
+router.get('/profil', requiredAuth, profilController.profil_client_get);
 
 router.put('/profil/:id/change-password', requiredAuth, profilController.profil_change_password_put)
 
