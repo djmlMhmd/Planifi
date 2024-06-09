@@ -75,6 +75,7 @@ const addColumInTable = async (tableName, columnName, columnType, isNotNull = fa
  * execute une commande SQL personnalisée
  *
  * @param query requete SQL exemple: 'SELECT * FROM users'
+ * @param values valeurs
  * @returns {Promise<boolean>}
  */
 const executeCustomQuery = async (query) => {
@@ -82,6 +83,24 @@ const executeCustomQuery = async (query) => {
         const client = getClientsCollection();
         await client.query(query);
         return true
+    }
+    catch (e) {
+        errorLogger(`Erreur lors de l'execution de la commande personnalisé ${query}, pensez à verifier la commande en local sur PgAdmin:` + e, 'executeCustomQuery')
+    }
+}
+
+/**
+ * execute une commande SQL personnalisée
+ *
+ * @param query requete SQL exemple: 'SELECT * FROM users'
+ * @param values valeurs
+ * @returns {Promise<boolean>}
+ */
+const executeCustomQueryWithData = async (query, values) => {
+    try{
+        const client = getClientsCollection();
+        let data = await client.query(query, values);
+        return data.rows
     }
     catch (e) {
         errorLogger(`Erreur lors de l'execution de la commande personnalisé ${query}, pensez à verifier la commande en local sur PgAdmin:` + e, 'executeCustomQuery')
@@ -133,4 +152,4 @@ const renameColumInTable = async (tableName, columnName, newName) => {
 }
 
 
-module.exports = { checkIfColumnExistInTable, addColumInTable, executeCustomQuery, deleteColumInTable, renameColumInTable, checkIfTableExist}
+module.exports = { checkIfColumnExistInTable, addColumInTable, executeCustomQuery, deleteColumInTable, renameColumInTable, checkIfTableExist, executeCustomQueryWithData}
