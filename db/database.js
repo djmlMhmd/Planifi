@@ -1,5 +1,9 @@
 const { Client } = require('pg');
-const {logLogger, errorLogger, verboseLogger} = require('../config/winston/winston.config')
+const {
+	logLogger,
+	errorLogger,
+	verboseLogger,
+} = require('../config/winston/winston.config');
 require('dotenv').config();
 
 const client = new Client({
@@ -13,9 +17,16 @@ const client = new Client({
 const connectToDatabase = async () => {
 	try {
 		await client.connect();
-		logLogger('Connecté avec succès à la base de données PostgreSQL', 'connectToDatabase')
+		logLogger(
+			'Connecté avec succès à la base de données PostgreSQL',
+			'connectToDatabase'
+		);
 	} catch (e) {
-		errorLogger('Erreur lors de la connexion à la base de données PostgreSQL:' + e.stack, 'connectToDatabase' )
+		errorLogger(
+			'Erreur lors de la connexion à la base de données PostgreSQL:' +
+				e.stack,
+			'connectToDatabase'
+		);
 	}
 };
 
@@ -47,12 +58,16 @@ const createTableUser = async () => {
       `;
 
 			await client.query(createTableQuery);
-			logLogger('Table [USERS] créée avec succès', 'createTableUser')
+			logLogger('Table [USERS] créée avec succès', 'createTableUser');
 		} else {
-			verboseLogger('La table [USERS] existe déjà.', 'createTableUser')
+			verboseLogger('La table [USERS] existe déjà.', 'createTableUser');
 		}
 	} catch (e) {
-		errorLogger('Erreur lors de la création/verification de la table [USERS]:' + e.stack, 'createTableUser')
+		errorLogger(
+			'Erreur lors de la création/verification de la table [USERS]:' +
+				e.stack,
+			'createTableUser'
+		);
 	}
 };
 
@@ -79,12 +94,22 @@ const createTableProAccount = async () => {
 		  `;
 
 			await client.query(createTableQuery);
-			logLogger('Table [PRO_ACCOUNT] créée avec succès', 'createTableProAccount')
+			logLogger(
+				'Table [PRO_ACCOUNT] créée avec succès',
+				'createTableProAccount'
+			);
 		} else {
-			verboseLogger('La table [PRO_ACCOUNT] existe déjà.', 'createTableProAccount')
+			verboseLogger(
+				'La table [PRO_ACCOUNT] existe déjà.',
+				'createTableProAccount'
+			);
 		}
 	} catch (e) {
-		errorLogger('Erreur lors de la création/verification de la table [PRO_ACCOUNT]:' + e.stack, 'createTableProAccount')
+		errorLogger(
+			'Erreur lors de la création/verification de la table [PRO_ACCOUNT]:' +
+				e.stack,
+			'createTableProAccount'
+		);
 	}
 };
 
@@ -110,12 +135,22 @@ const createTableService = async () => {
 		  `;
 
 			await client.query(createTableQuery);
-			logLogger('Table [SERVICE] créée avec succès', 'createTableService')
+			logLogger(
+				'Table [SERVICE] créée avec succès',
+				'createTableService'
+			);
 		} else {
-			verboseLogger('La table [SERVICE] existe déjà.', 'createTableService')
+			verboseLogger(
+				'La table [SERVICE] existe déjà.',
+				'createTableService'
+			);
 		}
 	} catch (e) {
-		errorLogger('Erreur lors de la création/verification de la table [SERVICE]:' + e.stack, 'createTableService')
+		errorLogger(
+			'Erreur lors de la création/verification de la table [SERVICE]:' +
+				e.stack,
+			'createTableService'
+		);
 	}
 };
 
@@ -140,12 +175,22 @@ const createTableAvailability = async () => {
             `;
 
 			await client.query(createTableQuery);
-			logLogger('Table [availability] créée avec succès', 'createTableAvailability')
+			logLogger(
+				'Table [availability] créée avec succès',
+				'createTableAvailability'
+			);
 		} else {
-			verboseLogger('La table [availability] existe déjà.', 'createTableAvailability')
+			verboseLogger(
+				'La table [availability] existe déjà.',
+				'createTableAvailability'
+			);
 		}
 	} catch (e) {
-		errorLogger('Erreur lors de la création/verification de la table [availability]:' + e.stack, 'createTableAvailability')
+		errorLogger(
+			'Erreur lors de la création/verification de la table [availability]:' +
+				e.stack,
+			'createTableAvailability'
+		);
 	}
 };
 
@@ -177,44 +222,24 @@ const createTableReservation = async () => {
             `;
 
 			await client.query(createTableQuery);
-			logLogger('Table [reservation] créée avec succès', 'createTableReservation')
+			logLogger(
+				'Table [reservation] créée avec succès',
+				'createTableReservation'
+			);
 		} else {
-			verboseLogger('La table [reservation] existe déjà.', 'createTableReservation')
+			verboseLogger(
+				'La table [reservation] existe déjà.',
+				'createTableReservation'
+			);
 		}
 	} catch (e) {
-		errorLogger('Erreur lors de la création/mise à jour de la table [reservation]:' + e.stack, 'createTableReservation')
+		errorLogger(
+			'Erreur lors de la création/mise à jour de la table [reservation]:' +
+				e.stack,
+			'createTableReservation'
+		);
 	}
 };
-
-/*
-const createTableDefaultAvailability = async () => {
-	try {
-		const checkTableQuery = `
-            SELECT to_regclass('default_availability') as table_exists;
-        `;
-
-		const result = await client.query(checkTableQuery);
-		if (result.rows[0].table_exists === null) {
-			const createTableQuery = `
-                CREATE TABLE default_availability (
-					default_availability_id SERIAL PRIMARY KEY,
-					professional_id INT,
-					day_of_week VARCHAR(10) NOT NULL CHECK (day_of_week IN ('Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche')),
-					start_time TIME NOT NULL DEFAULT '08:00:00',
-					end_time TIME NOT NULL DEFAULT '21:00:00',
-					is_available BOOLEAN DEFAULT TRUE
-                );
-            `;
-
-			await client.query(createTableQuery);
-			logLogger('Table [default_availability] créée avec succès', 'createTableDefaultAvailability')
-		} else {
-			verboseLogger('La table [default_availability] existe déjà.', 'createTableDefaultAvailability')
-		}
-	} catch (e) {
-		errorLogger('Erreur lors de la création/verification de la table [default_availability]:' + e.stack, 'createTableDefaultAvailability')
-	}
-};*/
 
 const createTableMessages = async () => {
 	try {
@@ -243,15 +268,24 @@ const createTableMessages = async () => {
       `;
 
 			await client.query(createTableQuery);
-			logLogger('Table [MESSAGES] créée avec succès', 'createTableMessages')
+			logLogger(
+				'Table [MESSAGES] créée avec succès',
+				'createTableMessages'
+			);
 		} else {
-			verboseLogger('La table [MESSAGES] existe déjà.', 'createTableMessages')
+			verboseLogger(
+				'La table [MESSAGES] existe déjà.',
+				'createTableMessages'
+			);
 		}
 	} catch (e) {
-		errorLogger('Erreur lors de la création/verification de la table [MESSAGES]:' + e.stack, 'createTableMessages')
+		errorLogger(
+			'Erreur lors de la création/verification de la table [MESSAGES]:' +
+				e.stack,
+			'createTableMessages'
+		);
 	}
 };
-
 
 const createTableImagesServicesProfessionals = async () => {
 	try {
@@ -275,12 +309,22 @@ const createTableImagesServicesProfessionals = async () => {
       `;
 
 			await client.query(createTableQuery);
-			logLogger('Table [images_services_professionals] créée avec succès', 'createTableImagesServicesProfessionals')
+			logLogger(
+				'Table [images_services_professionals] créée avec succès',
+				'createTableImagesServicesProfessionals'
+			);
 		} else {
-			verboseLogger('La table [images_services_professionals] existe déjà.', 'createTableImagesServicesProfessionals')
+			verboseLogger(
+				'La table [images_services_professionals] existe déjà.',
+				'createTableImagesServicesProfessionals'
+			);
 		}
 	} catch (e) {
-		errorLogger('Erreur lors de la création/verification de la table [images_services_professionals]:' + e.stack, 'createTableImagesServicesProfessionals')
+		errorLogger(
+			'Erreur lors de la création/verification de la table [images_services_professionals]:' +
+				e.stack,
+			'createTableImagesServicesProfessionals'
+		);
 	}
 };
 
@@ -298,5 +342,5 @@ module.exports = {
 	/*createTableDefaultAvailability,*/
 	createTableMessages,
 	getClientsCollection,
-	createTableImagesServicesProfessionals
+	createTableImagesServicesProfessionals,
 };
