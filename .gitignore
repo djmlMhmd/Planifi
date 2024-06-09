@@ -1,0 +1,8 @@
+/node_modules
+.env
+/package-lock.json
+public/js/firebase.js
+.test
+admin.json
+*.log
+.env
