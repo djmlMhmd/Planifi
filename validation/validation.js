@@ -49,4 +49,9 @@ function availabilityValidation(data) {
 	return availabilityValidationSchema.validate(data);
 }
 
-module.exports = { userValidation, serviceValidation, availabilityValidation, proValidation };
+module.exports = {
+	userValidation,
+	serviceValidation,
+	availabilityValidation,
+	proValidation,
+};

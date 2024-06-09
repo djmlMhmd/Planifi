@@ -13,6 +13,7 @@ const {
 	getClientsCollection,
 	createTableReservation,
 	createTableAvailability,
+	createTableNotation,
 	createTableMessages,
 	createTableImagesServicesProfessionals,
 } = require('./db/database');
@@ -35,20 +36,22 @@ const indexRoutes = require('./routes/index');
 const serviceRouter = require('./routes/services');
 const messagesRoutes = require('./messagerie/message');
 const professionalRoutes = require('./routes/professionalsRoute');
-const {logLogger} = require("./config/winston/winston.config");
-const {alterInTables} = require("./db/alterDatabase");
+const noteRoutes = require('./routes/notation');
+const { logLogger } = require('./config/winston/winston.config');
+const { alterInTables } = require('./db/alterDatabase');
 
 getClientsCollection();
-connectToDatabase().then( ()=> {
+connectToDatabase().then(() => {
 	createTableUser();
 	createTableProAccount();
 	createTableService();
 	createTableAvailability();
 	createTableReservation();
+	createTableNotation();
 	createTableMessages();
 	alterInTables();
-	createTableImagesServicesProfessionals()
-})
+	createTableImagesServicesProfessionals();
+});
 // Increase the listener limit for an EventEmitter object
 const bus = new EventEmitter();
 bus.setMaxListeners(30);
@@ -82,8 +85,7 @@ app.use(professionalRoutes);
 app.use('/api', require('./routes/reservation'));
 app.use(express.urlencoded({ extended: true }));
 app.use('/', messagesRoutes);
-
-
+app.use('/', noteRoutes);
 
 // Gestion des connexions WebSocket
 io.on('connection', (socket) => {
