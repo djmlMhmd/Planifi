@@ -37,9 +37,11 @@ const messagesRoutes = require('./messagerie/message');
 const professionalRoutes = require('./routes/professionalsRoute');
 const {logLogger} = require("./config/winston/winston.config");
 const {alterInTables} = require("./db/alterDatabase");
+const {insertDatas} = require("./db/insertDatabase");
 
 getClientsCollection();
 connectToDatabase().then( ()=> {
+	//insertDatas();
 	createTableUser();
 	createTableProAccount();
 	createTableService();
@@ -47,7 +49,7 @@ connectToDatabase().then( ()=> {
 	createTableReservation();
 	createTableMessages();
 	alterInTables();
-	createTableImagesServicesProfessionals()
+	createTableImagesServicesProfessionals();
 })
 // Increase the listener limit for an EventEmitter object
 const bus = new EventEmitter();
