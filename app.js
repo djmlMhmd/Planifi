@@ -95,7 +95,7 @@ server.listen(port, () => {
 });
 
 // Gestion des connexions WebSocket
-io.on('connection', (socket) => {
+/*io.on('connection', (socket) => {
 	console.log("Un utilisateur s'est connecté");
 
 	socket.on('send_message', async (data) => {
@@ -148,7 +148,7 @@ io.on('connection', (socket) => {
 		console.log(socket.adapter.rooms);
 		console.log(`Utilisateur ${socket.id} a rejoint la salle ${room.nom}`);
 	});
-});
+});*/
 
 app.use(
 	'/public/js',
