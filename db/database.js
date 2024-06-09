@@ -207,8 +207,8 @@ const createTableReservation = async () => {
                 CREATE TABLE reservations (
                     reservation_id SERIAL PRIMARY KEY,
                     professional_id INT,
-					CONSTRAINT FK_pro_id FOREIGN KEY(professional_id)
-						REFERENCES users(users_id),
+                    CONSTRAINT FK_pro_id FOREIGN KEY(professional_id)
+                        REFERENCES users(users_id),
                     users_id INT,
                     CONSTRAINT FK_users_id FOREIGN KEY (users_id)
                         REFERENCES users(users_id),
@@ -217,7 +217,8 @@ const createTableReservation = async () => {
                     end_time TIME NOT NULL,
                     service_id INT,
                     CONSTRAINT FK_service_id FOREIGN KEY (service_id)
-                        REFERENCES services(service_id)
+                        REFERENCES services(service_id),
+                    statut VARCHAR(10) DEFAULT 'actif'
                 );
             `;
 
