@@ -6,29 +6,28 @@
 		<script src="/socket.io/socket.io.js"></script>
 		<script>
 			document.addEventListener('DOMContentLoaded', function () {
-				const userId = '1'; // ID de l'utilisateur
-				const userName = 'Votre Nom'; // Nom de l'utilisateur
-				const socket = io('');
+				// Supposons que le JWT est stocké dans les cookies sous le nom 'jwt'
+				const token = getCookie('jwt');
 
-				let currentConversation = {
-					receiverId: null,
-					receiverName: '',
-					subject: '',
-				};
+				// Établir la connexion Socket.IO avec le token d'authentification
+				const socket = io('', { query: `token=${token}` });
+
+				socket.on('connect', () => {
+					console.log('Connecté au serveur Socket.IO');
+					console.log('Connecté en tant que:', user.id);
+					fetchMessages(); // Récupère les messages dès la connexion
+				});
 
 				function fetchMessages() {
-					fetch(`/api/conversations/${userId}`)
+					// Utilisation de fetch pour récupérer les messages de l'utilisateur
+					fetch(`/api/conversations`)
 						.then((response) => response.json())
 						.then((data) => {
-							data.forEach((message) => displayMessage(message));
-							if (data.length > 0) {
-								const lastMessage = data[0];
-								currentConversation = {
-									receiverId: lastMessage.receiver_id,
-									receiverName: lastMessage.sender_name,
-									subject: lastMessage.subject,
-								};
-								updateUI();
+							if (data && data.length > 0) {
+								data.forEach((message) =>
+									displayMessage(message)
+								);
+								updateUI(data[0]); // Mise à jour de l'UI avec le dernier message
 							}
 						})
 						.catch((error) =>
@@ -36,53 +35,29 @@
 						);
 				}
 
-				function updateUI() {
+				function updateUI(message) {
 					document.getElementById(
 						'conversation-subject'
-					).textContent = `Sujet: ${
-						currentConversation.subject
-							? currentConversation.subject
-							: 'Chat Général'
-					}`;
+					).textContent = `Sujet: ${message.subject}`;
 					document.getElementById(
 						'conversation-partner'
-					).textContent = `Conversation avec: ${
-						currentConversation.receiverName
-							? currentConversation.receiverName
-							: 'Inconnu'
-					}`;
+					).textContent = `Conversation avec: ${message.sender_name}`;
 				}
-
-				socket.on('connect', () => {
-					console.log('Connecté au serveur Socket.IO');
-					fetchMessages(); // Récupère les messages dès la connexion
-				});
 
 				document
 					.getElementById('send-message')
 					.addEventListener('click', function () {
 						const body =
 							document.getElementById('message-body').value;
-						if (!body.trim() || !currentConversation.receiverId)
-							return; // Éviter d'envoyer des messages vides ou lorsque receiverId est null
+						if (!body.trim()) return; // Éviter d'envoyer des messages vides
+
 						const messageData = {
-							subject: currentConversation.subject,
 							message_body: body,
-							sender_id: userId, // ID de l'utilisateur
-							receiver_id: currentConversation.receiverId, // ID du professionnel
-							fromSelf: true,
+							subject: 'Chat Général', // Ou récupérer d'une autre manière si nécessaire
 						};
 
-						// Afficher immédiatement le message dans l'UI
-						displayMessage({
-							...messageData,
-							sender_name: userName, // Nom de l'utilisateur
-							fromSelf: true,
-							sent_at: new Date(),
-						});
-
-						socket.emit('send_message', messageData);
-						document.getElementById('message-body').value = '';
+						socket.emit('send_message', messageData); // Envoyer le message au serveur
+						document.getElementById('message-body').value = ''; // Réinitialiser le champ de saisie
 					});
 
 				socket.on('new_message', (message) => {
@@ -90,53 +65,30 @@
 					displayMessage(message);
 				});
 
-				socket.on('message_sent', (response) =>
-					console.log('Message envoyé avec succès:', response)
-				);
+				socket.on('message_sent', (response) => {
+					console.log('Message envoyé avec succès:', response);
+				});
 
-				socket.on('message_error', (error) =>
+				socket.on('message_error', (error) => {
 					console.error(
 						"Erreur lors de l'envoi du message:",
 						error.message
-					)
-				);
-
-				socket.on('disconnect', () =>
-					console.log('Déconnecté du serveur Socket.IO')
-				);
-
-				socket.on('join_new_room', (info) => {
-					console.log('Info on joining new room:', info);
-					if (info.receiver_id == userId) {
-						socket.emit('join_room', {
-							nom: `${info.sender_id}-${info.receiver_id}`,
-						});
-					}
+					);
 				});
 
 				function displayMessage(message) {
 					const messagesContainer =
 						document.getElementById('messages');
 					const msgElement = document.createElement('div');
-					const date = new Date(message.sent_at || Date.now());
-					const options = {
-						weekday: 'long',
-						year: 'numeric',
-						month: 'long',
-						day: 'numeric',
-						hour: '2-digit',
-						minute: '2-digit',
-					};
-					const formattedDate = date.toLocaleDateString(
-						'fr-FR',
-						options
-					);
-					msgElement.innerHTML = `<strong>${
-						message.fromSelf ? 'Vous' : message.sender_name // Afficher le nom de l'expéditeur
-					}</strong>: ${
-						message.message_body
-					} <span style="font-size:0.8em;color:gray;">(${formattedDate})</span>`;
+					msgElement.innerHTML = `<strong>${message.sender_name}</strong>: ${message.message_body}`;
 					messagesContainer.appendChild(msgElement);
+				}
+
+				function getCookie(name) {
+					const value = `; ${document.cookie}`;
+					const parts = value.split(`; ${name}=`);
+					if (parts.length === 2)
+						return parts.pop().split(';').shift();
 				}
 			});
 		</script>
@@ -147,7 +99,7 @@
 		<div id="conversation-partner"></div>
 		<textarea
 			id="message-body"
-			placeholder="Écrivez votre réponse ici..."
+			placeholder="Écrivez votre message ici..."
 		></textarea>
 		<button id="send-message">Envoyer Message</button>
 		<div id="messages"></div>

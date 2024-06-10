@@ -103,30 +103,36 @@
 			document
 				.getElementById('login-form')
 				.addEventListener('submit', async (event) => {
-					event.preventDefault(); // Prevent form submission by default
+					event.preventDefault();
 
 					const email = document.getElementById('email').value;
 					const password = document.getElementById('password').value;
 
-					const response = await fetch('/connexion', {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify({ email, password }),
-					});
-					console.log(response);
-					if (response.status === 204) {
-						// Authentication successful, redirect the user to the profile page
-						//	const userData = await response.json();
-						window.location.href = `/profil/${2}`;
-						/*if (userData.users_id) {
-						} else if (userData.professional_id) {
-							window.location.href = `/profil/${userData.professional_id}`;
-						}*/
-					} else {
-						// Handle failed authentication, for example by displaying an error message
-						console.log("Échec de l'authentification");
+					try {
+						const response = await fetch('/connexion', {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ email, password }),
+						});
+
+						if (!response.ok) {
+							const errorText = await response.text(); // Obtenir le texte de l'erreur pour plus de détails
+							throw new Error(errorText);
+						}
+
+						const userData = await response.json();
+						document.cookie = `jwt=${userData.token}; path=/`; // Enregistrer le token dans un cookie
+
+						// Redirection basée sur le type d'utilisateur
+						const redirectUrl = userData.est_pro
+							? `/profil-pro/${userData.users_id}`
+							: `/profil-client/${userData.users_id}`;
+						window.location.href = redirectUrl;
+					} catch (error) {
+						console.error(
+							"Échec de l'authentification :",
+							error.message
+						);
 					}
 				});
 		</script>

@@ -1,10 +1,11 @@
 require('dotenv').config();
-
 const express = require('express');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const http = require('http');
 const socketIo = require('socket.io');
+const initializeSocket = require('./socket/socketController');
+
 const {
 	connectToDatabase,
 	createTableUser,
@@ -19,10 +20,8 @@ const {
 } = require('./db/database');
 const path = require('path');
 const app = express();
-
 const server = http.createServer(app); // Créer le serveur ici
 const io = socketIo(server); // Initialiser Socket.IO avec le serveur
-
 const port = 3000;
 const disconnect = require('./routes/disconnect');
 const routes = require('./routes/authentication');
@@ -56,6 +55,8 @@ connectToDatabase().then(() => {
 const bus = new EventEmitter();
 bus.setMaxListeners(30);
 
+initializeSocket(io);
+
 bus.on('monEvenement', () => {});
 
 app.use('/service', serviceRouter);
@@ -86,63 +87,6 @@ app.use('/api', require('./routes/reservation'));
 app.use(express.urlencoded({ extended: true }));
 app.use('/', messagesRoutes);
 app.use('/', noteRoutes);
-
-// Gestion des connexions WebSocket
-
-io.on('connection', (socket) => {
-	console.log("Un utilisateur s'est connecté");
-
-	socket.on('send_message', async (data) => {
-		console.log(
-			`Tentative d'envoi d'un message avec les données: ${JSON.stringify(
-				data
-			)}`
-		);
-		const { sender_id, receiver_id, subject, message_body } = data;
-
-		const client = getClientsCollection();
-		try {
-			const result = await client.query(
-				`INSERT INTO messages (sender_id, receiver_id, subject, message_body, sent_at)
-                 VALUES ($1, $2, $3, $4, NOW()) RETURNING *;`,
-				[sender_id, receiver_id, subject, message_body]
-			);
-			const message = result.rows[0];
-			message.sent_at = new Date().toISOString();
-			console.log(
-				`Message inséré avec succès: ${JSON.stringify(message)}`
-			);
-
-			socket.broadcast.emit('join_new_room', {
-				sender_id,
-				receiver_id,
-			});
-
-			socket
-				.to(`${sender_id.toString()}-${receiver_id.toString()}`)
-				.emit('new_message', message);
-			socket.emit('message_sent', {
-				status: 'success',
-				message: message,
-			});
-		} catch (error) {
-			console.error(
-				"Erreur lors de l'envoi du message via Socket.IO:",
-				error
-			);
-			socket.emit('message_error', {
-				status: 'error',
-				message: "Erreur lors de l'envoi du message",
-			});
-		}
-	});
-
-	socket.on('join_room', (room) => {
-		socket.join(room.nom);
-		console.log(socket.adapter.rooms);
-		console.log(`Utilisateur ${socket.id} a rejoint la salle ${room.nom}`);
-	});
-});
 
 // permet de lancer serveur web
 server.listen(port, () => {
