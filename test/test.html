@@ -1,107 +1,41 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 	<head>
 		<meta charset="UTF-8" />
-		<title>Test de Socket.IO</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Socket.IO Test</title>
 		<script src="/socket.io/socket.io.js"></script>
 		<script>
-			document.addEventListener('DOMContentLoaded', function () {
-				// Supposons que le JWT est stocké dans les cookies sous le nom 'jwt'
-				const token = getCookie('jwt');
+			document.addEventListener('DOMContentLoaded', () => {
+				const socket = io();
 
-				// Établir la connexion Socket.IO avec le token d'authentification
-				const socket = io('', { query: `token=${token}` });
-
-				socket.on('connect', () => {
-					console.log('Connecté au serveur Socket.IO');
-					console.log('Connecté en tant que:', user.id);
-					fetchMessages(); // Récupère les messages dès la connexion
+				socket.on('message', (message) => {
+					const li = document.createElement('li');
+					li.textContent = `From ${message.sender_id} to ${message.receiver_id}: ${message.message_body}`;
+					document.getElementById('messages').appendChild(li);
 				});
 
-				function fetchMessages() {
-					// Utilisation de fetch pour récupérer les messages de l'utilisateur
-					fetch(`/api/conversations`)
-						.then((response) => response.json())
-						.then((data) => {
-							if (data && data.length > 0) {
-								data.forEach((message) =>
-									displayMessage(message)
-								);
-								updateUI(data[0]); // Mise à jour de l'UI avec le dernier message
-							}
-						})
-						.catch((error) =>
-							console.error('Error fetching messages:', error)
-						);
-				}
-
-				function updateUI(message) {
-					document.getElementById(
-						'conversation-subject'
-					).textContent = `Sujet: ${message.subject}`;
-					document.getElementById(
-						'conversation-partner'
-					).textContent = `Conversation avec: ${message.sender_name}`;
-				}
-
-				document
-					.getElementById('send-message')
-					.addEventListener('click', function () {
-						const body =
-							document.getElementById('message-body').value;
-						if (!body.trim()) return; // Éviter d'envoyer des messages vides
-
-						const messageData = {
-							message_body: body,
-							subject: 'Chat Général', // Ou récupérer d'une autre manière si nécessaire
-						};
-
-						socket.emit('send_message', messageData); // Envoyer le message au serveur
-						document.getElementById('message-body').value = ''; // Réinitialiser le champ de saisie
+				document.getElementById('sendButton').onclick = () => {
+					const senderId = document.getElementById('senderId').value;
+					const receiverId =
+						document.getElementById('receiverId').value;
+					const messageBody =
+						document.getElementById('messageBody').value;
+					socket.emit('message', {
+						senderId,
+						receiverId,
+						messageBody,
 					});
-
-				socket.on('new_message', (message) => {
-					console.log('Nouveau message reçu:', message);
-					displayMessage(message);
-				});
-
-				socket.on('message_sent', (response) => {
-					console.log('Message envoyé avec succès:', response);
-				});
-
-				socket.on('message_error', (error) => {
-					console.error(
-						"Erreur lors de l'envoi du message:",
-						error.message
-					);
-				});
-
-				function displayMessage(message) {
-					const messagesContainer =
-						document.getElementById('messages');
-					const msgElement = document.createElement('div');
-					msgElement.innerHTML = `<strong>${message.sender_name}</strong>: ${message.message_body}`;
-					messagesContainer.appendChild(msgElement);
-				}
-
-				function getCookie(name) {
-					const value = `; ${document.cookie}`;
-					const parts = value.split(`; ${name}=`);
-					if (parts.length === 2)
-						return parts.pop().split(';').shift();
-				}
+				};
 			});
 		</script>
 	</head>
 	<body>
-		<h1>Test de Socket.IO</h1>
-		<div id="conversation-subject"></div>
-		<div id="conversation-partner"></div>
-		<textarea
-			id="message-body"
-			placeholder="Écrivez votre message ici..."
-		></textarea>
-		<button id="send-message">Envoyer Message</button>
-		<div id="messages"></div>
+		<h1>Socket.IO Test</h1>
+		<input id="senderId" type="text" placeholder="Sender ID" />
+		<input id="receiverId" type="text" placeholder="Receiver ID" />
+		<input id="messageBody" type="text" placeholder="Message" />
+		<button id="sendButton">Send</button>
+		<ul id="messages"></ul>
 	</body>
 </html>

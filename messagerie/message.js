@@ -65,7 +65,7 @@ router.get('/api/user-messages/:userId', async (req, res) => {
 });*/
 
 // Endpoint pour récupérer toutes les conversations d'un utilisateur
-router.get('/api/conversations/:userId', async (req, res) => {
+router.get('/conversations/:userId', async (req, res) => {
 	const client = getClientsCollection();
 	const userId = req.params.userId;
 

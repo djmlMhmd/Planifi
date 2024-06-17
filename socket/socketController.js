@@ -3,7 +3,6 @@ const { getClientsCollection } = require('../db/database');
 
 function initializeSocket(io) {
 	io.use((socket, next) => {
-		// Logique simplifiée pour test
 		console.log('Token Received:', socket.handshake.query.token);
 		return next();
 	});
@@ -17,7 +16,7 @@ function initializeSocket(io) {
 					data
 				)}`
 			);
-			const { sender_id, receiver_id, subject, message_body } = data.data;
+			const { sender_id, receiver_id, subject, message_body } = data;
 			const client = getClientsCollection();
 
 			try {
