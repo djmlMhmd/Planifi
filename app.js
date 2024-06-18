@@ -1,5 +1,7 @@
 require('dotenv').config();
 const express = require('express');
+const bodyParser = require('body-parser');
+const { verifyRecaptcha } = require('./middleware/recaptchaMiddleware');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const http = require('http');
@@ -87,6 +89,8 @@ app.use('/api', require('./routes/reservation'));
 app.use(express.urlencoded({ extended: true }));
 app.use('/', messagesRoutes);
 app.use('/', noteRoutes);
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // permet de lancer serveur web
 server.listen(port, () => {

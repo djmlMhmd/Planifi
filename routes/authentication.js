@@ -2,35 +2,65 @@ const express = require('express');
 const { Router } = require('express');
 
 const router = Router();
+const { verifyRecaptcha } = require('../middleware/recaptchaMiddleware');
 router.use(express.json());
 
-const { registrationLimiter, authLimiter,
-	sendMailResetPasswordLimiter, sendMailConfirmRegistrationLimiter
-} = require("../utils/auth.utils");
-const {requiredAuth} = require("../middleware/authMiddleware");
-const authentificationController = require('../controllers/authentificationController')
-
+const {
+	registrationLimiter,
+	authLimiter,
+	sendMailResetPasswordLimiter,
+	sendMailConfirmRegistrationLimiter,
+} = require('../utils/auth.utils');
+const { requiredAuth } = require('../middleware/authMiddleware');
+const authentificationController = require('../controllers/authentificationController');
 
 /**
  * Authentification user déjà log
  */
-router.get('/auth', requiredAuth, authentificationController.auth_get)
+router.get('/auth', requiredAuth, authentificationController.auth_get);
 
 // REGISTRATIONS
-router.post('/inscription/utilisateur', registrationLimiter, authentificationController.register_client_post);
+router.post(
+	'/inscription/utilisateur',
+	registrationLimiter,
+	verifyRecaptcha,
+	authentificationController.register_client_post
+);
 
 // Inscription pour les professionnels
-router.post('/inscription/professionnel', authentificationController.register_client_post);
+router.post(
+	'/inscription/professionnel',
+	verifyRecaptcha,
+	authentificationController.register_client_post
+);
 
 // CONNEXION
-router.post('/connexion', authLimiter, authentificationController.connexion_post);
+router.post(
+	'/connexion',
+	authLimiter,
+	authentificationController.connexion_post
+);
 
-router.get('/confirm-registration', authentificationController.confirm_registration_get);
+router.get(
+	'/confirm-registration',
+	authentificationController.confirm_registration_get
+);
 
-router.post('/resend-registration-mail', sendMailConfirmRegistrationLimiter, authentificationController.resend_mail_register_post);
+router.post(
+	'/resend-registration-mail',
+	sendMailConfirmRegistrationLimiter,
+	authentificationController.resend_mail_register_post
+);
 
-router.post('/forgot-password', sendMailResetPasswordLimiter, authentificationController.forgot_password_post);
+router.post(
+	'/forgot-password',
+	sendMailResetPasswordLimiter,
+	authentificationController.forgot_password_post
+);
 
-router.put('/forgot-password-reset', authentificationController.forget_password_reset_post);
+router.put(
+	'/forgot-password-reset',
+	authentificationController.forget_password_reset_post
+);
 
 module.exports = router;

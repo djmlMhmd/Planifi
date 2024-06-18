@@ -16,6 +16,12 @@
 			href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css"
 		/>
 		<link href="/css/sign-up.css" rel="stylesheet" type="text/css" />
+		<script
+			src="https://www.google.com/recaptcha/api.js"
+			async
+			defer
+		></script>
+		<!-- Ajout du script reCAPTCHA -->
 	</head>
 	<body>
 		<div class="section">
@@ -135,6 +141,11 @@
 												class="input-icon uil uil-lock-alt"
 											></i>
 										</div>
+										<!-- Ajout du widget reCAPTCHA -->
+										<div
+											class="g-recaptcha"
+											data-sitekey="6LeYmvspAAAAAJ0r5G92BO2jPmc35mFtLhzf8Jns"
+										></div>
 										<button type="submit">Register</button>
 									</form>
 								</div>
