@@ -21,7 +21,6 @@ function setupRoutes(app) {
 	app.use('/notes', noteRoutes);
 
 	// Doublon j'ai l'impression, en tout cas "services" ne sert à rien
-	app.use('/services', serviceRoutes);
 	app.use('/service', serviceRoutes);
 	// Pas sûr que ça soit utile ça :
 	app.use('/api', reservationRoutes);
