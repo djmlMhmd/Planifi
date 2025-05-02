@@ -2,28 +2,20 @@ const Joi = require('joi');
 
 function userValidation(data) {
 	const userValidationSchema = Joi.object({
-		firstName: Joi.string().min(2).max(30).trim().required(),
-		lastName: Joi.string().min(2).max(30).trim().required(),
 		email: Joi.string().email().trim().required(),
 		password: Joi.string().min(8).max(60).required(),
 		confirmPassword: Joi.string().valid(Joi.ref('password')).required(),
-		phone: Joi.string().min(10).max(15).required(),
-		country: Joi.string().min(2).max(100).required(),
-		city: Joi.string().min(2).max(100).required(),
-		address: Joi.string().min(5).max(300).required(),
-		company_name: Joi.string().min(2).max(100).trim().optional(),
-		company_address: Joi.string().min(5).max(300).trim().optional(),
 	});
 	return userValidationSchema.validate(data);
 }
 
-function proValidation(data) {
+/*function proValidation(data) {
 	const proValidationSchema = Joi.object({
 		company_name: Joi.string().min(2).max(100).trim().required(),
 		company_address: Joi.string().min(5).max(300).trim().required(),
 	});
 	return proValidationSchema.validate(data);
-}
+}*/
 
 function serviceValidation(data) {
 	const serviceValidationSchema = Joi.object({
