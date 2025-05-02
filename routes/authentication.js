@@ -23,15 +23,22 @@ router.get('/auth', requiredAuth, authentificationController.auth_get);
 router.post(
 	'/inscription/utilisateur',
 	registrationLimiter,
-	verifyRecaptcha,
-	authentificationController.register_client_post
+	//verifyRecaptcha,
+	authentificationController.register_user_post
 );
 
 // Inscription pour les professionnels
 router.post(
 	'/inscription/professionnel',
-	verifyRecaptcha,
-	authentificationController.register_client_post
+	//verifyRecaptcha,
+	authentificationController.register_user_post
+);
+
+// Complétion du profil utilisateur (client ou pro)
+router.post(
+	'/complete-profile',
+	requiredAuth,
+	authentificationController.complete_profile_post
 );
 
 // CONNEXION

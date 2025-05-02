@@ -7,7 +7,7 @@ const {
 	sendError,
 	sendFailure,
 } = require('../utils/error_message.utils');
-const { userValidation, proValidation } = require('../validation/validation');
+//const { userValidation, proValidation } = require('../validation/validation');
 const {
 	errorLogger,
 	logLogger,
@@ -35,7 +35,7 @@ module.exports.auth_get = (req, res) => {
 };
 
 module.exports.register_user_post = async (req, res) => {
-	const { email, password, confirmPassword } = req.body;
+	const { email, password, confirmPassword, est_pro } = req.body;
 
 	if (password !== confirmPassword) {
 		return sendBadRequest(res, 'Les mots de passe ne correspondent pas');
@@ -65,13 +65,14 @@ module.exports.register_user_post = async (req, res) => {
 		const hashedPassword = await bcrypt.hash(password, saltRounds);
 
 		const insertUserQuery = `
-            INSERT INTO users(email, password)
-            VALUES($1, $2)
-            RETURNING users_id, email
-        `;
+	INSERT INTO users(email, password, est_pro)
+	VALUES($1, $2, $3)
+	RETURNING users_id, email, est_pro
+`;
 		const result = await client.query(insertUserQuery, [
 			email,
 			hashedPassword,
+			est_pro ?? false, // par défaut à false si undefined
 		]);
 
 		const { users_id } = result.rows[0];
@@ -107,7 +108,7 @@ module.exports.register_user_post = async (req, res) => {
 	}
 };
 
-module.exports.register_pro_post = async (req, res) => {
+/*module.exports.register_pro_post = async (req, res) => {
 	const { body } = req;
 	const { id } = decodeJWT(req.cookies.jwt);
 	const { error } = proValidation(body);
@@ -212,6 +213,82 @@ module.exports.register_pro_post = async (req, res) => {
 		return sendInternalServerError(
 			res,
 			"Erreur serveur lors de l'inscription du professionnel." + e.message
+		);
+	}
+};*/
+
+module.exports.complete_profile_post = async (req, res) => {
+	const {
+		firstName,
+		lastName,
+		phone,
+		country,
+		city,
+		address,
+		company_name,
+		company_address,
+	} = req.body;
+
+	const { id } = decodeJWT(req.cookies.jwt);
+	if (!id) {
+		return sendUnauthorized(res, 'Utilisateur non authentifié');
+	}
+
+	const client = getClientsCollection();
+
+	try {
+		// Vérifie que l'utilisateur existe et récupère s'il est pro
+		const userResult = await client.query(
+			'SELECT est_pro FROM users WHERE users_id = $1',
+			[id]
+		);
+
+		if (userResult.rowCount === 0) {
+			return sendFailure(res, 'Utilisateur introuvable');
+		}
+
+		const isPro = userResult.rows[0].est_pro;
+
+		// Mise à jour du profil commun
+		await client.query(
+			`UPDATE users 
+			 SET "firstName" = $1, "lastName" = $2, phone = $3, country = $4, city = $5, address = $6 
+			 WHERE users_id = $7`,
+			[firstName, lastName, phone, country, city, address, id]
+		);
+
+		// Si pro, on vérifie les infos et on insère ou met à jour pro_account
+		if (isPro && company_name && company_address) {
+			const proResult = await client.query(
+				'SELECT 1 FROM pro_account WHERE user_id = $1',
+				[id]
+			);
+
+			if (proResult.rowCount === 0) {
+				await client.query(
+					'INSERT INTO pro_account(company_name, company_address, user_id) VALUES ($1, $2, $3)',
+					[company_name, company_address, id]
+				);
+			} else {
+				await client.query(
+					'UPDATE pro_account SET company_name = $1, company_address = $2 WHERE user_id = $3',
+					[company_name, company_address, id]
+				);
+			}
+		}
+
+		return sendSuccess(res, 'Profil mis à jour avec succès');
+	} catch (e) {
+		errorLogger(
+			`Erreur lors de la complétion du profil : ${e.stack}`,
+			'',
+			'authentification.js',
+			'/complete-profile',
+			constants.POST_HTTP
+		);
+		return sendInternalServerError(
+			res,
+			'Erreur serveur lors de la mise à jour du profil'
 		);
 	}
 };
