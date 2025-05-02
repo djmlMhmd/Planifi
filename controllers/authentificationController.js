@@ -34,174 +34,64 @@ module.exports.auth_get = (req, res) => {
 	return sendSuccessWithNoContent(res);
 };
 
-module.exports.register_client_post = async (req, res) => {
-	const { body } = req;
-	const { error } = userValidation(body);
+module.exports.register_user_post = async (req, res) => {
+	const { email, password, confirmPassword } = req.body;
 
-	// Validatin initale des mots de passe
-	if (body.password !== body.confirmPassword) {
-		errorLogger(
-			`Les mots de passe ne correspondent pas`,
-			'',
-			'authentification.js',
-			'/inscription/utilisateur',
-			constants.POST_HTTP
-		);
+	if (password !== confirmPassword) {
 		return sendBadRequest(res, 'Les mots de passe ne correspondent pas');
 	}
 
-	if (error) {
-		errorLogger(
-			`Erreur lors de la validation des données de l'utilisateur ${JSON.stringify(
-				body.email
-			)}:`,
-			'',
-			'authentification.js',
-			'/inscription/utilisateur',
-			constants.POST_HTTP
+	if (isUndefinedOrEmpty(email) || isUndefinedOrEmpty(password)) {
+		return sendBadRequest(
+			res,
+			'L’email et le mot de passe sont obligatoires'
 		);
-		return sendBadRequest(res, error.details[0].message);
 	}
+
 	const client = getClientsCollection();
+
 	try {
-		const queryExistingAccount = `SELECT email from users where email = $1`;
-		const resultExistUser = await client.query(queryExistingAccount, [
-			body.email,
-		]);
-		if (resultExistUser.rows.length === 1) {
-			errorLogger(
-				`Un compte existe déjà avec cette adresse mail ${body.email}:`,
-				'',
-				'authentification.js',
-				'/inscription/utilisateur',
-				constants.POST_HTTP
-			);
+		const userExists = await client.query(
+			'SELECT email FROM users WHERE email = $1',
+			[email]
+		);
+		if (userExists.rows.length > 0) {
 			return sendFailure(
 				res,
-				`Vous possédez déjà un compte à cette adresse mail`
+				'Un compte existe déjà avec cette adresse email'
 			);
 		}
-	} catch (e) {
-		errorLogger(
-			`Erreur lors de la vérification à l'inscription : ${e.stack}`,
+
+		const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+		const insertUserQuery = `
+            INSERT INTO users(email, password)
+            VALUES($1, $2)
+            RETURNING users_id, email
+        `;
+		const result = await client.query(insertUserQuery, [
+			email,
+			hashedPassword,
+		]);
+
+		const { users_id } = result.rows[0];
+		const token = createToken(
+			users_id,
 			'',
-			'authentification.js',
-			'/inscription/utilisateur',
-			constants.POST_HTTP
+			constants.CONFIRM_REGISTRATION,
+			REGISTRATION_EXPIRES_IN
 		);
-		return sendInternalServerError(
+
+		await sendRegistrationLink(
+			email,
+			email,
+			`${process.env.API_URL}/confirm-registration?token=${token}`
+		);
+
+		return sendSuccess(
 			res,
-			"Erreur serveur lors de l'inscription. " + e.message
+			`Votre inscription a bien été prise en compte, un lien de confirmation vous a été envoyé à ${email}`
 		);
-	}
-
-	let resultInsertUser = null;
-	try {
-		const hash = await bcrypt.hash(body.password, saltRounds);
-		const valuesUser = [
-			body.firstName,
-			body.lastName,
-			hash,
-			body.email,
-			body.phone,
-			body.country,
-			body.city,
-			body.address,
-		];
-		if (
-			isUndefinedOrEmpty(body.company_name) ||
-			isUndefinedOrEmpty(body.company_address)
-		) {
-			const insertQuery = `INSERT INTO users("firstName", "lastName", password, email, phone, country, city, address)
-            VALUES($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT DO NOTHING RETURNING *`;
-
-			resultInsertUser = await client.query(insertQuery, valuesUser);
-		} else {
-			/**
-			 * On effectue une transaction lors de l'inscription d'un professionel
-			 * c'est à dire soit un crée un compte user ET un compte pro
-			 * soit rien en cas d'échec
-			 */
-			try {
-				await client.query('BEGIN');
-				const insertUserQuery = `INSERT INTO users("firstName", "lastName", password, email, phone, country, city, address, est_pro)
-                VALUES($1, $2, $3, $4, $5, $6, $7, $8, true) ON CONFLICT DO NOTHING RETURNING *`;
-
-				resultInsertUser = await client.query(
-					insertUserQuery,
-					valuesUser
-				);
-				const insertProQuery =
-					'INSERT INTO pro_account(company_name, company_address, user_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING RETURNING *';
-				const valuesPro = [
-					body.company_name,
-					body.company_address,
-					resultInsertUser.rows[0].users_id,
-				];
-				await client.query(insertProQuery, valuesPro);
-				await client.query('COMMIT');
-			} catch (e) {
-				await client.query('ROLLBACK');
-				errorLogger(
-					`Erreur lors de l'inscription en tant que professionnel : ${e.stack}`,
-					'',
-					'authentification.js',
-					'/inscription/utilisateur',
-					constants.POST_HTTP
-				);
-				return sendInternalServerError(
-					res,
-					"Erreur serveur lors de l'inscription. " + e.message
-				);
-			}
-		}
-
-		// Vérifie si des lignes ont été insérées
-		if (resultInsertUser && resultInsertUser.rowCount > 0) {
-			logLogger(
-				`Utilisateur inscrit avec succès:` +
-					JSON.stringify(resultInsertUser.rows[0]),
-				'',
-				'authentification.js',
-				'/inscription/utilisateur',
-				constants.POST_HTTP
-			);
-			const { email, firstName } = resultInsertUser.rows[0];
-			let id = resultInsertUser.rows[0].users_id;
-
-			/**
-			 * on crée un token qui ne durera que 10 minutes
-			 * @type {string}
-			 */
-			const token = createToken(
-				id,
-				'',
-				constants.CONFIRM_REGISTRATION,
-				REGISTRATION_EXPIRES_IN
-			);
-
-			sendSuccess(
-				res,
-				`Votre inscription a bien été prise en compte, un lien de confirmation d'inscription vous a été envoyé à votre adresse mail: ${email}`
-			);
-			await sendRegistrationLink(
-				email,
-				firstName,
-				`${process.env.API_URL}/confirm-registration?token=${token}`
-			);
-		} else {
-			errorLogger(
-				'Le compte existe déjà ou une autre erreur est survenue.',
-				'',
-				'authentification.js',
-				'/inscription/utilisateur',
-				constants.POST_HTTP
-			);
-			return sendBadRequest(
-				res,
-				'Le compte existe déjà ou une autre erreur est survenue.'
-			);
-		}
 	} catch (e) {
 		errorLogger(
 			`Erreur lors de l'inscription : ${e.stack}`,
@@ -212,7 +102,7 @@ module.exports.register_client_post = async (req, res) => {
 		);
 		return sendInternalServerError(
 			res,
-			"Erreur serveur lors de l'inscription. " + e.message
+			"Erreur serveur lors de l'inscription"
 		);
 	}
 };
