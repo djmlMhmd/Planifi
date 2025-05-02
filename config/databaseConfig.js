@@ -20,6 +20,7 @@ function initDatabase() {
 		createTableReservation();
 		createTableNotation();
 		createTableMessages();
+		createTableAvailability();
 		createTableImagesServicesProfessionals();
 		alterInTables();
 	});
