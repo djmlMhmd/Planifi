@@ -12,7 +12,7 @@ const { logLogger } = require('./config/winston/winston.config');
 
 const app = express();
 const server = http.createServer(app); // Créer le serveur ici
-const port = 3000;
+const port = 3000 || process.env.PORT;
 
 // Initialize database tables
 databaseConfig.init();

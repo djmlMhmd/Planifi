@@ -13,7 +13,7 @@ router.post('/notes', async (req, res) => {
 			'SELECT est_pro FROM users WHERE users_id = $1',
 			[users_id]
 		);
-		if (userCheck.rowCount == 0) {
+		if (userCheck.rowCount === 0) {
 			res.status(404).send("L'utilisateur spécifié n'existe pas.");
 			return;
 		}
@@ -36,18 +36,19 @@ router.post('/notes', async (req, res) => {
 });
 
 router.get('/notes/:users_id', async (req, res) => {
+	const { users_id } = req.body;
 	try {
 		const userCheck = await db.query(
 			'SELECT est_pro FROM users WHERE users_id = $1',
 			[users_id]
 		);
-		if (userCheck.rowCount == 0 || !userCheck.rows[0].est_pro) {
+		if (userCheck.rowCount === 0 || !userCheck.rows[0].est_pro) {
 			return res.status(404).send('Professionnel non trouvé ou ID');
 		}
 
 		const result = await db.query(
 			'SELECT * FROM notation WHERE users_id = $1',
-			[req.params.users_id]
+			[users_id]
 		);
 		if (result.rows.length > 0) {
 			res.status(200).send(result.rows);
