@@ -2,7 +2,7 @@ const fetch = require('node-fetch');
 
 const verifyRecaptcha = (req, res, next) => {
 	const token = req.body['g-recaptcha-response'];
-	const secretKey = '6LeYmvspAAAAAGZYw_zEo9cZXMLHmKHFBpCCpo6T';
+	const secretKey = process.env.SECRET_KEY_CAPTCHA;
 	const url = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${token}`;
 
 	fetch(url, { method: 'POST' })
