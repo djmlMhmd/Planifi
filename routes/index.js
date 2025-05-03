@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-const {requiredAuth} = require("../middleware/authMiddleware");
+const { requiredAuth } = require('../middleware/authMiddleware');
 const router = express.Router();
 
 // Définissez la route pour la page "À propos"
