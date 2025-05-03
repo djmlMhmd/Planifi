@@ -4,7 +4,6 @@ const http = require('http');
 const path = require('path');
 const EventEmitter = require('events');
 
-const socketConfig = require('./config/socketConfig');
 const databaseConfig = require('./config/databaseConfig');
 const middlewareConfig = require('./config/middlewareConfig');
 const routeConfig = require('./config/routeConfig');
@@ -16,9 +15,6 @@ const port = 3000;
 
 // Initialize database tables
 databaseConfig.init();
-
-// Initialize Socket.IO
-socketConfig.init(server);
 
 // Setup middleware
 middlewareConfig.setup(app);
