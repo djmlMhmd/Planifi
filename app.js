@@ -5,6 +5,7 @@ const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const http = require('http');
 const socketIo = require('socket.io');
+const fs = require('fs');
 const {
 	connectToDatabase,
 	createTableUser,
@@ -13,11 +14,13 @@ const {
 	getClientsCollection,
 	createTableReservation,
 	createTableAvailability,
+	createTableNotation,
 	createTableMessages,
 	createTableImagesServicesProfessionals,
 } = require('./db/database');
 const path = require('path');
 const app = express();
+const reactDistPath = path.join(__dirname, 'client', 'dist');
 
 const server = http.createServer(app); // Créer le serveur ici
 const io = socketIo(server); // Initialiser Socket.IO avec le serveur
@@ -40,17 +43,25 @@ const {alterInTables} = require("./db/alterDatabase");
 const {insertDatas} = require("./db/insertDatabase");
 
 getClientsCollection();
-connectToDatabase().then( ()=> {
-	//insertDatas();
-	createTableUser();
-	createTableProAccount();
-	createTableService();
-	createTableAvailability();
-	createTableReservation();
-	createTableMessages();
-	alterInTables();
-	createTableImagesServicesProfessionals();
-})
+connectToDatabase()
+	.then(() => {
+		//insertDatas();
+		createTableUser();
+		createTableProAccount();
+		createTableService();
+		createTableAvailability();
+		createTableReservation();
+		createTableNotation();
+		createTableMessages();
+		alterInTables();
+		createTableImagesServicesProfessionals();
+	})
+	.catch(() => {
+		logLogger(
+			'Initialisation de la base ignorée car la connexion PostgreSQL a échoué',
+			'App'
+		);
+	});
 // Increase the listener limit for an EventEmitter object
 const bus = new EventEmitter();
 bus.setMaxListeners(30);
@@ -73,6 +84,21 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'views')));
 app.use(express.json());
 app.use(cookieParser());
+app.get('/api/health', (_req, res) => {
+	res.json({
+		status: 'ok',
+		service: 'planifi-api',
+		timestamp: new Date().toISOString(),
+	});
+});
+
+if (fs.existsSync(reactDistPath)) {
+	app.use('/app', express.static(reactDistPath));
+	app.get('/app/*splat', (_req, res) => {
+		res.sendFile(path.join(reactDistPath, 'index.html'));
+	});
+}
+
 app.use('/', indexRoutes);
 app.use(disconnect);
 app.use(routes);

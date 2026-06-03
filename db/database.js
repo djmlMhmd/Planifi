@@ -27,6 +27,7 @@ const connectToDatabase = async () => {
 				e.stack,
 			'connectToDatabase'
 		);
+		throw e;
 	}
 };
 

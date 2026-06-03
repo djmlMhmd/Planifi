@@ -3,9 +3,18 @@
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
+    "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "dev:server": "nodemon app.js",
+    "dev:client": "vite --config client/vite.config.mjs",
+    "dev:full": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "build:client": "vite build --config client/vite.config.mjs",
+    "preview:client": "vite preview --config client/vite.config.mjs"
   },
   "author": "",
   "license": "ISC",
@@ -36,12 +45,17 @@
     "pg": "^8.11.3",
     "pg-format": "^1.0.4",
     "pg-promise": "^11.6.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "socket.io": "^4.7.5",
     "uuid-v4": "^0.1.0",
     "winston": "^3.13.0"
   },
   "devDependencies": {
     "@event-calendar/core": "^2.4.1",
-    "@event-calendar/time-grid": "^2.4.1"
+    "@event-calendar/time-grid": "^2.4.1",
+    "@vitejs/plugin-react": "^5.1.0",
+    "concurrently": "^9.2.1",
+    "vite": "^7.2.1"
   }
 }
