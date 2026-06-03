@@ -287,6 +287,44 @@ const createTableMessages = async () => {
 	}
 };
 
+const createTableNotation = async () => {
+	try {
+		const checkTableQuery = `
+            SELECT to_regclass('notation') as table_exists;
+        `;
+
+		const result = await client.query(checkTableQuery);
+		if (result.rows[0].table_exists === null) {
+			const createTableQuery = `
+                CREATE TABLE notation (
+                    note_id SERIAL PRIMARY KEY,
+                    users_id INT,
+					rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+					comment TEXT,
+					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (users_id) REFERENCES users(users_id)
+                );
+            `;
+
+			await client.query(createTableQuery);
+			logLogger(
+				'Table [notation] créée avec succès',
+				'createTableNotation'
+			);
+		} else {
+			verboseLogger(
+				'La table [notation] existe déjà.',
+				'createTableNotation'
+			);
+		}
+	} catch (e) {
+		errorLogger(
+			'Erreur lors de la création/verification de la table [notation]:' +
+				e.stack,
+			'createTableNotation'
+		);
+	}
+};
 const createTableImagesServicesProfessionals = async () => {
 	try {
 		const checkTableQuery = `
@@ -339,7 +377,7 @@ module.exports = {
 	createTableService,
 	createTableReservation,
 	createTableAvailability,
-	/*createTableDefaultAvailability,*/
+	createTableNotation,
 	createTableMessages,
 	getClientsCollection,
 	createTableImagesServicesProfessionals,
