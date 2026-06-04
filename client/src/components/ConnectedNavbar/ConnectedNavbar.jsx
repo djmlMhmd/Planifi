@@ -140,10 +140,10 @@ export default function ConnectedNavbar() {
 				<button
 					type="button"
 					onClick={() => navigateTo('/')}
-					aria-label="Retour a l'accueil Planifi"
+					aria-label="Retour a l'accueil Prestat"
 					className="shrink-0 justify-self-start"
 				>
-					<img src={prestatLogo} alt="Planifi" className="w-[156px]" />
+					<img src={prestatLogo} alt="Prestat" className="w-[156px]" />
 				</button>
 
 				<div className="mx-auto flex w-full max-w-[372px] items-center rounded-[18px] border border-black/8 bg-white shadow-[0_12px_28px_rgba(17,19,30,0.04)] justify-self-center">

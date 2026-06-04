@@ -2,6 +2,8 @@ import navigationPlaceholder from '../assets/navigation-placeholder.jpg';
 import providerGalleryOne from '../assets/provider-gallery-1.jpg';
 import providerGalleryTwo from '../assets/provider-gallery-2.jpg';
 
+const PROVIDER_OVERRIDES_STORAGE_KEY = 'prestat-provider-overrides';
+
 export const providers = [
 	{
 		id: 'tressa',
@@ -193,12 +195,41 @@ export const providers = [
 	},
 ];
 
+function readProviderOverrides() {
+	if (typeof window === 'undefined') {
+		return {};
+	}
+
+	try {
+		const raw = window.localStorage.getItem(PROVIDER_OVERRIDES_STORAGE_KEY);
+		return raw ? JSON.parse(raw) : {};
+	} catch {
+		return {};
+	}
+}
+
+function writeProviderOverrides(overrides) {
+	if (typeof window === 'undefined') {
+		return;
+	}
+
+	window.localStorage.setItem(PROVIDER_OVERRIDES_STORAGE_KEY, JSON.stringify(overrides));
+}
+
 export function getProviderById(providerId) {
-	return providers.find((provider) => provider.id === providerId) ?? providers[0];
+	const provider = providers.find((item) => item.id === providerId) ?? providers[0];
+	const override = readProviderOverrides()[provider.id];
+	return override ? { ...provider, ...override } : provider;
 }
 
 export function getProviderAndService(providerId, serviceId) {
 	const provider = getProviderById(providerId);
 	const service = provider.services.find((item) => item.id === serviceId) ?? provider.services[0];
 	return { provider, service };
+}
+
+export function saveProviderOverride(providerId, nextProviderData) {
+	const overrides = readProviderOverrides();
+	overrides[providerId] = nextProviderData;
+	writeProviderOverrides(overrides);
 }

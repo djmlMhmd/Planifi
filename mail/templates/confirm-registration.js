@@ -608,7 +608,7 @@ const confirmRegistrationTemplate = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.
 \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tvotre
 \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tinscription
 \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tsur
-\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tPlanifi.</span
+\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tPrestat.</span
 \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t>
 \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</p>
 \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<p

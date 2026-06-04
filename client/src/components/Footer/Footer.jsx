@@ -11,13 +11,13 @@ export default function Footer() {
 			<div className={s.top}>
 				<Reveal from="bottom">
 					<div className={s.brand}>
-						<img src={prestatLogo} alt="Planifi" />
+						<img src={prestatLogo} alt="Prestat" />
 						<p>La réservation de services, réinventée.</p>
 					</div>
 				</Reveal>
 				<nav className={s.nav}>
 					{[
-						{ title: 'Planifi', links: [['À propos', '/'], ['CGU', '/'], ['Confidentialité', '/'], ['Cookies', '/']] },
+						{ title: 'Prestat', links: [['À propos', '/'], ['CGU', '/'], ['Confidentialité', '/'], ['Cookies', '/']] },
 						{ title: 'Professionnels', links: professionals.map((p) => [p, '/services']) },
 						{ title: 'Recherches', links: searches.map((r) => [r, '/services']) },
 					].map(({ title, links }, i) => (
@@ -35,7 +35,7 @@ export default function Footer() {
 				</nav>
 			</div>
 			<div className={s.bottom}>
-				<p>© {new Date().getFullYear()} Planifi. Tous droits réservés.</p>
+				<p>© {new Date().getFullYear()} Prestat. Tous droits réservés.</p>
 				<a href="#faq">Proposer un service</a>
 			</div>
 		</footer>

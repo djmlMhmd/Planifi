@@ -617,7 +617,7 @@ const templateResetPassword = `
 \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tde
 \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tpasse
 \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tsur
-\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tPlanifi.</span
+\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tPrestat.</span
 \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t>
 \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t</p>
 \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t<p

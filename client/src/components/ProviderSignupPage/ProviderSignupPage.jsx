@@ -56,7 +56,7 @@ export default function ProviderSignupPage() {
 									<label className={s.checkboxRow}>
 										<input type="checkbox" />
 										<span>
-											J&apos;accepte les <a href="/">CGU</a> de Planifi
+											J&apos;accepte les <a href="/">CGU</a> de Prestat
 										</span>
 									</label>
 
@@ -65,7 +65,7 @@ export default function ProviderSignupPage() {
 									</button>
 
 									<p className={s.legalText}>
-										Vos informations sont traitees par Planifi, consultez notre{' '}
+										Vos informations sont traitees par Prestat, consultez notre{' '}
 										<a href="/">politique de confidentialite</a>. Ce site est protege
 										par reCAPTCHA et est soumis a la <a href="/">Politique de
 										Confidentialite</a> et aux <a href="/">Conditions

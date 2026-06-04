@@ -4,8 +4,8 @@ import s from './Faq.module.css';
 
 const items = [
 	{
-		question: "Planifi c'est quoi ?",
-		answer: "Planifi est une plateforme qui met en relation les particuliers avec des professionnels de divers domaines, facilitant la prise et la gestion de rendez-vous en toute simplicité.",
+		question: "Prestat c'est quoi ?",
+		answer: "Prestat est une plateforme qui met en relation les particuliers avec des professionnels de divers domaines, facilitant la prise et la gestion de rendez-vous en toute simplicité.",
 	},
 	{
 		question: "Réserver, c'est facile ?",
@@ -16,7 +16,7 @@ const items = [
 		answer: 'Depuis votre espace, vous pouvez retrouver vos réservations, suivre vos disponibilités et ajuster vos rendez-vous sans friction.',
 	},
 	{
-		question: 'Comment proposer mes services sur Planifi ?',
+		question: 'Comment proposer mes services sur Prestat ?',
 		answer: "Il suffit de créer votre compte, compléter votre profil professionnel et publier vos prestations pour commencer à recevoir des demandes.",
 	},
 ];

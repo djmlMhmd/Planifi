@@ -93,11 +93,11 @@ export default function AppHeader({ ctaHref, ctaLabel, navHref = '/app/proposer-
 	return (
 		<header className="pointer-events-none fixed inset-x-0 top-0 z-30 py-6 max-[640px]:py-[18px]">
 			<div className="pointer-events-auto mx-auto flex w-content items-center justify-between">
-				<a href={homeHref} aria-label="Planifi accueil">
+				<a href={homeHref} aria-label="Prestat accueil">
 					<img
 						className="h-auto w-40 brightness-0 invert max-[640px]:w-[120px]"
 						src={prestatLogo}
-						alt="Planifi"
+						alt="Prestat"
 					/>
 				</a>
 				<nav className="flex items-center gap-8 max-[640px]:gap-4">

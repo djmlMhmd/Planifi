@@ -277,7 +277,7 @@ export default function AuthPage({ initialMode = 'signup' }) {
 												<a className="underline underline-offset-2" href="/">
 													CGU
 												</a>{' '}
-												de Planifi
+												de Prestat
 											</span>
 										</label>
 
@@ -295,7 +295,7 @@ export default function AuthPage({ initialMode = 'signup' }) {
 										) : null}
 
 										<p className="mt-4 text-center text-[0.74rem] leading-[1.65] text-white/55">
-											Vos informations sont traitées par Planifi, consultez notre{' '}
+											Vos informations sont traitées par Prestat, consultez notre{' '}
 											<a className="text-white/70 underline underline-offset-2" href="/">
 												politique de confidentialité
 											</a>

@@ -6,8 +6,12 @@ import tipsImg3 from '../../assets/tips-3.png';
 import tipsImg4 from '../../assets/tips-4.png';
 import tipsImg5 from '../../assets/tips-5.png';
 import pdfFileIcon from '../../assets/pdf-file-icon.png';
+import navigationPlaceholder from '../../assets/navigation-placeholder.jpg';
+import providerGalleryOne from '../../assets/provider-gallery-1.jpg';
+import providerGalleryTwo from '../../assets/provider-gallery-2.jpg';
 import providerUserPlaceholder from '../../assets/provider-user-placeholder.png';
 import prestatLogo from '../../assets/prestat-logo.svg';
+import { getProviderById, saveProviderOverride } from '../../data/providers';
 import Reveal from '../Reveal/Reveal';
 
 async function readJsonSafely(response) {
@@ -199,6 +203,82 @@ function VerifiedBadge({ className = '' }) {
 	);
 }
 
+function PinIcon({ className = '' }) {
+	return (
+		<svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+			<path
+				d="M12 20C12 20 18 14.5 18 10.2A6 6 0 1 0 6 10.2C6 14.5 12 20 12 20Z"
+				stroke="currentColor"
+				strokeWidth="1.8"
+				strokeLinejoin="round"
+			/>
+			<circle cx="12" cy="10.2" r="2.1" fill="currentColor" />
+		</svg>
+	);
+}
+
+function StarIcon({ className = '' }) {
+	return (
+		<svg viewBox="0 0 20 20" fill="none" className={className} aria-hidden="true">
+			<path
+				d="M10 2.8L12.1 7.1L16.9 7.8L13.4 11.2L14.2 16L10 13.8L5.8 16L6.6 11.2L3.1 7.8L7.9 7.1L10 2.8Z"
+				stroke="currentColor"
+				strokeWidth="1.4"
+				strokeLinejoin="round"
+			/>
+		</svg>
+	);
+}
+
+function PencilIcon({ className = '' }) {
+	return (
+		<svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+			<path d="M4 16.8V20H7.2L17.3 9.9L14.1 6.7L4 16.8Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+			<path d="M12.8 8L16 11.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+			<path d="M13.4 7.4L15 5.8A1.9 1.9 0 0 1 17.7 5.8L18.2 6.3A1.9 1.9 0 0 1 18.2 9L16.6 10.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+		</svg>
+	);
+}
+
+function TrashIcon({ className = '' }) {
+	return (
+		<svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+			<path d="M5 7H19" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+			<path d="M9 7V5.7C9 5.01 9.56 4.45 10.25 4.45H13.75C14.44 4.45 15 5.01 15 5.7V7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+			<path d="M7.2 7L8.1 18.1C8.18 19.04 8.96 19.75 9.9 19.75H14.1C15.04 19.75 15.82 19.04 15.9 18.1L16.8 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+			<path d="M10 10.3V16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+			<path d="M14 10.3V16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+		</svg>
+	);
+}
+
+function SocialIcon({ kind, className = '' }) {
+	if (kind === 'instagram') {
+		return (
+			<svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
+				<rect x="3.5" y="3.5" width="17" height="17" rx="5" stroke="currentColor" strokeWidth="2" />
+				<circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2" />
+				<circle cx="17.2" cy="6.8" r="1.2" fill="currentColor" />
+			</svg>
+		);
+	}
+	if (kind === 'tiktok') {
+		return (
+			<svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
+				<path d="M14 4V13.2A3.8 3.8 0 1 1 10.8 9.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+				<path d="M14 4C14.8 5.8 16.3 7 18.4 7.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+			</svg>
+		);
+	}
+	return (
+		<svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
+			<path d="M10 14L14 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+			<path d="M8.5 16.5L6.8 18.2A3 3 0 1 1 2.6 14l2.1-2.1A3 3 0 0 1 9 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+			<path d="M15 13A3 3 0 0 1 19.3 13.1l2.1 2.1A3 3 0 1 1 17.2 19.4L15.5 17.7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+		</svg>
+	);
+}
+
 function BellOutlineIcon({ className = '' }) {
 	return (
 		<svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
@@ -363,6 +443,26 @@ function getProfileTabFromLocation(search = window.location.search) {
 	}
 
 	return 'dashboard';
+}
+
+function getProfessionalTabFromLocation(search = window.location.search) {
+	const tabParam = new URLSearchParams(search).get('tab');
+
+	if (tabParam === 'profile' || tabParam === 'settings') {
+		return tabParam;
+	}
+
+	return 'dashboard';
+}
+
+function resolveProfessionalProviderId(profile) {
+	const companyName = (profile?.company_name || '').toLowerCase();
+
+	if (companyName.includes('tressa')) return 'tressa';
+	if (companyName.includes('atelier')) return 'atelier';
+	if (companyName.includes('maison')) return 'maison';
+
+	return 'tressa';
 }
 
 function SidebarLink({ href, active = false, icon: Icon, onNavigate, tone = 'dark', children }) {
@@ -881,10 +981,10 @@ function DashboardShell({ profile, reservations, onProfileUpdated }) {
 			<div className="grid min-h-screen grid-cols-[210px_1fr]">
 				<aside className="sticky top-0 flex h-screen flex-col overflow-hidden border-r border-white/10 bg-[linear-gradient(180deg,#090909_0%,#121212_100%)] text-white">
 					<div className="flex h-[92px] items-center justify-center border-b border-white/10 px-7">
-						<a href="/" aria-label="Retour a l'accueil Planifi" className="transition opacity-100 hover:opacity-80">
+						<a href="/" aria-label="Retour a l'accueil Prestat" className="transition opacity-100 hover:opacity-80">
 							<img
 								src={prestatLogo}
-								alt="Planifi"
+								alt="Prestat"
 								className="w-[126px]"
 								style={{ filter: 'brightness(0) invert(1)' }}
 							/>
@@ -1076,59 +1176,396 @@ function DashboardShell({ profile, reservations, onProfileUpdated }) {
 	);
 }
 
-function ProfessionalProfile({ profile }) {
+function ProfessionalProfile({ profile, serviceTiles, onAddService, onEditService }) {
+	const providerId = resolveProfessionalProviderId(profile);
+	const provider = getProviderById(providerId);
+	const [isEditing, setIsEditing] = useState(false);
+	const [saveState, setSaveState] = useState('');
+	const [draft, setDraft] = useState(() => ({
+		company: profile.company_name || provider.company,
+		location: profile.company_address || provider.location,
+		policy: provider.policy,
+		news: provider.news,
+		description: provider.description,
+		hours: provider.hours,
+		gallery: provider.gallery.length ? provider.gallery : [
+			{ id: 'g1', image: providerGalleryOne, alt: 'Photo vitrine 1' },
+			{ id: 'g2', image: providerGalleryTwo, alt: 'Photo vitrine 2' },
+			{ id: 'g3', image: favoritesPlaceholder, alt: 'Photo vitrine 3' },
+		],
+		socials: {
+			instagram: provider.socials.find((item) => item.id === 'instagram')?.href || '',
+			tiktok: provider.socials.find((item) => item.id === 'tiktok')?.href || '',
+			link: provider.socials.find((item) => item.id === 'link')?.href || '',
+		},
+	}));
+
+	useEffect(() => {
+		setDraft({
+			company: profile.company_name || provider.company,
+			location: profile.company_address || provider.location,
+			policy: provider.policy,
+			news: provider.news,
+			description: provider.description,
+			hours: provider.hours,
+			gallery: provider.gallery.length ? provider.gallery : [
+				{ id: 'g1', image: providerGalleryOne, alt: 'Photo vitrine 1' },
+				{ id: 'g2', image: providerGalleryTwo, alt: 'Photo vitrine 2' },
+				{ id: 'g3', image: favoritesPlaceholder, alt: 'Photo vitrine 3' },
+			],
+			socials: {
+				instagram: provider.socials.find((item) => item.id === 'instagram')?.href || '',
+				tiktok: provider.socials.find((item) => item.id === 'tiktok')?.href || '',
+				link: provider.socials.find((item) => item.id === 'link')?.href || '',
+			},
+		});
+	}, [profile.company_name, profile.company_address, provider.company, provider.location, provider.policy, provider.news, provider.description, provider.hours, provider.gallery, provider.socials]);
+
+	function updateDraft(field, value) {
+		setDraft((current) => ({ ...current, [field]: value }));
+		setSaveState('');
+	}
+
+	function updateHour(index, value) {
+		setDraft((current) => ({
+			...current,
+			hours: current.hours.map((entry, entryIndex) => (entryIndex === index ? [entry[0], value] : entry)),
+		}));
+		setSaveState('');
+	}
+
+	function updateSocial(field, value) {
+		setDraft((current) => ({
+			...current,
+			socials: { ...current.socials, [field]: value },
+		}));
+		setSaveState('');
+	}
+
+	function handleSaveProfile() {
+		saveProviderOverride(providerId, {
+			company: draft.company,
+			location: draft.location,
+			policy: draft.policy,
+			news: draft.news,
+			description: draft.description,
+			hours: draft.hours,
+			gallery: draft.gallery,
+			socials: [
+				{ id: 'instagram', label: 'Instagram', href: draft.socials.instagram || '#' },
+				{ id: 'tiktok', label: 'TikTok', href: draft.socials.tiktok || '#' },
+				{ id: 'link', label: 'Site', href: draft.socials.link || '#' },
+			],
+			services: serviceTiles.map((service) => ({
+				id: service.id,
+				name: service.title,
+				duration: service.duration || '1h',
+				price: service.price,
+				description: service.description || '',
+			})),
+		});
+		setIsEditing(false);
+		setSaveState('Modifications enregistrées.');
+	}
+
 	return (
-		<main className="relative min-h-screen overflow-hidden bg-brand-black pt-32 text-white">
-			<div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_30%),linear-gradient(180deg,#0a0a0a_0%,#101010_100%)]" />
-			<section className="relative z-[1] mx-auto flex w-content flex-col gap-8 pb-16">
-				<Reveal from="bottom">
-					<div className="max-w-[760px]">
-						<p className="mb-3 text-sm uppercase tracking-[0.18em] text-white/50">Espace prestataire</p>
-						<h1 className="text-[clamp(2.4rem,5vw,4rem)] font-semibold tracking-[-0.04em]">
-							Profil professionnel
-						</h1>
-					</div>
-				</Reveal>
-
-				<div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-					<div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-md">
-						<h2 className="mb-4 text-[1.35rem] font-semibold text-white">Informations</h2>
-						<div className="grid grid-cols-[160px_1fr] gap-4 border-b border-white/10 py-3">
-							<div className="text-sm text-white/55">Entreprise</div>
-							<div className="text-white/92">{profile.company_name || '-'}</div>
-						</div>
-						<div className="grid grid-cols-[160px_1fr] gap-4 border-b border-white/10 py-3">
-							<div className="text-sm text-white/55">Nom</div>
-							<div className="text-white/92">{profile.firstName} {profile.lastName}</div>
-						</div>
-						<div className="grid grid-cols-[160px_1fr] gap-4 border-b border-white/10 py-3">
-							<div className="text-sm text-white/55">Email</div>
-							<div className="text-white/92">{profile.email}</div>
-						</div>
-						<div className="grid grid-cols-[160px_1fr] gap-4 py-3">
-							<div className="text-sm text-white/55">Adresse pro</div>
-							<div className="text-white/92">{profile.company_address || '-'}</div>
-						</div>
-					</div>
-
-					<div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-md">
-						<h2 className="mb-4 text-[1.35rem] font-semibold text-white">Compte</h2>
-						<p className="text-sm leading-7 text-white/65">
-							La version détaillée du dashboard prestataire peut venir ensuite. Pour
-							l’instant, on garde ici un espace propre et cohérent avec le nouveau
-							parcours connecté.
-						</p>
-					</div>
+		<div className="px-9 pb-12 pt-9">
+			<div className="mx-auto max-w-[1480px]">
+				<div className="mb-8 flex flex-wrap items-center gap-4">
+					<button
+						type="button"
+						onClick={() => setIsEditing((value) => !value)}
+						className="rounded-full border border-black/12 bg-white px-5 py-2.5 text-[0.95rem] font-medium text-[#171717] transition hover:border-black/18 hover:bg-black/[0.02]"
+					>
+						{isEditing ? 'Annuler l’édition' : 'Éditer le profil'}
+					</button>
+					<button
+						type="button"
+						onClick={handleSaveProfile}
+						className="rounded-full bg-[#101010] px-5 py-2.5 text-[0.95rem] font-medium text-white shadow-[0_14px_28px_rgba(17,19,30,0.14)] transition hover:-translate-y-px"
+					>
+						Enregistrer
+					</button>
+					{saveState ? <p className="text-[0.9rem] text-black/48">{saveState}</p> : null}
 				</div>
-			</section>
-		</main>
+
+				<div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
+					<div className="min-w-0">
+						<div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+							<div className="flex items-start gap-5">
+								<div className="relative flex h-32 w-32 items-center justify-center rounded-full border border-[#dbc78f] bg-white shadow-[0_16px_34px_rgba(17,19,30,0.04)]">
+									<div className="absolute bottom-2 right-2 flex h-11 w-11 items-center justify-center rounded-full bg-[#1a1b20] text-white shadow-[0_10px_24px_rgba(17,19,30,0.18)]">
+										<PlusCircleIcon className="h-5 w-5" />
+									</div>
+									<svg viewBox="0 0 64 64" className="h-20 w-20 text-[#cfb16d]" fill="none" aria-hidden="true">
+										<path d="M32 13C24 19 21 27 21 34C21 42 26 49 32 53C38 49 43 42 43 34C43 27 40 19 32 13Z" stroke="currentColor" strokeWidth="2.8" />
+										<path d="M32 18V49" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
+										<path d="M24.5 24.5C29 28 30.8 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+										<path d="M39.5 24.5C35 28 33.2 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+									</svg>
+								</div>
+
+								<div className="pt-2">
+									{isEditing ? (
+										<input
+											type="text"
+											value={draft.company}
+											onChange={(event) => updateDraft('company', event.target.value)}
+											className="w-full max-w-[420px] rounded-[16px] border border-black/8 bg-white px-4 py-3 text-[2rem] font-semibold tracking-[-0.04em] text-[#181818] outline-none transition focus:border-black/18"
+										/>
+									) : (
+										<h1 className="text-[clamp(2rem,3vw,2.8rem)] font-semibold tracking-[-0.04em] text-[#181818]">{draft.company}</h1>
+									)}
+									<div className="mt-3 flex items-center gap-2 text-[1rem] font-medium text-[#1f1f1f]">
+										<PinIcon className="h-[18px] w-[18px]" />
+										{isEditing ? (
+											<input
+												type="text"
+												value={draft.location}
+												onChange={(event) => updateDraft('location', event.target.value)}
+												className="w-full max-w-[320px] rounded-[12px] border border-black/8 bg-white px-3 py-2 text-[0.98rem] outline-none transition focus:border-black/18"
+											/>
+										) : (
+											<span>{draft.location}</span>
+										)}
+									</div>
+									<div className="mt-2 flex items-center gap-2 text-[0.96rem] text-black/48">
+										<VerifiedBadge className="h-[18px] w-[18px]" />
+										<span>utilisateur vérifié</span>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div className="mb-8">
+							<button
+								type="button"
+								onClick={onAddService}
+								className="inline-flex items-center gap-2 rounded-full bg-[#1a1b20] px-4 py-2.5 text-[0.9rem] font-medium text-white shadow-[0_12px_24px_rgba(17,19,30,0.14)]"
+							>
+								<PlusCircleIcon className="h-4 w-4" />
+								Ajouter un service
+							</button>
+						</div>
+
+						<section>
+							<div className="space-y-6">
+								{serviceTiles.map((service) => (
+									<div key={service.id} className="rounded-[24px] border border-black/8 bg-white p-5 shadow-[0_14px_34px_rgba(17,19,30,0.045)]">
+										<div className="mb-4 flex items-start justify-between gap-4">
+											<div>
+												<h3 className="text-[1.2rem] font-semibold text-[#191919]">{service.title}</h3>
+												{service.duration ? <span className="text-[0.95rem] text-black/34">{service.duration}</span> : null}
+											</div>
+											<div className="flex items-center gap-3 text-black/46">
+												<button type="button" onClick={() => onEditService(service)} className="transition hover:text-black" aria-label="Modifier le service">
+													<PencilIcon className="h-5 w-5" />
+												</button>
+												<button type="button" className="transition hover:text-black" aria-label="Supprimer le service">
+													<TrashIcon className="h-5 w-5" />
+												</button>
+											</div>
+										</div>
+										<div className="grid grid-cols-[96px_1fr] gap-4">
+											<div>
+												<div className="flex h-24 items-center justify-center rounded-[14px] bg-[linear-gradient(135deg,#aba79c_0%,#7c786f_100%)] text-white">
+													<PlusCircleIcon className="h-7 w-7" />
+												</div>
+												<p
+													className="mt-3 text-center text-[2rem] tracking-[-0.04em] text-[#161616]"
+													style={{ fontFamily: '"TAN Meringue", "Iowan Old Style", "Times New Roman", serif' }}
+												>
+													{service.price}
+												</p>
+											</div>
+											<div className="flex min-h-[96px] flex-col">
+												<p className="text-[0.96rem] leading-7 text-black/62">{service.description || 'Ajoutez une description pour ce service.'}</p>
+											</div>
+										</div>
+									</div>
+								))}
+							</div>
+						</section>
+
+						<section className="mt-10">
+							<h2 className="mb-5 text-[1.9rem] font-semibold tracking-[-0.04em] text-[#1a1a1a]">Descriptions</h2>
+							<div className="rounded-[26px] border border-black/8 bg-white p-7 shadow-[0_16px_38px_rgba(17,19,30,0.045)]">
+								{isEditing ? (
+									<textarea
+										value={draft.description}
+										onChange={(event) => updateDraft('description', event.target.value)}
+										className="h-[260px] w-full resize-none rounded-[18px] border border-black/8 bg-[#f7f7f8] p-5 text-[1rem] leading-8 text-black/68 outline-none transition focus:border-black/18 focus:bg-white"
+										placeholder="Description"
+									/>
+								) : (
+									<div className="text-[1rem] leading-8 text-black/66">
+										{draft.description.split('\n\n').map((paragraph) => (
+											<p key={paragraph} className="mb-6 last:mb-0">{paragraph}</p>
+										))}
+									</div>
+								)}
+							</div>
+						</section>
+
+						<section className="mt-10">
+							<h2 className="mb-5 text-[1.9rem] font-semibold tracking-[-0.04em] text-[#1a1a1a]">Vitrine photo</h2>
+							<div className="flex flex-wrap gap-4">
+								{draft.gallery.map((photo, index) => (
+									<div key={photo.id} className="group relative aspect-square w-[168px] overflow-hidden rounded-[22px] border border-black/6 bg-white shadow-[0_14px_34px_rgba(17,19,30,0.04)] sm:w-[182px] lg:w-[196px] xl:w-[210px]">
+										<img src={photo.image} alt={photo.alt} className="absolute inset-0 h-full w-full object-cover" />
+										<div className="absolute inset-0 flex items-center justify-center bg-[rgba(15,16,18,0.18)]">
+											<div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/72 text-[#17181d] backdrop-blur-[2px]">
+												{index === 2 ? <PlusCircleIcon className="h-8 w-8" /> : <PencilIcon className="h-7 w-7" />}
+											</div>
+										</div>
+									</div>
+								))}
+							</div>
+						</section>
+					</div>
+
+					<aside className="space-y-5 xl:sticky xl:top-28 xl:self-start">
+						<div className="overflow-hidden rounded-[26px] border border-black/8 bg-white p-4 shadow-[0_16px_38px_rgba(17,19,30,0.045)]">
+							<div className="relative h-[240px] overflow-hidden rounded-[18px] bg-[linear-gradient(135deg,#efe5c7_0%,#dad7cf_40%,#f1efe8_100%)]">
+								<img src={navigationPlaceholder} alt="Carte" className="h-full w-full object-cover" />
+							</div>
+						</div>
+
+						<div className="rounded-[24px] border border-black/8 bg-white p-6 shadow-[0_16px_38px_rgba(17,19,30,0.045)]">
+							<div className="mb-4 flex items-center justify-between">
+								<h3 className="text-center text-[1.15rem] font-semibold text-[#222222]">Politique de prestation</h3>
+								{isEditing ? <PencilIcon className="h-5 w-5 text-black/36" /> : null}
+							</div>
+							{isEditing ? (
+								<textarea
+									value={draft.policy}
+									onChange={(event) => updateDraft('policy', event.target.value)}
+									className="h-[150px] w-full resize-none rounded-[16px] border border-black/8 bg-[#f7f7f8] p-4 text-[0.96rem] leading-7 text-black/62 outline-none transition focus:border-black/18 focus:bg-white"
+								/>
+							) : (
+								<p className="text-[0.96rem] leading-7 text-black/62">{draft.policy}</p>
+							)}
+						</div>
+
+						<div className="rounded-[24px] border border-black/8 bg-white p-6 shadow-[0_16px_38px_rgba(17,19,30,0.045)]">
+							<div className="mb-4 flex items-center justify-between">
+								<h3 className="text-center text-[1.15rem] font-semibold text-[#222222]">Actualités</h3>
+								{isEditing ? <PencilIcon className="h-5 w-5 text-black/36" /> : null}
+							</div>
+							{isEditing ? (
+								<textarea
+									value={draft.news}
+									onChange={(event) => updateDraft('news', event.target.value)}
+									className="h-[150px] w-full resize-none rounded-[16px] border border-black/8 bg-[#f7f7f8] p-4 text-[0.96rem] leading-7 text-black/62 outline-none transition focus:border-black/18 focus:bg-white"
+								/>
+							) : (
+								<p className="text-[0.96rem] leading-7 text-black/62">{draft.news}</p>
+							)}
+						</div>
+
+						<div className="rounded-[24px] border border-black/8 bg-white p-6 shadow-[0_16px_38px_rgba(17,19,30,0.045)]">
+							<div className="mb-4 flex items-center justify-between">
+								<h3 className="text-center text-[1.15rem] font-semibold text-[#222222]">Horaires d’ouvertures</h3>
+								{isEditing ? <PencilIcon className="h-5 w-5 text-black/36" /> : null}
+							</div>
+							<div className="mt-4 overflow-hidden rounded-[16px] border border-black/6">
+								{draft.hours.map(([day, hours], index) => (
+									<div key={day} className="grid grid-cols-[1fr_auto] gap-4 border-b border-black/6 px-5 py-3.5 text-[1rem] last:border-b-0">
+										<span className="text-[#2c2c2c]">{day}</span>
+										{isEditing ? (
+											<input
+												type="text"
+												value={hours}
+												onChange={(event) => updateHour(index, event.target.value)}
+												className="w-[120px] rounded-[10px] border border-black/8 bg-[#f7f7f8] px-3 py-1 text-right text-[0.92rem] outline-none transition focus:border-black/18 focus:bg-white"
+											/>
+										) : (
+											<span className={`${hours === 'Fermé' ? 'text-black/34' : 'text-[#2c2c2c]'}`}>{hours}</span>
+										)}
+									</div>
+								))}
+							</div>
+						</div>
+
+						<div className="rounded-[24px] border border-black/8 bg-white p-6 shadow-[0_16px_38px_rgba(17,19,30,0.045)]">
+							<h3 className="text-center text-[1.15rem] font-semibold text-[#222222]">Avis</h3>
+							<div className="mt-5 rounded-[18px] border border-black/6 p-5">
+								<div className="flex items-center gap-2 text-[0.95rem] text-[#1d1d1d]">
+									<span className="font-semibold">5,0</span>
+									<StarIcon className="h-4 w-4" />
+								</div>
+								<p className="mt-4 text-[0.96rem] leading-7 text-black/62">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua lo...</p>
+								<div className="mt-4 flex justify-end text-[#1a1a1a]">→</div>
+							</div>
+						</div>
+
+						<div className="rounded-[24px] border border-black/8 bg-white p-6 shadow-[0_16px_38px_rgba(17,19,30,0.045)]">
+							<div className="mb-4 flex items-center justify-between">
+								<h3 className="text-center text-[1.15rem] font-semibold text-[#222222]">Nous suivre</h3>
+								{isEditing ? <PencilIcon className="h-5 w-5 text-black/36" /> : null}
+							</div>
+							<div className="space-y-3 rounded-[18px] border border-black/6 px-4 py-4">
+								{[
+									{ id: 'instagram', label: 'Lien instagram' },
+									{ id: 'tiktok', label: 'Lien tiktok' },
+									{ id: 'link', label: 'Autre liens' },
+								].map((item) => (
+									<div key={item.id} className="grid grid-cols-[28px_1fr] items-center gap-3">
+										<SocialIcon kind={item.id} className="h-6 w-6 text-[#111111]" />
+										{isEditing ? (
+											<input
+												type="text"
+												value={draft.socials[item.id]}
+												onChange={(event) => updateSocial(item.id, event.target.value)}
+												className="h-10 rounded-[12px] border border-black/8 bg-[#f7f7f8] px-3 text-[0.9rem] outline-none transition focus:border-black/18 focus:bg-white"
+												placeholder={item.label}
+											/>
+										) : (
+											<p className="text-[0.92rem] text-black/54">{draft.socials[item.id] || item.label}</p>
+										)}
+									</div>
+								))}
+							</div>
+						</div>
+					</aside>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+const newsItems = [
+	{ tag: 'Fonctionnalité', date: 'Juin 2025', title: 'Réservation instantanée', body: 'Les clients peuvent désormais réserver sans confirmation manuelle de votre part.' },
+	{ tag: 'Amélioration', date: 'Mai 2025', title: 'Nouveau tableau de bord', body: 'Statistiques enrichies et graphiques d\'évolution annuelle disponibles.' },
+	{ tag: 'Correction', date: 'Avr. 2025', title: 'Notifications push', body: 'Les rappels de RDV sont maintenant envoyés 24 h à l\'avance.' },
+	{ tag: 'Fonctionnalité', date: 'Mar. 2025', title: 'Messagerie intégrée', body: 'Échangez directement avec vos clients depuis votre espace professionnel.' },
+	{ tag: 'Amélioration', date: 'Fév. 2025', title: 'Photos de profil', body: 'Ajoutez jusqu\'à 6 photos pour illustrer vos prestations.' },
+];
+
+function NewsCard({ item }) {
+	return (
+		<div className="rounded-[14px] bg-[#f6f7f9] px-4 py-3.5">
+			<div className="mb-1.5 flex items-center gap-2">
+				<span className={`rounded-full px-2 py-0.5 text-[0.68rem] font-semibold ${
+					item.tag === 'Fonctionnalité' ? 'bg-[#0a0a0a] text-white' :
+					item.tag === 'Amélioration' ? 'bg-black/8 text-black/60' :
+					'bg-black/5 text-black/42'
+				}`}>{item.tag}</span>
+				<span className="text-[0.75rem] text-black/34">{item.date}</span>
+			</div>
+			<p className="text-[0.88rem] font-semibold text-[#1b1b1d]">{item.title}</p>
+			<p className="mt-0.5 text-[0.82rem] leading-relaxed text-black/48">{item.body}</p>
+		</div>
 	);
 }
 
 function ProfessionalDashboardShell({ profile }) {
 	const displayName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || '[nom pro]';
 	const companyName = profile.company_name || 'TRESSA COIFFURE';
+	const [activeProfessionalTab, setActiveProfessionalTab] = useState(() => getProfessionalTabFromLocation());
 	const [isDayPlannerOpen, setIsDayPlannerOpen] = useState(false);
+	const [isNewsOpen, setIsNewsOpen] = useState(false);
+	const [isServicesPanelOpen, setIsServicesPanelOpen] = useState(false);
 	const [selectedDayIndex, setSelectedDayIndex] = useState(0);
 	const [isCreateServiceOpen, setIsCreateServiceOpen] = useState(false);
 	const [editingServiceId, setEditingServiceId] = useState(null);
@@ -1145,6 +1582,7 @@ function ProfessionalDashboardShell({ profile }) {
 	});
 	const [servicesLoading, setServicesLoading] = useState(false);
 	const [serviceListVersion, setServiceListVersion] = useState(0);
+	const [selectedServiceIndex, setSelectedServiceIndex] = useState(0);
 
 	const plannerDays = [
 		{
@@ -1192,7 +1630,7 @@ function ProfessionalDashboardShell({ profile }) {
 		{ title: 'Répondez rapidement', body: 'Un temps de réponse court améliore votre positionnement dans les résultats de recherche.', img: tipsImg2 },
 		{ title: 'Disponibilités à jour', body: 'Mettez à jour vos créneaux régulièrement pour rester visible et éviter les annulations.', img: tipsImg3 },
 		{ title: 'Demandez des avis', body: 'Après chaque prestation, invitez vos clients à laisser un avis pour renforcer votre crédibilité.', img: tipsImg4 },
-		{ title: 'Profil complet', body: 'Un profil renseigné à 100 % apparaît en priorité dans les suggestions Planifi.', img: tipsImg5 },
+		{ title: 'Profil complet', body: 'Un profil renseigné à 100 % apparaît en priorité dans les suggestions Prestat.', img: tipsImg5 },
 	];
 	const [tipIndex, setTipIndex] = useState(0);
 	const [statView, setStatView] = useState(0); // 0 = donut, 1 = courbe
@@ -1286,7 +1724,7 @@ function ProfessionalDashboardShell({ profile }) {
 	}
 
 	function mapServicesToTiles(loadedServices) {
-		return loadedServices.slice(0, 3).map((service, index) => ({
+		return loadedServices.map((service, index) => ({
 			id: service.service_id,
 			title: service.service_name,
 			price: formatServicePrice(service.service_price),
@@ -1322,6 +1760,7 @@ function ProfessionalDashboardShell({ profile }) {
 				}
 
 				setServiceTiles(mapServicesToTiles(loadedServices));
+				setSelectedServiceIndex(0);
 			} catch {
 				// Keep current fallback cards if the list endpoint is unavailable.
 			} finally {
@@ -1411,6 +1850,39 @@ function ProfessionalDashboardShell({ profile }) {
 		setIsCreateServiceOpen(true);
 	}
 
+	function showPreviousService() {
+		setSelectedServiceIndex((current) => {
+			if (serviceTiles.length <= 1) return current;
+			return current === 0 ? serviceTiles.length - 1 : current - 1;
+		});
+	}
+
+	function showNextService() {
+		setSelectedServiceIndex((current) => {
+			if (serviceTiles.length <= 1) return current;
+			return current === serviceTiles.length - 1 ? 0 : current + 1;
+		});
+	}
+
+	const selectedService = serviceTiles[selectedServiceIndex] ?? serviceTiles[0] ?? null;
+	const previewServices = serviceTiles.length <= 1
+		? []
+		: Array.from({ length: Math.min(2, serviceTiles.length - 1) }, (_, offset) => {
+			const index = (selectedServiceIndex + offset + 1) % serviceTiles.length;
+			return serviceTiles[index];
+		});
+
+	useEffect(() => {
+		function handlePopState() {
+			startTransition(() => {
+				setActiveProfessionalTab(getProfessionalTabFromLocation());
+			});
+		}
+
+		window.addEventListener('popstate', handlePopState);
+		return () => window.removeEventListener('popstate', handlePopState);
+	}, []);
+
 	function showPreviousPlannerDay() {
 		setSelectedDayIndex((current) => (current === 0 ? plannerDays.length - 1 : current - 1));
 	}
@@ -1419,19 +1891,38 @@ function ProfessionalDashboardShell({ profile }) {
 		setSelectedDayIndex((current) => (current === plannerDays.length - 1 ? 0 : current + 1));
 	}
 
+	function handleProfessionalSidebarNavigation(href) {
+		const targetUrl = new URL(href, window.location.origin);
+		const nextTab = getProfessionalTabFromLocation(targetUrl.search);
+
+		if (targetUrl.pathname !== window.location.pathname) {
+			window.location.href = targetUrl.toString();
+			return;
+		}
+
+		if (nextTab === activeProfessionalTab) {
+			return;
+		}
+
+		window.history.pushState({}, '', `${targetUrl.pathname}${targetUrl.search}`);
+		startTransition(() => {
+			setActiveProfessionalTab(nextTab);
+		});
+	}
+
 	return (
 		<main className="min-h-screen bg-[linear-gradient(180deg,#f7f6f2_0%,#fcfcfa_45%,#f3f1ec_100%)] text-[#181818]">
 			<div className="grid min-h-screen grid-cols-[202px_1fr]">
 				<aside className="flex h-screen flex-col border-r border-black/6 bg-[rgba(255,255,255,0.72)]">
 					<div className="flex h-[132px] items-center justify-center border-b border-black/6 px-6">
-						<a href="/" aria-label="Retour a l'accueil Planifi" className="transition hover:opacity-80">
-							<img src={prestatLogo} alt="Planifi" className="w-[126px]" />
+						<a href="/" aria-label="Retour a l'accueil Prestat" className="transition hover:opacity-80">
+							<img src={prestatLogo} alt="Prestat" className="w-[126px]" />
 						</a>
 					</div>
 
 					<nav className="flex flex-1 flex-col px-7 pb-8 pt-10">
 						<div className="space-y-5">
-							<SidebarLink href="/app/profil/professionnel" active icon={DashboardIcon} tone="light">
+							<SidebarLink href="/app/profil/professionnel" active={activeProfessionalTab === 'dashboard'} icon={DashboardIcon} onNavigate={handleProfessionalSidebarNavigation} tone="light">
 								Dashboard
 							</SidebarLink>
 							<SidebarLink href="/app/profil/professionnel" icon={BookmarkOutlineIcon} tone="light">
@@ -1443,10 +1934,10 @@ function ProfessionalDashboardShell({ profile }) {
 						</div>
 
 						<div className="mt-auto space-y-5">
-							<SidebarLink href="/app/profil/professionnel" icon={UserIcon} tone="light">
+							<SidebarLink href="/app/profil/professionnel?tab=profile" active={activeProfessionalTab === 'profile'} icon={UserIcon} onNavigate={handleProfessionalSidebarNavigation} tone="light">
 								Profil
 							</SidebarLink>
-							<SidebarLink href="/app/profil/professionnel" icon={SettingsIcon} tone="light">
+							<SidebarLink href="/app/profil/professionnel?tab=settings" active={activeProfessionalTab === 'settings'} icon={SettingsIcon} onNavigate={handleProfessionalSidebarNavigation} tone="light">
 								Paramètres
 							</SidebarLink>
 							<SidebarLink href="/deconnexion/client" icon={LogoutIcon} tone="light">
@@ -1489,10 +1980,18 @@ function ProfessionalDashboardShell({ profile }) {
 						</div>
 					</header>
 
+					{activeProfessionalTab === 'profile' ? (
+						<ProfessionalProfile
+							profile={profile}
+							serviceTiles={serviceTiles}
+							onAddService={() => setIsCreateServiceOpen(true)}
+							onEditService={openEditServiceModal}
+						/>
+					) : (
 					<section className="px-9 pb-10 pt-9">
 
 						{/* ── Rangée 1 : Planner · Stats · Astuces ── */}
-						<div className="mb-8 grid gap-5 lg:grid-cols-3" style={{ alignItems: 'stretch' }}>
+						<div className="mb-8 grid gap-5 lg:grid-cols-3" style={{ gridAutoRows: '460px' }}>
 
 							{/* 1. Planner */}
 							<Reveal from="bottom" className="h-full">
@@ -1539,23 +2038,25 @@ function ProfessionalDashboardShell({ profile }) {
 									</div>
 
 									{/* Navigation */}
-									<div className="mt-5 flex items-center justify-between">
-										<button
-											type="button"
-											onClick={(event) => { event.stopPropagation(); showPreviousPlannerDay(); }}
-											className="flex h-9 w-9 items-center justify-center rounded-full bg-[#17181d] text-white transition hover:opacity-80"
-											aria-label="Jour précédent"
-										>
-											<ChevronIcon direction="left" className="h-4 w-4" />
-										</button>
-										<button
-											type="button"
-											onClick={(event) => { event.stopPropagation(); showNextPlannerDay(); }}
-											className="flex h-9 w-9 items-center justify-center rounded-full bg-[#17181d] text-white transition hover:opacity-80"
-											aria-label="Jour suivant"
-										>
-											<ChevronIcon className="h-4 w-4" />
-										</button>
+									<div className="mt-4 flex items-center justify-end border-t border-black/5 pt-4">
+										<div className="flex gap-2">
+											<button
+												type="button"
+												onClick={(event) => { event.stopPropagation(); showPreviousPlannerDay(); }}
+												className="flex h-8 w-8 items-center justify-center rounded-full border border-black/10 text-black/50 transition hover:bg-black/5"
+												aria-label="Jour précédent"
+											>
+												<ChevronIcon direction="left" className="h-3.5 w-3.5" />
+											</button>
+											<button
+												type="button"
+												onClick={(event) => { event.stopPropagation(); showNextPlannerDay(); }}
+												className="flex h-8 w-8 items-center justify-center rounded-full border border-black/10 text-black/50 transition hover:bg-black/5"
+												aria-label="Jour suivant"
+											>
+												<ChevronIcon className="h-3.5 w-3.5" />
+											</button>
+										</div>
 									</div>
 								</button>
 							</Reveal>
@@ -1577,7 +2078,7 @@ function ProfessionalDashboardShell({ profile }) {
 
 									{/* Vue 0 — Donut + légende à droite */}
 									{statView === 0 ? (
-										<div className="flex flex-1 items-center justify-center gap-6 py-4">
+										<div className="flex min-h-0 flex-1 items-center justify-center gap-6 overflow-hidden py-4">
 											<div
 												className="shrink-0 flex items-center justify-center rounded-full"
 												style={{
@@ -1604,8 +2105,8 @@ function ProfessionalDashboardShell({ profile }) {
 										</div>
 									) : (
 										/* Vue 1 — Courbe annuelle */
-										<div className="flex flex-1 flex-col justify-center py-3">
-											<svg viewBox="0 0 280 140" className="w-full" aria-hidden="true">
+										<div className="flex min-h-0 flex-1 flex-col justify-center overflow-hidden py-3">
+											<svg viewBox="0 0 280 140" className="w-full" height="100%" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
 												{/* Grilles horizontales */}
 												{[0,1,2,3,4].map((i) => (
 													<line key={i} x1="32" y1={12 + i * 26} x2="276" y2={12 + i * 26}
@@ -1670,10 +2171,11 @@ function ProfessionalDashboardShell({ profile }) {
 
 							{/* 3. Astuces */}
 							<Reveal from="bottom" delay={160} className="h-full">
-								<div className="relative flex h-full flex-col overflow-hidden rounded-[26px] bg-[#0f1012] shadow-[0_16px_34px_rgba(17,19,30,0.22)] text-white">
+								<div className="relative flex h-full flex-col overflow-hidden rounded-[26px] bg-[linear-gradient(180deg,#101114_0%,#14161a_100%)] shadow-[0_16px_34px_rgba(17,19,30,0.22)] text-white">
 
 									{/* Images — cross-fade, centrées, grandes */}
-									<div className="relative flex-1 overflow-hidden">
+									<div className="relative min-h-0 flex-1 overflow-hidden">
+										<div className="pointer-events-none absolute inset-x-0 top-0 h-[72%] bg-[radial-gradient(circle_at_55%_18%,rgba(255,176,84,0.32)_0%,rgba(255,176,84,0.12)_18%,rgba(255,176,84,0)_54%)]" />
 										{tips.map((tip, i) => (
 											<img
 												key={tip.img}
@@ -1691,7 +2193,7 @@ function ProfessionalDashboardShell({ profile }) {
 									{/* Texte — positionné au bas */}
 									<div className="px-7 pb-7 pt-0">
 										<p className="text-[0.70rem] font-semibold uppercase tracking-[0.22em] text-white/32">
-											Astuce Planifi
+											Astuce Prestat
 										</p>
 										<div key={tipIndex} className="animate-[viewFade_400ms_ease_both]">
 											<h4 className="mt-2.5 text-[1.5rem] font-semibold leading-tight tracking-[-0.02em]">
@@ -1715,7 +2217,7 @@ function ProfessionalDashboardShell({ profile }) {
 													/>
 												))}
 											</div>
-											<div className="flex gap-1.5">
+											<div className="flex items-center gap-2">
 												<button
 													type="button"
 													onClick={() => setTipIndex((i) => (i - 1 + tips.length) % tips.length)}
@@ -1739,24 +2241,31 @@ function ProfessionalDashboardShell({ profile }) {
 							</Reveal>
 						</div>
 
-						{/* ── Rangée 2 : Services + Documents ── */}
-						<div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
-							<Reveal from="bottom" delay={130}>
-								<section className="max-w-[900px] rounded-[26px] border border-black/6 bg-white p-7 shadow-[0_16px_34px_rgba(17,19,30,0.05)]">
+						{/* ── Rangée 2 : Services · Documents · Nouveautés ── */}
+						<div className="grid items-stretch gap-5 xl:grid-cols-[minmax(0,1.9fr)_minmax(0,1fr)_minmax(0,1fr)]">
+							<Reveal from="bottom" delay={130} className="h-full">
+								<section className="flex h-full flex-col rounded-[26px] border border-black/6 bg-white p-7 shadow-[0_16px_34px_rgba(17,19,30,0.05)]">
 										<div className="mb-6 flex items-center justify-between">
 											<h2 className="text-[1.95rem] font-semibold tracking-[-0.04em] text-[#161616]">Services</h2>
 											<div className="flex items-center gap-4 text-[#161616]">
-												<button type="button" className="transition hover:opacity-70">
+												<button type="button" onClick={showPreviousService} className="transition hover:opacity-70" aria-label="Service précédent">
 													<ChevronIcon direction="left" className="h-6 w-6" />
 												</button>
-												<button type="button" className="transition hover:opacity-70">
+												<button type="button" onClick={showNextService} className="transition hover:opacity-70" aria-label="Service suivant">
 													<ChevronIcon className="h-6 w-6" />
 												</button>
-												<DotsIcon className="h-6 w-6" />
+												<button
+													type="button"
+													onClick={() => setIsServicesPanelOpen(true)}
+													className="transition hover:opacity-70"
+													aria-label="Afficher tous les services"
+												>
+													<DashboardIcon className="h-5 w-5" />
+												</button>
 											</div>
 										</div>
 
-										<div className="grid gap-4 xl:grid-cols-[minmax(0,690px)_200px]">
+										<div className="grid flex-1 gap-4 grid-cols-[1fr_160px]">
 											<div className="relative min-h-[290px] overflow-hidden rounded-[22px] border border-black/6 bg-[#ebeef4]">
 												<img
 													src={favoritesPlaceholder}
@@ -1768,21 +2277,21 @@ function ProfessionalDashboardShell({ profile }) {
 												<div className="absolute inset-x-0 bottom-0 z-[1] grid gap-6 px-7 pb-5 pt-8 text-white md:grid-cols-[190px_minmax(0,1fr)] md:items-end">
 													<div className="self-end">
 														<p className="text-[1.1rem] font-medium leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.14)]">
-															{serviceTiles[0]?.title || 'Service'}
+															{selectedService?.title || 'Service'}
 														</p>
 														<p className="mt-1 text-[3.15rem] leading-none drop-shadow-[0_2px_10px_rgba(0,0,0,0.14)]">
-															{serviceTiles[0]?.price || '--'}
+															{selectedService?.price || '--'}
 														</p>
 														<button
 															type="button"
-															onClick={() => openEditServiceModal(serviceTiles[0])}
+															onClick={() => selectedService && openEditServiceModal(selectedService)}
 															className="mt-4 rounded-full bg-white px-4 py-1.5 text-[0.82rem] font-semibold text-[#151515] shadow-[0_10px_22px_rgba(17,19,30,0.16)] transition hover:-translate-y-px"
 														>
 															Modifier
 														</button>
 													</div>
-													{serviceTiles[0]?.description ? (
-														<div className="flex min-h-[128px] items-end pb-1">
+													{selectedService?.description ? (
+														<div className="flex min-h-[128px] items-start pt-1">
 															<p
 																className="max-w-[44ch] overflow-hidden text-[0.84rem] leading-7 text-white/92 drop-shadow-[0_2px_10px_rgba(0,0,0,0.14)] md:text-[0.92rem]"
 																style={{
@@ -1791,7 +2300,7 @@ function ProfessionalDashboardShell({ profile }) {
 																	WebkitBoxOrient: 'vertical',
 																}}
 															>
-																{serviceTiles[0].description}
+																{selectedService.description}
 															</p>
 														</div>
 													) : (
@@ -1801,13 +2310,18 @@ function ProfessionalDashboardShell({ profile }) {
 											</div>
 
 											<div className="grid gap-4">
-												{serviceTiles.slice(1, 3).map((tile) => (
-													<div key={tile.id} className="relative min-h-[136px] overflow-hidden rounded-[18px] border border-black/6 bg-[#ebeef4]">
+												{previewServices.map((tile) => (
+													<button
+														key={tile.id}
+														type="button"
+														onClick={() => setSelectedServiceIndex(serviceTiles.findIndex((service) => service.id === tile.id))}
+														className="relative min-h-[136px] overflow-hidden rounded-[18px] border border-black/6 bg-[#ebeef4] text-left transition hover:-translate-y-px hover:shadow-[0_10px_24px_rgba(17,19,30,0.12)]"
+													>
 														<img src={favoritesPlaceholder} alt={tile.title} className="absolute inset-0 h-full w-full object-cover" />
 														<div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.03)_0%,rgba(18,18,18,0.02)_48%,rgba(10,10,10,0.16)_100%)]" />
 														<div className="pointer-events-none absolute inset-x-0 bottom-0 h-[44%] bg-[linear-gradient(180deg,rgba(20,20,22,0.08)_0%,rgba(15,15,17,0.32)_38%,rgba(10,10,12,0.58)_100%)] backdrop-blur-[2px]" />
 														<p className="absolute bottom-3 left-4 right-4 z-[1] text-[1rem] font-medium text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.14)]">{tile.title}</p>
-													</div>
+													</button>
 												))}
 											</div>
 										</div>
@@ -1816,13 +2330,13 @@ function ProfessionalDashboardShell({ profile }) {
 							</Reveal>
 
 							{/* Documents */}
-							<Reveal from="bottom" delay={200}>
-								<aside className="rounded-[26px] border border-black/6 bg-white p-6 shadow-[0_16px_34px_rgba(17,19,30,0.05)]">
+							<Reveal from="bottom" delay={200} className="h-full">
+								<aside className="flex h-full flex-col rounded-[26px] border border-black/6 bg-white p-6 shadow-[0_16px_34px_rgba(17,19,30,0.05)]">
 									<div className="mb-5 flex items-center justify-between">
 										<h3 className="text-[1.15rem] font-semibold text-[#171717]">Documents</h3>
 										<DocumentIcon className="h-5 w-5 text-black/38" />
 									</div>
-									<div className="space-y-3">
+									<div className="flex flex-1 flex-col gap-3">
 										{documentItems.map((item) => (
 											<div key={item} className="flex items-center gap-3 rounded-[16px] bg-[#f6f7f9] px-4 py-3">
 												<img src={pdfFileIcon} alt="PDF" className="h-5 w-5 shrink-0 object-contain" />
@@ -1832,8 +2346,31 @@ function ProfessionalDashboardShell({ profile }) {
 									</div>
 								</aside>
 							</Reveal>
+
+							{/* Dernières nouvelles */}
+							<Reveal from="bottom" delay={260} className="h-full">
+								<aside className="flex h-full flex-col rounded-[26px] border border-black/6 bg-white p-6 shadow-[0_16px_34px_rgba(17,19,30,0.05)]">
+									<div className="mb-5 flex items-center justify-between">
+										<h3 className="text-[1.15rem] font-semibold text-[#171717]">Dernières nouvelles</h3>
+										<span className="rounded-full bg-[#0a0a0a] px-2.5 py-0.5 text-[0.72rem] font-medium text-white">Nouveau</span>
+									</div>
+									<div className="flex flex-1 flex-col justify-between gap-3">
+										{newsItems.slice(0, 2).map((item) => (
+											<NewsCard key={item.title} item={item} />
+										))}
+									</div>
+									<button
+										type="button"
+										onClick={() => setIsNewsOpen(true)}
+										className="mt-4 w-full rounded-[14px] border border-black/8 py-2.5 text-[0.85rem] font-medium text-black/50 transition hover:bg-black/4 hover:text-black/70"
+									>
+										Tout voir
+									</button>
+								</aside>
+							</Reveal>
 						</div>
 					</section>
+					)}
 				</div>
 			</div>
 			{isDayPlannerOpen ? (
@@ -1863,6 +2400,88 @@ function ProfessionalDashboardShell({ profile }) {
 										<p className="mt-1 text-[0.94rem] text-black/54">{appointment.time}</p>
 									</div>
 									<span className="rounded-full bg-[#eef1f5] px-3 py-1 text-[0.82rem] font-medium text-[#5b6574]">Confirmé</span>
+								</div>
+							))}
+						</div>
+					</div>
+				</div>
+			) : null}
+			{isNewsOpen ? (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(17,15,13,0.32)] px-6 backdrop-blur-[3px]">
+					<div className="w-full max-w-[540px] rounded-[28px] bg-white p-7 shadow-[0_28px_80px_rgba(17,19,30,0.18)] animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]">
+						<div className="mb-6 flex items-start justify-between gap-6">
+							<div>
+								<p className="text-[0.82rem] font-semibold uppercase tracking-[0.16em] text-black/42">Prestat</p>
+								<h2 className="mt-1.5 text-[1.8rem] font-semibold tracking-[-0.04em] text-[#171717]">Dernières nouvelles</h2>
+							</div>
+							<button
+								type="button"
+								onClick={() => setIsNewsOpen(false)}
+								className="rounded-full border border-black/10 px-4 py-2 text-[0.9rem] font-medium text-black/56 transition hover:border-black/18 hover:text-black"
+							>
+								Fermer
+							</button>
+						</div>
+						<div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+							{newsItems.map((item) => (
+								<NewsCard key={item.title} item={item} />
+							))}
+						</div>
+					</div>
+				</div>
+			) : null}
+			{isServicesPanelOpen ? (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(17,15,13,0.32)] px-6 backdrop-blur-[3px]">
+					<div className="w-full max-w-[760px] rounded-[28px] bg-white p-7 shadow-[0_28px_80px_rgba(17,19,30,0.18)] animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]">
+						<div className="mb-6 flex items-start justify-between gap-6">
+							<div>
+								<p className="text-[0.82rem] font-semibold uppercase tracking-[0.16em] text-black/42">Prestat</p>
+								<h2 className="mt-1.5 text-[1.8rem] font-semibold tracking-[-0.04em] text-[#171717]">Tous les services</h2>
+							</div>
+							<button
+								type="button"
+								onClick={() => setIsServicesPanelOpen(false)}
+								className="rounded-full border border-black/10 px-4 py-2 text-[0.9rem] font-medium text-black/56 transition hover:border-black/18 hover:text-black"
+							>
+								Fermer
+							</button>
+						</div>
+						<div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+							{serviceTiles.map((service, index) => (
+								<div
+									key={service.id}
+									className={`flex items-center justify-between gap-4 rounded-[18px] border px-5 py-4 ${
+										index === selectedServiceIndex ? 'border-black/14 bg-[#f6f7f9]' : 'border-black/6 bg-white'
+									}`}
+								>
+									<button
+										type="button"
+										onClick={() => {
+											setSelectedServiceIndex(index);
+											setIsServicesPanelOpen(false);
+										}}
+										className="min-w-0 flex-1 text-left"
+									>
+										<div className="flex items-center gap-3">
+											<span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#17181d]" />
+											<p className="truncate text-[1rem] font-semibold text-[#171717]">{service.title}</p>
+										</div>
+										<div className="mt-1 flex items-center gap-3 pl-[22px]">
+											<span className="text-[0.92rem] font-medium text-black/56">{service.price || '--'}</span>
+											{service.duration ? <span className="text-[0.88rem] text-black/38">{service.duration}</span> : null}
+										</div>
+									</button>
+									<button
+										type="button"
+										onClick={() => {
+											setSelectedServiceIndex(index);
+											setIsServicesPanelOpen(false);
+											openEditServiceModal(service);
+										}}
+										className="shrink-0 rounded-full bg-[#101010] px-4 py-2 text-[0.84rem] font-semibold text-white transition hover:opacity-90"
+									>
+										Modifier
+									</button>
 								</div>
 							))}
 						</div>

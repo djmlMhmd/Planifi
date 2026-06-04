@@ -33,7 +33,7 @@ const sendResetPassword = async (userEmail, name, linkResetPassword) => {
          * info.envelope: { from: 'test@shandoragames.fr', to: [ 'marius.vitta@gmail.com' ] },
          */
         const info = await transporter.sendMail({
-            from: `Planifi <${process.env.MAIL_USERNAME}>`,
+            from: `Prestat <${process.env.MAIL_USERNAME}>`,
             to: userEmail,
             subject: "Réinitialisation de votre mot de passe",
             html: template,
@@ -62,7 +62,7 @@ const sendRegistrationLink = async (userEmail, name, linkRegistration) => {
         let template = confirmRegistrationTemplate.replace('[prenom]', name)
         template = template.replace('[lien_inscription]', linkRegistration)
         const info = await transporter.sendMail({
-            from: `Planifi <${process.env.MAIL_USERNAME}>`,
+            from: `Prestat <${process.env.MAIL_USERNAME}>`,
             to: userEmail,
             subject: "Activation de votre compte",
             html: template
@@ -104,7 +104,7 @@ const sendConfirmationRendezVousClient = async (userEmail, name, rdvInfos) => {
         template = template.replace('[nom_pro]', rdvInfos.nom_pro)
         template = template.replace('[nom_service]', rdvInfos.service_nom)
         const info = await transporter.sendMail({
-            from: `Planifi <${process.env.MAIL_USERNAME}>`,
+            from: `Prestat <${process.env.MAIL_USERNAME}>`,
             to: userEmail,
             subject: "Confirmation de rendez-vous",
             html: template
@@ -145,7 +145,7 @@ const sendRendezVousPrisPro = async (userEmail, name, rdvInfos) => {
         template = template.replace('[nom_client]', rdvInfos.nom_client)
         template = template.replace('[nom_service]', rdvInfos.service_nom)
         const info = await transporter.sendMail({
-            from: `Planifi <${process.env.MAIL_USERNAME}>`,
+            from: `Prestat <${process.env.MAIL_USERNAME}>`,
             to: userEmail,
             subject: "Nouveau Rendez-vous",
             html: template
@@ -186,7 +186,7 @@ const sendRendezVousAnnuleClient = async (userEmail, name, rdvInfos) => {
         template = template.replace('[nom_pro]', rdvInfos.nom_pro)
         template = template.replace('[nom_service]', rdvInfos.service_nom)
         const info = await transporter.sendMail({
-            from: `Planifi <${process.env.MAIL_USERNAME}>`,
+            from: `Prestat <${process.env.MAIL_USERNAME}>`,
             to: userEmail,
             subject: "Annulation rendez-vous",
             html: template
@@ -227,7 +227,7 @@ const sendRendezVousAnnulePro = async (userEmail, name, rdvInfos) => {
         template = template.replace('[nom_client]', rdvInfos.nom_client)
         template = template.replace('[nom_service]', rdvInfos.service_nom)
         const info = await transporter.sendMail({
-            from: `Planifi <${process.env.MAIL_USERNAME}>`,
+            from: `Prestat <${process.env.MAIL_USERNAME}>`,
             to: userEmail,
             subject: "Annulation rendez-vous",
             html: template
@@ -242,7 +242,7 @@ const sendRendezVousAnnulePro = async (userEmail, name, rdvInfos) => {
 const sendRestart = async () => {
     try{
         const info = await transporter.sendMail({
-            from: `Planifi <${process.env.MAIL_USERNAME}>`,
+            from: `Prestat <${process.env.MAIL_USERNAME}>`,
             to: "marius.vitta@gmail.com",
             subject: "Le back a bien démarre",
             html: `<h1> le back vient de demarré à ${new Date()} </h1>`,
