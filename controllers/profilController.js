@@ -164,21 +164,25 @@ module.exports.update_profile_picture_put = async (req, res) => {
         let imageUrl = `${process.env.DOWNLOAD_PATH}/${encodeURIComponent(`images/profile-picture/${dateActuelle.getTime()} - ${file.originalname}`)}?alt=media&token=${uuid}`
         let imagePath = `images/profile-picture/${dateActuelle.getTime()} - ${file.originalname}`
         const blob = bucket.file(`images/profile-picture/${dateActuelle.getTime()} - ${file.originalname}`)
-        const blobStream = blob.createWriteStream({
-            metadata: metadata,
-            gzip: true
-        })
+        await new Promise((resolve, reject) => {
+            const blobStream = blob.createWriteStream({
+                metadata: metadata,
+                gzip: true
+            })
 
-        blobStream.on("error", err => {
-            errorLogger(`erreur lors de l'upload de l'image ${imageUrl} de l'utilisateur ${id}`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
-            errorLogger(err, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
-        })
+            blobStream.on("error", err => {
+                errorLogger(`erreur lors de l'upload de l'image ${imageUrl} de l'utilisateur ${id}`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
+                errorLogger(err, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
+                reject(err)
+            })
 
-        blobStream.on("finish", () => {
-            logLogger(`upload de l'image ${imageUrl} de l'utilisateur ${id} a bien été effectuée`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
-        })
+            blobStream.on("finish", () => {
+                logLogger(`upload de l'image ${imageUrl} de l'utilisateur ${id} a bien été effectuée`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
+                resolve()
+            })
 
-        blobStream.end(req.file.buffer)
+            blobStream.end(req.file.buffer)
+        })
 
         const client = getClientsCollection();
         let queryUpdateProfilPicture
@@ -230,7 +234,7 @@ module.exports.update_profile_picture_put = async (req, res) => {
 
     } catch (e) {
         errorLogger('Erreur lors de la récupération du profil:' + e.stack, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
-        return sendInternalServerError(res, 'Erreur serveur' )
+        return sendInternalServerError(res, "Impossible d'enregistrer la photo de profil. Vérifiez la configuration du stockage." )
     }
 }
 

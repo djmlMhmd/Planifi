@@ -363,6 +363,10 @@ export default function NavigationPage() {
 					</div>
 
 					<Reveal as="aside" from="right" delay={140} className="xl:sticky xl:top-6 xl:self-start">
+						<div
+							key={selectedProvider?.id ?? 'empty-selection'}
+							className="animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]"
+						>
 						{selectedProvider ? (
 							<>
 						<div className="rounded-[28px] border border-black/6 bg-white/96 p-6 shadow-[0_16px_38px_rgba(17,19,30,0.05)]">
@@ -446,6 +450,7 @@ export default function NavigationPage() {
 								</p>
 							</div>
 						)}
+						</div>
 					</Reveal>
 				</div>
 				</div>

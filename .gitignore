@@ -4,6 +4,7 @@
 public/js/firebase.js
 .test
 admin.json
+.firebase/
 *.log
 .DS_Store
 coverage/

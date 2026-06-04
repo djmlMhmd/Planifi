@@ -34,6 +34,51 @@ module.exports.service_create_post =  async (req, res) => {
     }
 }
 
+module.exports.service_update_put = async (req, res) => {
+    const { serviceId } = req.params;
+    const { service_name, service_description, service_price, duration } = req.body;
+
+    if (!isANumber(serviceId)) {
+        return sendBadRequest(res, "le 'serviceId' de la requête doit etre un entier");
+    }
+
+    const { id } = decodeJWT(req.cookies.jwt);
+
+    try {
+        const client = getClientsCollection();
+        const serviceOwnerQuery = await client.query(
+            'SELECT professional_id FROM services WHERE service_id = $1',
+            [serviceId]
+        );
+
+        const service = serviceOwnerQuery.rows[0];
+
+        if (!service) {
+            return sendBadRequest(res, 'Service non trouvé');
+        }
+
+        if (service.professional_id !== id) {
+            return sendUnauthorized(res, "Vous n'êtes pas autorisé à modifier ce service");
+        }
+
+        const updateResult = await client.query(
+            `UPDATE services
+             SET service_name = $1,
+                 service_description = $2,
+                 service_price = $3,
+                 duration = $4
+             WHERE service_id = $5
+             RETURNING *`,
+            [service_name, service_description, service_price, duration, serviceId]
+        );
+
+        return sendSuccess(res, updateResult.rows[0]);
+    } catch (e) {
+        errorLogger(`Erreur lors de la modification du service : ${ e.stack}`, '','servicesController.js', `/service/${serviceId}`, constants.PUT_HTTP);
+        return sendFailure(res, 'Erreur lors de la modification du service :' + e.message);
+    }
+}
+
 module.exports.service_all_get =  async (req, res) => {
     try {
         const client = getClientsCollection();
@@ -114,12 +159,16 @@ module.exports.service_liste_pro_get = async (req, res) => {
              FROM services
                       INNER JOIN users as pro
                                  ON services.professional_id = pro.users_id
-                      INNER JOIN reservations
+                      LEFT JOIN reservations
                                  ON services.service_id = reservations.service_id
+                                 AND TO_TIMESTAMP(reservations.day_of_week || ' ' || reservations.start_time, 'DD-MM-YYYY HH24:MI:SS') >= CURRENT_TIMESTAMP
                      join public.pro_account pa on pro.users_id = pa.user_id
              WHERE pro.users_id = $1
-               AND TO_TIMESTAMP(reservations.day_of_week || ' ' || reservations.start_time, 'DD-MM-YYYY HH24:MI:SS') >= CURRENT_TIMESTAMP
              group by services.service_id,
+                      services.service_name,
+                      services.service_description,
+                      services.service_price,
+                      services.duration,
                       pro.email,
                       pro.phone,
                       pa.company_name,

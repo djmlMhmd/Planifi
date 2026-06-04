@@ -10,6 +10,7 @@ const serviceController = require('../controllers/servicesController')
 // SERVICE CREATE
 
 router.post('/service/create', requiredAuth, serviceController.service_create_post);
+router.put('/service/:serviceId', requiredAuth, serviceController.service_update_put);
 
 // route pour récupérer tout les services enregistré en base
 router.get('/service', requiredAuth, serviceController.service_all_get);
