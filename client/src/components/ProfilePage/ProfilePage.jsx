@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { startTransition, useEffect, useMemo, useState } from 'react';
 import favoritesPlaceholder from '../../assets/favorites-placeholder.jpg';
 import pdfFileIcon from '../../assets/pdf-file-icon.png';
 import providerUserPlaceholder from '../../assets/provider-user-placeholder.png';
@@ -254,13 +254,31 @@ function InvoiceItem({ label }) {
 	);
 }
 
-function SidebarLink({ href, active = false, icon: Icon, children }) {
+function getProfileTabFromLocation(search = window.location.search) {
+	const tabParam = new URLSearchParams(search).get('tab');
+
+	if (tabParam === 'settings' || tabParam === 'favorites') {
+		return tabParam;
+	}
+
+	return 'dashboard';
+}
+
+function SidebarLink({ href, active = false, icon: Icon, onNavigate, children }) {
+	function handleClick(event) {
+		if (onNavigate) {
+			event.preventDefault();
+			onNavigate(href);
+		}
+	}
+
 	return (
 		<a
 			className={`flex items-center gap-3 text-[0.98rem] font-medium transition ${
 				active ? 'text-[#c9a25f]' : 'text-white/62 hover:text-white'
 			}`}
 			href={href}
+			onClick={handleClick}
 		>
 			<Icon className="h-5 w-5" />
 			<span>{children}</span>
@@ -436,22 +454,22 @@ function SettingsPanel({ profile }) {
 
 function FavoriteCard({ item }) {
 	return (
-		<div className="rounded-[22px] border border-black/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(249,248,244,0.96)_100%)] p-4 shadow-[0_14px_34px_rgba(17,19,30,0.045)]">
-			<div className="flex flex-col gap-4">
-				<div className="relative h-[180px] w-full overflow-hidden rounded-[16px]">
+		<div className="w-full max-w-[430px] rounded-[20px] border border-black/8 bg-white/96 p-3 shadow-[0_12px_28px_rgba(17,19,30,0.04)]">
+			<div className="flex items-start gap-3">
+				<div className="relative h-[128px] w-[124px] shrink-0 overflow-hidden rounded-[14px]">
 					<img src={favoritesPlaceholder} alt={item.title} className="h-full w-full object-cover" />
 					<button
 						type="button"
-						className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-[12px] bg-white/95 text-[#111111] shadow-[0_8px_22px_rgba(10,10,10,0.15)]"
+						className="absolute right-2 top-2 flex h-10 w-10 items-center justify-center rounded-[12px] bg-white text-[#111111] shadow-[0_10px_24px_rgba(10,10,10,0.18)]"
 					>
-						<BookmarkIcon className="h-5 w-5" />
+						<BookmarkIcon className="h-[22px] w-[22px]" />
 					</button>
 				</div>
 
-				<div className="flex min-w-0 flex-1 flex-col">
-					<h3 className="truncate text-[1rem] font-semibold text-[#151515]">{item.title}</h3>
-					<p className="mt-2 text-[0.96rem] text-[#242424]">{item.category}</p>
-					<p className="mt-8 text-[0.92rem] text-black/28">{item.location}</p>
+				<div className="flex min-w-0 flex-1 flex-col pt-1">
+					<h3 className="text-[0.96rem] font-semibold leading-[1.3] text-[#151515]">{item.title}</h3>
+					<p className="mt-2 text-[0.92rem] text-[#242424]">{item.category}</p>
+					<p className="mt-auto pt-7 text-[0.9rem] text-black/28">{item.location}</p>
 				</div>
 			</div>
 		</div>
@@ -474,7 +492,7 @@ function FavoritesPanel() {
 				Retrouvez vos prestataires favoris sauvegardés ici
 			</h2>
 
-			<div className="grid gap-8 lg:grid-cols-2 2xl:grid-cols-3">
+			<div className="grid grid-cols-[repeat(auto-fit,minmax(330px,430px))] gap-6">
 				{favoriteItems.map((item, index) => (
 					<Reveal key={item.id} from="bottom" delay={index * 60}>
 						<FavoriteCard item={item} />
@@ -505,11 +523,8 @@ function DashboardShell({ profile, reservations }) {
 		window.location.href = '/connexion/';
 	}
 
-	const activeTabParam = new URLSearchParams(window.location.search).get('tab');
-	const activeTab =
-		activeTabParam === 'settings' || activeTabParam === 'favorites'
-			? activeTabParam
-			: 'dashboard';
+	const [activeTab, setActiveTab] = useState(() => getProfileTabFromLocation());
+	const [contentVisible, setContentVisible] = useState(true);
 
 	const reservationList = reservations.length
 		? reservations.slice(0, 7)
@@ -523,31 +538,73 @@ function DashboardShell({ profile, reservations }) {
 				{ reservation_id: 'demo-7', service_name: 'Coaching perso', title: 'Fit&Go Domicile', start: 'Vendredi 20 14:00 - 15:30' },
 		  ];
 
+	useEffect(() => {
+		function handlePopState() {
+			startTransition(() => {
+				setActiveTab(getProfileTabFromLocation());
+			});
+		}
+
+		window.addEventListener('popstate', handlePopState);
+		return () => window.removeEventListener('popstate', handlePopState);
+	}, []);
+
+	useEffect(() => {
+		setContentVisible(false);
+
+		const animationFrameId = window.requestAnimationFrame(() => {
+			setContentVisible(true);
+		});
+
+		return () => window.cancelAnimationFrame(animationFrameId);
+	}, [activeTab]);
+
+	function handleSidebarNavigation(href) {
+		const targetUrl = new URL(href, window.location.origin);
+		const nextTab = getProfileTabFromLocation(targetUrl.search);
+
+		if (targetUrl.pathname !== window.location.pathname) {
+			window.location.href = targetUrl.toString();
+			return;
+		}
+
+		if (nextTab === activeTab) {
+			return;
+		}
+
+		window.history.pushState({}, '', `${targetUrl.pathname}${targetUrl.search}`);
+		startTransition(() => {
+			setActiveTab(nextTab);
+		});
+	}
+
 	return (
 		<main className="min-h-screen bg-[linear-gradient(180deg,#f7f6f2_0%,#fcfcfa_45%,#f3f1ec_100%)] text-[#1f1f1f]">
 			<div className="grid min-h-screen grid-cols-[210px_1fr]">
-				<aside className="flex flex-col border-r border-white/10 bg-[linear-gradient(180deg,#090909_0%,#121212_100%)] text-white">
+				<aside className="sticky top-0 flex h-screen flex-col overflow-hidden border-r border-white/10 bg-[linear-gradient(180deg,#090909_0%,#121212_100%)] text-white">
 					<div className="flex h-[92px] items-center justify-center border-b border-white/10 px-7">
-						<img
-							src={prestatLogo}
-							alt="Planifi"
-							className="w-[126px]"
-							style={{ filter: 'brightness(0) invert(1)' }}
-						/>
+						<a href="/" aria-label="Retour a l'accueil Planifi" className="transition opacity-100 hover:opacity-80">
+							<img
+								src={prestatLogo}
+								alt="Planifi"
+								className="w-[126px]"
+								style={{ filter: 'brightness(0) invert(1)' }}
+							/>
+						</a>
 					</div>
 
-					<nav className="flex flex-1 flex-col px-9 pb-9 pt-11">
+					<nav className="flex flex-1 flex-col overflow-y-auto px-9 pb-9 pt-11">
 						<div className="space-y-8">
-							<SidebarLink href="/app/profil" active={activeTab === 'dashboard'} icon={DashboardIcon}>
+							<SidebarLink href="/app/profil" active={activeTab === 'dashboard'} icon={DashboardIcon} onNavigate={handleSidebarNavigation}>
 								Dashboard
 							</SidebarLink>
-							<SidebarLink href="#" icon={CompassIcon}>
+							<SidebarLink href="/navigation" icon={CompassIcon}>
 								Découvrir
 							</SidebarLink>
-							<SidebarLink href="/app/profil?tab=favorites" active={activeTab === 'favorites'} icon={BookmarkIcon}>
+							<SidebarLink href="/app/profil?tab=favorites" active={activeTab === 'favorites'} icon={BookmarkIcon} onNavigate={handleSidebarNavigation}>
 								Favoris
 							</SidebarLink>
-							<SidebarLink href="/app/profil?tab=settings" active={activeTab === 'settings'} icon={SettingsIcon}>
+							<SidebarLink href="/app/profil?tab=settings" active={activeTab === 'settings'} icon={SettingsIcon} onNavigate={handleSidebarNavigation}>
 								Paramètres
 							</SidebarLink>
 						</div>
@@ -613,8 +670,13 @@ function DashboardShell({ profile, reservations }) {
 						</div>
 					</header>
 
-					<div className="grid gap-8 px-9 pb-10 pt-11 lg:grid-cols-[1fr_305px]">
-						<div className="min-w-0">
+					<div className={`grid gap-8 px-9 pb-10 pt-11 ${activeTab === 'dashboard' ? 'lg:grid-cols-[1fr_305px]' : 'grid-cols-1'}`}>
+						<div
+							key={activeTab}
+							className={`min-w-0 transition-[opacity,transform] duration-220 ease-out ${
+								contentVisible ? 'translate-y-0 opacity-100' : 'translate-y-[6px] opacity-0'
+							}`}
+						>
 							{activeTab === 'settings' ? (
 								<SettingsPanel profile={profile} />
 							) : activeTab === 'favorites' ? (

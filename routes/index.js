@@ -7,7 +7,7 @@ router.get('/', (_req, res) => {
 	res.sendFile(path.join(__dirname, '..', 'client', 'dist', 'index.html'));
 });
 router.get('/services', requiredAuth, (req, res) => {
-	res.sendFile(path.join(__dirname, '..', 'views', 'services.html'));
+	res.sendFile(path.join(__dirname, '..', 'client', 'dist', 'index.html'));
 });
 
 router.get('/disponibilite/', requiredAuth, (req, res) => {
@@ -44,7 +44,7 @@ router.get('/connexion/', (req, res) => {
 // });
 
 router.get('/navigation', requiredAuth, (req, res) => {
-	res.sendFile(path.join(__dirname, '..', 'views', 'navigation.html'));
+	res.sendFile(path.join(__dirname, '..', 'client', 'dist', 'index.html'));
 });
 router.get('/test', (req, res) => {
 	res.sendFile(path.join(__dirname, '..', 'test', 'test.html'));
