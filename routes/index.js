@@ -15,11 +15,11 @@ router.get('/disponibilite/', requiredAuth, (req, res) => {
 });
 
 router.get('/inscription/', (req, res) => {
-	res.sendFile(path.join(__dirname, '..', 'views', 'signup.html'));
+	res.sendFile(path.join(__dirname, '..', 'client', 'dist', 'index.html'));
 });
 
 router.get('/connexion/', (req, res) => {
-	res.sendFile(path.join(__dirname, '..', 'views', 'login.html'));
+	res.sendFile(path.join(__dirname, '..', 'client', 'dist', 'index.html'));
 });
 
 // router.get('/profil/:id', requiredAuth, (req, res) => {
