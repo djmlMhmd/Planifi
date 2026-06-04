@@ -3,9 +3,8 @@ const path = require('path');
 const {requiredAuth} = require("../middleware/authMiddleware");
 const router = express.Router();
 
-// Définissez la route pour la page "À propos"
-router.get('/', (req, res) => {
-	res.sendFile(path.join(__dirname, '..', 'views', 'home.html'));
+router.get('/', (_req, res) => {
+	res.sendFile(path.join(__dirname, '..', 'client', 'dist', 'index.html'));
 });
 router.get('/services', requiredAuth, (req, res) => {
 	res.sendFile(path.join(__dirname, '..', 'views', 'services.html'));

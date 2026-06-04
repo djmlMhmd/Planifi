@@ -1,0 +1,19 @@
+.reveal {
+	opacity: 0;
+	transition:
+		opacity 700ms cubic-bezier(0.4, 0, 0.2, 1),
+		transform 700ms cubic-bezier(0.4, 0, 0.2, 1);
+	will-change: opacity, transform;
+}
+
+/* Directions de départ */
+.bottom  { transform: translateY(32px); }
+.left    { transform: translateX(-32px); }
+.right   { transform: translateX(32px); }
+.none    { transform: none; }
+
+/* État visible — déclenché par data-visible="true" */
+.reveal[data-visible='true'] {
+	opacity: 1;
+	transform: none;
+}

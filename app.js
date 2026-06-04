@@ -79,6 +79,7 @@ app.use(
 
 app.use(express.static('public'));
 app.use('/profile-images', express.static('img'));
+app.use('/app-assets', express.static(path.join(__dirname, 'client', 'src', 'assets')));
 app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'views')));
@@ -94,9 +95,6 @@ app.get('/api/health', (_req, res) => {
 
 if (fs.existsSync(reactDistPath)) {
 	app.use('/app', express.static(reactDistPath));
-	app.get('/app/*splat', (_req, res) => {
-		res.sendFile(path.join(reactDistPath, 'index.html'));
-	});
 }
 
 app.use('/', indexRoutes);
@@ -110,6 +108,16 @@ app.use(professionalRoutes);
 app.use('/api', require('./routes/reservation'));
 app.use(express.urlencoded({ extended: true }));
 app.use('/', messagesRoutes);
+
+if (fs.existsSync(reactDistPath)) {
+	app.get('/app', (_req, res) => {
+		res.sendFile(path.join(reactDistPath, 'index.html'));
+	});
+
+	app.get('/app/*', (_req, res) => {
+		res.sendFile(path.join(reactDistPath, 'index.html'));
+	});
+}
 
 
 

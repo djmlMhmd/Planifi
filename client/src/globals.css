@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+	--black: #0a0a0a;
+	--white: #ffffff;
+	--grey-50: #f6f6f4;
+	--grey-100: #ebebeb;
+	--grey-400: rgba(10, 10, 10, 0.38);
+	--grey-600: rgba(10, 10, 10, 0.62);
+	--white-10: rgba(255, 255, 255, 0.10);
+	--white-20: rgba(255, 255, 255, 0.20);
+	--white-60: rgba(255, 255, 255, 0.60);
+	--white-80: rgba(255, 255, 255, 0.80);
+	--content: min(1140px, calc(100% - 64px));
+	font-family: 'Poppins', 'Helvetica Neue', sans-serif;
+	color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+	margin: 0;
+	background: var(--white);
+	color: var(--black);
+}
+
+button, input, a { font: inherit; }
+a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; }
+ul { list-style: none; margin: 0; padding: 0; }
+
+.sr-only {
+	position: absolute;
+	width: 1px; height: 1px;
+	padding: 0; margin: -1px;
+	overflow: hidden;
+	clip: rect(0,0,0,0);
+	white-space: nowrap;
+	border: 0;
+}

@@ -12,6 +12,8 @@
     "dev": "nodemon app.js",
     "dev:server": "nodemon app.js",
     "dev:client": "vite --config client/vite.config.mjs",
+    "build:client:watch": "vite build --watch --config client/vite.config.mjs",
+    "dev:auto": "concurrently \"npm run dev:server\" \"npm run build:client:watch\"",
     "dev:full": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "build:client": "vite build --config client/vite.config.mjs",
     "preview:client": "vite preview --config client/vite.config.mjs"
