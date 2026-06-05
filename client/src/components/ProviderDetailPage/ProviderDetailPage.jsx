@@ -149,15 +149,19 @@ function UserAvatar({ profile }) {
 	);
 }
 
-function ServiceCard({ service, providerId }) {
+function ServiceCard({ service, providerId, onOpenDetails }) {
 	return (
-		<div className="rounded-[24px] border border-black/8 bg-white p-4 shadow-[0_14px_34px_rgba(17,19,30,0.045)]">
+		<button
+			type="button"
+			onClick={() => onOpenDetails(service)}
+			className="h-full w-full rounded-[24px] border border-black/8 bg-white p-4 text-left shadow-[0_14px_34px_rgba(17,19,30,0.045)] transition hover:-translate-y-px hover:shadow-[0_18px_40px_rgba(17,19,30,0.06)]"
+		>
 			<div className="mb-4 flex items-start justify-between gap-4">
 				<h3 className="text-[1.15rem] font-semibold text-[#191919]">{service.name}</h3>
 				<span className="text-[1rem] text-black/34">{service.duration}</span>
 			</div>
-			<div className="grid grid-cols-[96px_1fr] gap-4">
-				<div>
+			<div className="grid min-h-[168px] grid-cols-[96px_1fr] gap-4">
+				<div className="flex h-full flex-col">
 					<div className="h-24 rounded-[14px] bg-[linear-gradient(135deg,#aba79c_0%,#7c786f_100%)]" />
 					<p
 						className="mt-3 text-center text-[2rem] tracking-[-0.04em] text-[#161616]"
@@ -166,18 +170,31 @@ function ServiceCard({ service, providerId }) {
 						{service.price}
 					</p>
 				</div>
-				<div className="flex min-h-[96px] flex-col">
-					<p className="text-[0.96rem] leading-7 text-black/62">{service.description}</p>
+				<div className="flex h-full min-h-[96px] flex-col">
+					<p
+						className="text-[0.96rem] leading-7 text-black/62"
+						style={{
+							display: '-webkit-box',
+							WebkitLineClamp: 4,
+							WebkitBoxOrient: 'vertical',
+							overflow: 'hidden',
+						}}
+					>
+						{service.description}
+					</p>
 					<button
 						type="button"
-						onClick={() => navigateTo(`/app/reservation?professionalId=${providerId}&serviceId=${service.id}`)}
+						onClick={(event) => {
+							event.stopPropagation();
+							navigateTo(`/app/reservation?professionalId=${providerId}&serviceId=${service.id}`);
+						}}
 						className="mt-auto inline-flex items-center justify-center self-start rounded-full bg-[linear-gradient(135deg,#161616_0%,#35332d_100%)] px-5 py-3 text-[0.92rem] font-medium text-white shadow-[0_12px_26px_rgba(22,22,22,0.16)] transition hover:-translate-y-px hover:opacity-92"
 					>
 						Prendre RDV
 					</button>
 				</div>
 			</div>
-		</div>
+		</button>
 	);
 }
 
@@ -185,6 +202,7 @@ export default function ProviderDetailPage() {
 	const [profile, setProfile] = useState(null);
 	const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 	const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+	const [selectedService, setSelectedService] = useState(null);
 	const search = window.location.search;
 	const searchParams = new URLSearchParams(search);
 	const [showConfirmation, setShowConfirmation] = useState(() => searchParams.get('confirmed') === '1');
@@ -313,9 +331,9 @@ export default function ProviderDetailPage() {
 
 							<section className="mt-10">
 								<h2 className="mb-5 text-[1.9rem] font-semibold tracking-[-0.04em] text-[#1a1a1a]">Prestation</h2>
-								<div className="grid gap-6 md:grid-cols-2">
+								<div className="grid gap-6 md:auto-rows-fr md:grid-cols-2">
 									{provider.services.map((service) => (
-										<ServiceCard key={service.id} service={service} providerId={provider.id} />
+										<ServiceCard key={service.id} service={service} providerId={provider.id} onOpenDetails={setSelectedService} />
 									))}
 								</div>
 							</section>
@@ -480,6 +498,53 @@ export default function ProviderDetailPage() {
 									<img src={photo.image} alt={photo.alt} className="h-full w-full object-cover" />
 								</button>
 							))}
+						</div>
+					</div>
+				</div>
+			) : null}
+
+			{selectedService ? (
+				<div className="fixed inset-0 z-[85] flex items-center justify-center bg-[rgba(10,10,14,0.54)] px-4 backdrop-blur-[2px]" onClick={() => setSelectedService(null)}>
+					<div
+						className="w-full max-w-[760px] rounded-[28px] bg-white p-6 shadow-[0_30px_80px_rgba(0,0,0,0.24)] animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]"
+						onClick={(event) => event.stopPropagation()}
+					>
+						<div className="mb-5 flex items-start justify-between gap-4">
+							<div>
+								<h3 className="text-[1.65rem] font-semibold tracking-[-0.04em] text-[#191919]">{selectedService.name}</h3>
+								<p className="mt-1 text-[0.98rem] text-black/40">{selectedService.duration}</p>
+							</div>
+							<button
+								type="button"
+								onClick={() => setSelectedService(null)}
+								className="text-[1.8rem] leading-none text-black/36 transition hover:text-black/66"
+								aria-label="Fermer le détail de la prestation"
+							>
+								×
+							</button>
+						</div>
+
+						<div className="grid gap-5 md:grid-cols-[140px_1fr]">
+							<div className="flex flex-col">
+								<div className="h-[140px] rounded-[20px] bg-[linear-gradient(135deg,#aba79c_0%,#7c786f_100%)]" />
+								<p
+									className="mt-4 text-left text-[2.4rem] tracking-[-0.04em] text-[#161616]"
+									style={{ fontFamily: '"TAN Meringue", "Iowan Old Style", "Times New Roman", serif' }}
+								>
+									{selectedService.price}
+								</p>
+							</div>
+
+							<div className="flex min-h-[140px] flex-col">
+								<p className="text-[1rem] leading-8 text-black/66">{selectedService.description}</p>
+								<button
+									type="button"
+									onClick={() => navigateTo(`/app/reservation?professionalId=${provider.id}&serviceId=${selectedService.id}`)}
+									className="mt-6 inline-flex items-center justify-center self-start rounded-full bg-[linear-gradient(135deg,#161616_0%,#35332d_100%)] px-6 py-3 text-[0.95rem] font-medium text-white shadow-[0_12px_26px_rgba(22,22,22,0.16)] transition hover:-translate-y-px hover:opacity-92"
+								>
+									Prendre RDV
+								</button>
+							</div>
 						</div>
 					</div>
 				</div>

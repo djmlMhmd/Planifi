@@ -3,6 +3,7 @@ import providerGalleryOne from '../assets/provider-gallery-1.jpg';
 import providerGalleryTwo from '../assets/provider-gallery-2.jpg';
 
 const PROVIDER_OVERRIDES_STORAGE_KEY = 'prestat-provider-overrides';
+const PROFESSIONAL_PROVIDER_STORAGE_KEY = 'prestat-professional-provider';
 
 export const providers = [
 	{
@@ -216,10 +217,55 @@ function writeProviderOverrides(overrides) {
 	window.localStorage.setItem(PROVIDER_OVERRIDES_STORAGE_KEY, JSON.stringify(overrides));
 }
 
-export function getProviderById(providerId) {
-	const provider = providers.find((item) => item.id === providerId) ?? providers[0];
-	const override = readProviderOverrides()[provider.id];
+function readProfessionalProvider() {
+	if (typeof window === 'undefined') {
+		return null;
+	}
+
+	try {
+		const raw = window.localStorage.getItem(PROFESSIONAL_PROVIDER_STORAGE_KEY);
+		return raw ? JSON.parse(raw) : null;
+	} catch {
+		return null;
+	}
+}
+
+function writeProfessionalProvider(provider) {
+	if (typeof window === 'undefined') {
+		return;
+	}
+
+	window.localStorage.setItem(PROFESSIONAL_PROVIDER_STORAGE_KEY, JSON.stringify(provider));
+}
+
+function mergeProviderWithOverride(provider, overrides) {
+	const override = overrides[provider.id];
 	return override ? { ...provider, ...override } : provider;
+}
+
+export function getAllProviders() {
+	const overrides = readProviderOverrides();
+	const professionalProvider = readProfessionalProvider();
+	const mergedProviders = providers.map((provider) => mergeProviderWithOverride(provider, overrides));
+
+	if (!professionalProvider) {
+		return mergedProviders;
+	}
+
+	const existingIndex = mergedProviders.findIndex((provider) => provider.id === professionalProvider.id);
+	if (existingIndex >= 0) {
+		mergedProviders[existingIndex] = {
+			...mergedProviders[existingIndex],
+			...professionalProvider,
+		};
+		return mergedProviders;
+	}
+
+	return [professionalProvider, ...mergedProviders];
+}
+
+export function getProviderById(providerId) {
+	return getAllProviders().find((item) => item.id === providerId) ?? getAllProviders()[0];
 }
 
 export function getProviderAndService(providerId, serviceId) {
@@ -232,4 +278,8 @@ export function saveProviderOverride(providerId, nextProviderData) {
 	const overrides = readProviderOverrides();
 	overrides[providerId] = nextProviderData;
 	writeProviderOverrides(overrides);
+}
+
+export function saveProfessionalProvider(provider) {
+	writeProfessionalProvider(provider);
 }

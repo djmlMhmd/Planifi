@@ -11,7 +11,7 @@ import providerGalleryOne from '../../assets/provider-gallery-1.jpg';
 import providerGalleryTwo from '../../assets/provider-gallery-2.jpg';
 import providerUserPlaceholder from '../../assets/provider-user-placeholder.png';
 import prestatLogo from '../../assets/prestat-logo.svg';
-import { getProviderById, saveProviderOverride } from '../../data/providers';
+import { getProviderById, saveProfessionalProvider, saveProviderOverride } from '../../data/providers';
 import Reveal from '../Reveal/Reveal';
 
 async function readJsonSafely(response) {
@@ -448,7 +448,7 @@ function getProfileTabFromLocation(search = window.location.search) {
 function getProfessionalTabFromLocation(search = window.location.search) {
 	const tabParam = new URLSearchParams(search).get('tab');
 
-	if (tabParam === 'profile' || tabParam === 'settings') {
+	if (tabParam === 'profile' || tabParam === 'settings' || tabParam === 'favorites') {
 		return tabParam;
 	}
 
@@ -463,6 +463,10 @@ function resolveProfessionalProviderId(profile) {
 	if (companyName.includes('maison')) return 'maison';
 
 	return 'tressa';
+}
+
+function getProfessionalProviderStorageId(profile) {
+	return profile?.users_id ? `pro-${profile.users_id}` : resolveProfessionalProviderId(profile);
 }
 
 function SidebarLink({ href, active = false, icon: Icon, onNavigate, tone = 'dark', children }) {
@@ -859,6 +863,434 @@ function SettingsPanel({ profile, onProfileUpdated }) {
 	);
 }
 
+function ProfessionalSettingsPanel({ profile, onProfileUpdated }) {
+	const [accountForm, setAccountForm] = useState({
+		title: 'madame',
+		firstName: profile.firstName || '',
+		lastName: profile.lastName || '',
+		birthDate: '',
+	});
+	const [companyForm, setCompanyForm] = useState({
+		email: profile.email || '',
+		companyName: profile.company_name || '',
+		siret: profile.siret || '',
+		companyAddress: profile.company_address || '',
+		phone: profile.phone || '',
+	});
+	const [emailEditable, setEmailEditable] = useState(false);
+	const [accountMessage, setAccountMessage] = useState('');
+	const [companyMessage, setCompanyMessage] = useState('');
+	const [passwordState, setPasswordState] = useState({
+		previousPassword: '',
+		newPassword: '',
+		confirmPassword: '',
+		loading: false,
+		message: '',
+		error: '',
+	});
+
+	useEffect(() => {
+		setAccountForm((current) => ({
+			...current,
+			firstName: profile.firstName || '',
+			lastName: profile.lastName || '',
+		}));
+		setCompanyForm({
+			email: profile.email || '',
+			companyName: profile.company_name || '',
+			siret: profile.siret || '',
+			companyAddress: profile.company_address || '',
+			phone: profile.phone || '',
+		});
+	}, [profile]);
+
+	function handlePasswordFieldChange(field, value) {
+		setPasswordState((current) => ({
+			...current,
+			[field]: value,
+			message: '',
+			error: '',
+		}));
+	}
+
+	async function handlePasswordSubmit(event) {
+		event.preventDefault();
+
+		if (!passwordState.previousPassword || !passwordState.newPassword || !passwordState.confirmPassword) {
+			setPasswordState((current) => ({
+				...current,
+				error: 'Renseigne tous les champs du mot de passe.',
+				message: '',
+			}));
+			return;
+		}
+
+		if (passwordState.newPassword !== passwordState.confirmPassword) {
+			setPasswordState((current) => ({
+				...current,
+				error: 'Le nouveau mot de passe et sa confirmation ne correspondent pas.',
+				message: '',
+			}));
+			return;
+		}
+
+		setPasswordState((current) => ({ ...current, loading: true, message: '', error: '' }));
+
+		try {
+			const response = await fetch(`/profil/${profile.users_id}/change-password`, {
+				method: 'PUT',
+				credentials: 'same-origin',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					previousPassword: passwordState.previousPassword,
+					newPassword: passwordState.newPassword,
+				}),
+			});
+			const payload = await readJsonSafely(response);
+
+			if (!response.ok) {
+				setPasswordState((current) => ({
+					...current,
+					loading: false,
+					message: '',
+					error: payload?.message || 'Impossible de modifier le mot de passe.',
+				}));
+				return;
+			}
+
+			setPasswordState({
+				previousPassword: '',
+				newPassword: '',
+				confirmPassword: '',
+				loading: false,
+				message: 'Mot de passe mis à jour.',
+				error: '',
+			});
+		} catch {
+			setPasswordState((current) => ({
+				...current,
+				loading: false,
+				message: '',
+				error: 'Erreur réseau lors de la mise à jour du mot de passe.',
+			}));
+		}
+	}
+
+	function saveAccountSection() {
+		onProfileUpdated({
+			...profile,
+			firstName: accountForm.firstName,
+			lastName: accountForm.lastName,
+		});
+		setAccountMessage('Informations du compte mises à jour.');
+	}
+
+	function saveCompanySection() {
+		onProfileUpdated({
+			...profile,
+			email: companyForm.email,
+			company_name: companyForm.companyName,
+			company_address: companyForm.companyAddress,
+			phone: companyForm.phone,
+			siret: companyForm.siret,
+		});
+		setCompanyMessage('Informations professionnelles mises à jour.');
+		setEmailEditable(false);
+	}
+
+	const sectionClass = 'border-t border-black/8 pt-7';
+	const inputClass = 'h-12 rounded-[14px] border border-black/6 bg-[#f2f1ed] px-4 text-[#151515] outline-none transition focus:border-black/18 focus:bg-white';
+	const saveButtonClass = 'rounded-[14px] bg-[#101010] px-5 py-3 text-[0.96rem] font-semibold text-white shadow-[0_12px_28px_rgba(10,10,10,0.18)] transition hover:-translate-y-px';
+
+	return (
+		<div className="space-y-8 rounded-[24px] border border-black/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(249,248,244,0.96)_100%)] p-7 shadow-[0_16px_38px_rgba(17,19,30,0.05)]">
+			<section>
+				<h2 className="text-[2rem] font-semibold tracking-[-0.04em] text-[#151515]">Paramètres</h2>
+
+				<div className="mt-8">
+					<h3 className="text-[1.35rem] font-semibold text-[#151515]">Information du compte</h3>
+
+					<div className="mt-8 flex flex-wrap gap-8 text-[0.98rem] text-[#1a1a1a]">
+						{[
+							{ value: 'madame', label: 'Madame' },
+							{ value: 'monsieur', label: 'Monsieur' },
+							{ value: 'non-specifiee', label: 'Non spécifiée' },
+						].map((option) => (
+							<label key={option.value} className="flex items-center gap-3">
+								<input
+									type="radio"
+									name="pro-title"
+									checked={accountForm.title === option.value}
+									onChange={() => {
+										setAccountForm((current) => ({ ...current, title: option.value }));
+										setAccountMessage('');
+									}}
+									className="accent-[#101010]"
+								/>
+								<span>{option.label}</span>
+							</label>
+						))}
+					</div>
+
+					<div className="mt-10 grid gap-6 md:grid-cols-2">
+						<label className="flex flex-col gap-2">
+							<span className="text-[0.95rem] font-medium text-[#151515]">Nom *</span>
+							<input
+								type="text"
+								value={accountForm.lastName}
+								onChange={(event) => {
+									setAccountForm((current) => ({ ...current, lastName: event.target.value }));
+									setAccountMessage('');
+								}}
+								className={inputClass}
+							/>
+						</label>
+						<label className="flex flex-col gap-2">
+							<span className="text-[0.95rem] font-medium text-[#151515]">Prénom *</span>
+							<input
+								type="text"
+								value={accountForm.firstName}
+								onChange={(event) => {
+									setAccountForm((current) => ({ ...current, firstName: event.target.value }));
+									setAccountMessage('');
+								}}
+								className={inputClass}
+							/>
+						</label>
+						<label className="flex flex-col gap-2 md:max-w-[340px]">
+							<span className="text-[0.95rem] font-medium text-[#151515]">Date de naissance *</span>
+							<input
+								type="text"
+								placeholder="JJ/MM/AAAA"
+								value={accountForm.birthDate}
+								onChange={(event) => {
+									setAccountForm((current) => ({ ...current, birthDate: event.target.value }));
+									setAccountMessage('');
+								}}
+								className={inputClass}
+							/>
+						</label>
+					</div>
+
+					<button type="button" onClick={saveAccountSection} className={`mt-7 ${saveButtonClass}`}>
+						Enregistrer
+					</button>
+					{accountMessage ? <p className="mt-4 text-[0.94rem] font-medium text-[#1f6b3b]">{accountMessage}</p> : null}
+				</div>
+			</section>
+
+			<section className={sectionClass}>
+				<h2 className="text-[1.35rem] font-semibold text-[#151515]">Adresse</h2>
+				<div className="mt-6 grid max-w-[760px] gap-5 md:grid-cols-2">
+					<label className="flex flex-col gap-2 md:col-span-2">
+						<span className="text-[0.95rem] font-medium text-[#151515]">Adresse *</span>
+						<input
+							type="text"
+							defaultValue={profile.address || ''}
+							placeholder="Nom de la rue et ville/code postal"
+							className="h-12 rounded-[14px] border border-black/6 bg-[#f2f1ed] px-4 text-[#151515] outline-none transition focus:border-black/18 focus:bg-white"
+						/>
+					</label>
+					<label className="flex flex-col gap-2">
+						<span className="text-[0.95rem] font-medium text-[#151515]">Ville *</span>
+						<input
+							type="text"
+							defaultValue={profile.city || ''}
+							placeholder="Ville"
+							className="h-12 rounded-[14px] border border-black/6 bg-[#f2f1ed] px-4 text-[#151515] outline-none transition focus:border-black/18 focus:bg-white"
+						/>
+					</label>
+					<label className="flex flex-col gap-2">
+						<span className="text-[0.95rem] font-medium text-[#151515]">Pays *</span>
+						<input
+							type="text"
+							defaultValue={profile.country || ''}
+							placeholder="Pays"
+							className="h-12 rounded-[14px] border border-black/6 bg-[#f2f1ed] px-4 text-[#151515] outline-none transition focus:border-black/18 focus:bg-white"
+						/>
+					</label>
+				</div>
+
+				<button type="button" className={`mt-7 ${saveButtonClass}`}>
+					Enregistrer
+				</button>
+			</section>
+
+			<section className={sectionClass}>
+				<h2 className="text-[1.35rem] font-semibold text-[#151515]">E-mail</h2>
+				<div className="mt-6 flex max-w-[720px] items-center gap-3 rounded-[16px] border border-black/6 bg-[#f2f1ed] p-3">
+					<input
+						type="email"
+						value={companyForm.email}
+						onChange={(event) => {
+							setCompanyForm((current) => ({ ...current, email: event.target.value }));
+							setCompanyMessage('');
+						}}
+						disabled={!emailEditable}
+						className="min-w-0 flex-1 bg-transparent px-2 text-[1rem] text-[#151515] outline-none disabled:text-[#151515]"
+					/>
+					<button
+						type="button"
+						onClick={() => setEmailEditable((value) => !value)}
+						className="rounded-[14px] bg-[#101010] px-5 py-3 text-[0.95rem] font-semibold text-white shadow-[0_10px_24px_rgba(10,10,10,0.16)]"
+					>
+						{emailEditable ? 'Valider' : 'Modifier'}
+					</button>
+				</div>
+			</section>
+
+			<section className={sectionClass}>
+				<h2 className="text-[1.35rem] font-semibold text-[#151515]">Détails de l'entreprise</h2>
+
+				<div className="mt-8 grid gap-6 md:grid-cols-2">
+					<label className="flex flex-col gap-2">
+						<span className="text-[0.95rem] font-medium text-[#151515]">Nom de l’entreprise</span>
+						<input
+							type="text"
+							value={companyForm.companyName}
+							onChange={(event) => {
+								setCompanyForm((current) => ({ ...current, companyName: event.target.value }));
+								setCompanyMessage('');
+							}}
+							className={`${inputClass} text-black/68`}
+						/>
+					</label>
+					<label className="flex flex-col gap-2">
+						<span className="text-[0.95rem] font-medium text-[#151515]">Numéro SIRET</span>
+						<input
+							type="text"
+							value={companyForm.siret}
+							onChange={(event) => {
+								setCompanyForm((current) => ({ ...current, siret: event.target.value }));
+								setCompanyMessage('');
+							}}
+							placeholder="Pas obligatoire"
+							className={inputClass}
+						/>
+					</label>
+					<label className="flex flex-col gap-2">
+						<span className="text-[0.95rem] font-medium text-[#151515]">Adresse de l’entreprise *</span>
+						<input
+							type="text"
+							value={companyForm.companyAddress}
+							onChange={(event) => {
+								setCompanyForm((current) => ({ ...current, companyAddress: event.target.value }));
+								setCompanyMessage('');
+							}}
+							className={inputClass}
+						/>
+					</label>
+					<label className="flex flex-col gap-2">
+						<span className="text-[0.95rem] font-medium text-[#151515]">Numéro de téléphone *</span>
+						<input
+							type="text"
+							value={companyForm.phone}
+							onChange={(event) => {
+								setCompanyForm((current) => ({ ...current, phone: event.target.value }));
+								setCompanyMessage('');
+							}}
+							className={inputClass}
+						/>
+					</label>
+				</div>
+
+				<button type="button" onClick={saveCompanySection} className={`mt-7 ${saveButtonClass}`}>
+					Enregistrer
+				</button>
+				{companyMessage ? <p className="mt-4 text-[0.94rem] font-medium text-[#1f6b3b]">{companyMessage}</p> : null}
+			</section>
+
+			<section className={sectionClass}>
+				<h2 className="text-[1.35rem] font-semibold text-[#151515]">Préférences</h2>
+
+				<div className="mt-6 space-y-5">
+					<div className="rounded-[20px] bg-[#f2f1ed] p-5">
+						<h3 className="text-[1.1rem] font-semibold text-[#151515]">Messagerie</h3>
+						<div className="mt-5 space-y-4">
+							<div className="flex items-center justify-between gap-6">
+								<p className="text-[0.98rem] text-[#242424]">Recevoir des messages privés</p>
+								<span className="relative inline-flex h-7 w-12 shrink-0 rounded-full bg-[#101010] transition">
+									<span className="absolute left-6 top-1 h-5 w-5 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.16)] transition" />
+								</span>
+							</div>
+							<div className="flex items-center justify-between gap-6">
+								<p className="text-[0.98rem] text-[#242424]">Recevoir les nouveaux messages par mails</p>
+								<span className="relative inline-flex h-7 w-12 shrink-0 rounded-full bg-black/12 transition">
+									<span className="absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.16)] transition" />
+								</span>
+							</div>
+						</div>
+					</div>
+
+					<div className="rounded-[20px] bg-[#f2f1ed] p-5">
+						<h3 className="text-[1.1rem] font-semibold text-[#151515]">Informations</h3>
+						<div className="mt-5 space-y-4">
+							<div className="flex items-center justify-between gap-6">
+								<p className="text-[0.98rem] text-[#242424]">Afficher mon adresse sur mon profil</p>
+								<span className="relative inline-flex h-7 w-12 shrink-0 rounded-full bg-black/12 transition">
+									<span className="absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.16)] transition" />
+								</span>
+							</div>
+							<div className="flex items-center justify-between gap-6">
+								<p className="text-[0.98rem] text-[#242424]">Afficher mon numéro de téléphone sur mon profil</p>
+								<span className="relative inline-flex h-7 w-12 shrink-0 rounded-full bg-[#101010] transition">
+									<span className="absolute left-6 top-1 h-5 w-5 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.16)] transition" />
+								</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section className={sectionClass}>
+				<h2 className="text-[1.35rem] font-semibold text-[#151515]">Sécurité</h2>
+				<form className="mt-8 grid max-w-[720px] gap-5" onSubmit={handlePasswordSubmit}>
+					<label className="flex flex-col gap-2">
+						<span className="text-[0.95rem] font-medium text-[#151515]">Mot de passe actuel</span>
+						<input
+							type="password"
+							value={passwordState.previousPassword}
+							onChange={(event) => handlePasswordFieldChange('previousPassword', event.target.value)}
+							className={inputClass}
+						/>
+					</label>
+					<label className="flex flex-col gap-2">
+						<span className="text-[0.95rem] font-medium text-[#151515]">Nouveau mot de passe</span>
+						<input
+							type="password"
+							value={passwordState.newPassword}
+							onChange={(event) => handlePasswordFieldChange('newPassword', event.target.value)}
+							className={inputClass}
+						/>
+					</label>
+					<label className="flex flex-col gap-2">
+						<span className="text-[0.95rem] font-medium text-[#151515]">Confirmer le nouveau mot de passe</span>
+						<input
+							type="password"
+							value={passwordState.confirmPassword}
+							onChange={(event) => handlePasswordFieldChange('confirmPassword', event.target.value)}
+							className={inputClass}
+						/>
+					</label>
+
+					<button
+						type="submit"
+						disabled={passwordState.loading}
+						className={`mt-2 self-start ${passwordState.loading ? 'cursor-not-allowed bg-black/30' : 'bg-[#101010]'} rounded-[14px] px-5 py-3 text-[0.96rem] font-semibold text-white shadow-[0_12px_28px_rgba(10,10,10,0.18)]`}
+					>
+						{passwordState.loading ? 'Mise à jour…' : 'Mettre à jour le mot de passe'}
+					</button>
+				</form>
+
+				{passwordState.message ? <p className="mt-5 text-[0.94rem] font-medium text-[#1f6b3b]">{passwordState.message}</p> : null}
+				{passwordState.error ? <p className="mt-5 text-[0.94rem] font-medium text-[#c35555]">{passwordState.error}</p> : null}
+			</section>
+		</div>
+	);
+}
+
 function FavoritesPanel() {
 	return (
 		<div>
@@ -1178,6 +1610,7 @@ function DashboardShell({ profile, reservations, onProfileUpdated }) {
 
 function ProfessionalProfile({ profile, serviceTiles, onAddService, onEditService }) {
 	const providerId = resolveProfessionalProviderId(profile);
+	const professionalProviderId = getProfessionalProviderStorageId(profile);
 	const provider = getProviderById(providerId);
 	const [isEditing, setIsEditing] = useState(false);
 	const [saveState, setSaveState] = useState('');
@@ -1243,7 +1676,7 @@ function ProfessionalProfile({ profile, serviceTiles, onAddService, onEditServic
 	}
 
 	function handleSaveProfile() {
-		saveProviderOverride(providerId, {
+		const nextProviderData = {
 			company: draft.company,
 			location: draft.location,
 			policy: draft.policy,
@@ -1263,6 +1696,13 @@ function ProfessionalProfile({ profile, serviceTiles, onAddService, onEditServic
 				price: service.price,
 				description: service.description || '',
 			})),
+		};
+
+		saveProviderOverride(providerId, nextProviderData);
+		saveProfessionalProvider({
+			...provider,
+			...nextProviderData,
+			id: professionalProviderId,
 		});
 		setIsEditing(false);
 		setSaveState('Modifications enregistrées.');
@@ -1560,8 +2000,12 @@ function NewsCard({ item }) {
 }
 
 function ProfessionalDashboardShell({ profile }) {
-	const displayName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || '[nom pro]';
-	const companyName = profile.company_name || 'TRESSA COIFFURE';
+	const [currentProfile, setCurrentProfile] = useState(profile);
+	const displayName = `${currentProfile.firstName || ''} ${currentProfile.lastName || ''}`.trim() || '[nom pro]';
+	const companyName = currentProfile.company_name || 'TRESSA COIFFURE';
+	const baseProviderId = resolveProfessionalProviderId(currentProfile);
+	const professionalProviderId = getProfessionalProviderStorageId(currentProfile);
+	const baseProvider = getProviderById(baseProviderId);
 	const [activeProfessionalTab, setActiveProfessionalTab] = useState(() => getProfessionalTabFromLocation());
 	const [isDayPlannerOpen, setIsDayPlannerOpen] = useState(false);
 	const [isNewsOpen, setIsNewsOpen] = useState(false);
@@ -1634,6 +2078,10 @@ function ProfessionalDashboardShell({ profile }) {
 	];
 	const [tipIndex, setTipIndex] = useState(0);
 	const [statView, setStatView] = useState(0); // 0 = donut, 1 = courbe
+
+	useEffect(() => {
+		setCurrentProfile(profile);
+	}, [profile]);
 
 	useEffect(() => {
 		const id = window.setInterval(() => setTipIndex((i) => (i + 1) % tips.length), 5000);
@@ -1738,14 +2186,14 @@ function ProfessionalDashboardShell({ profile }) {
 		let cancelled = false;
 
 		async function loadProfessionalServices() {
-			if (!profile?.users_id) {
+			if (!currentProfile?.users_id) {
 				return;
 			}
 
 			setServicesLoading(true);
 
 			try {
-				const response = await fetch(`/service/${profile.users_id}/liste`, {
+				const response = await fetch(`/service/${currentProfile.users_id}/liste`, {
 					credentials: 'same-origin',
 				});
 				const payload = await readJsonSafely(response);
@@ -1775,7 +2223,7 @@ function ProfessionalDashboardShell({ profile }) {
 		return () => {
 			cancelled = true;
 		};
-	}, [profile?.users_id, serviceListVersion]);
+	}, [currentProfile?.users_id, serviceListVersion]);
 
 	async function handleCreateServiceSubmit(event) {
 		event.preventDefault();
@@ -1873,6 +2321,22 @@ function ProfessionalDashboardShell({ profile }) {
 		});
 
 	useEffect(() => {
+		saveProfessionalProvider({
+			...baseProvider,
+			id: professionalProviderId,
+			company: currentProfile.company_name || baseProvider.company,
+			location: currentProfile.company_address || baseProvider.location,
+			services: serviceTiles.map((service) => ({
+				id: service.id,
+				name: service.title,
+				duration: service.duration || '1h',
+				price: service.price,
+				description: service.description || '',
+			})),
+		});
+	}, [baseProvider, professionalProviderId, currentProfile.company_address, currentProfile.company_name, serviceTiles]);
+
+	useEffect(() => {
 		function handlePopState() {
 			startTransition(() => {
 				setActiveProfessionalTab(getProfessionalTabFromLocation());
@@ -1913,37 +2377,45 @@ function ProfessionalDashboardShell({ profile }) {
 	return (
 		<main className="min-h-screen bg-[linear-gradient(180deg,#f7f6f2_0%,#fcfcfa_45%,#f3f1ec_100%)] text-[#181818]">
 			<div className="grid min-h-screen grid-cols-[202px_1fr]">
-				<aside className="flex h-screen flex-col border-r border-black/6 bg-[rgba(255,255,255,0.72)]">
-					<div className="flex h-[132px] items-center justify-center border-b border-black/6 px-6">
+				<aside className="sticky top-0 flex h-screen flex-col overflow-hidden border-r border-white/10 bg-[linear-gradient(180deg,#090909_0%,#121212_100%)] text-white">
+					<div className="flex h-[132px] items-center justify-center border-b border-white/10 px-6">
 						<a href="/" aria-label="Retour a l'accueil Prestat" className="transition hover:opacity-80">
-							<img src={prestatLogo} alt="Prestat" className="w-[126px]" />
+							<img
+								src={prestatLogo}
+								alt="Prestat"
+								className="w-[126px]"
+								style={{ filter: 'brightness(0) invert(1)' }}
+							/>
 						</a>
 					</div>
 
 					<nav className="flex flex-1 flex-col px-7 pb-8 pt-10">
 						<div className="space-y-5">
-							<SidebarLink href="/app/profil/professionnel" active={activeProfessionalTab === 'dashboard'} icon={DashboardIcon} onNavigate={handleProfessionalSidebarNavigation} tone="light">
+							<SidebarLink href="/app/profil/professionnel" active={activeProfessionalTab === 'dashboard'} icon={DashboardIcon} onNavigate={handleProfessionalSidebarNavigation}>
 								Dashboard
 							</SidebarLink>
-							<SidebarLink href="/app/profil/professionnel" icon={BookmarkOutlineIcon} tone="light">
+							<SidebarLink href="/navigation" icon={CompassIcon}>
+								Découvrir
+							</SidebarLink>
+							<SidebarLink href="/app/profil/professionnel?tab=favorites" active={activeProfessionalTab === 'favorites'} icon={BookmarkOutlineIcon} onNavigate={handleProfessionalSidebarNavigation}>
 								Favoris
 							</SidebarLink>
-							<SidebarLink href="/app/profil/professionnel" icon={DocumentIcon} tone="light">
+							<SidebarLink href="/app/profil/professionnel" icon={DocumentIcon}>
 								Documents
 							</SidebarLink>
 						</div>
 
 						<div className="mt-auto space-y-5">
-							<SidebarLink href="/app/profil/professionnel?tab=profile" active={activeProfessionalTab === 'profile'} icon={UserIcon} onNavigate={handleProfessionalSidebarNavigation} tone="light">
+							<SidebarLink href="/app/profil/professionnel?tab=profile" active={activeProfessionalTab === 'profile'} icon={UserIcon} onNavigate={handleProfessionalSidebarNavigation}>
 								Profil
 							</SidebarLink>
-							<SidebarLink href="/app/profil/professionnel?tab=settings" active={activeProfessionalTab === 'settings'} icon={SettingsIcon} onNavigate={handleProfessionalSidebarNavigation} tone="light">
+							<SidebarLink href="/app/profil/professionnel?tab=settings" active={activeProfessionalTab === 'settings'} icon={SettingsIcon} onNavigate={handleProfessionalSidebarNavigation}>
 								Paramètres
 							</SidebarLink>
-							<SidebarLink href="/deconnexion/client" icon={LogoutIcon} tone="light">
+							<SidebarLink href="/deconnexion/client" icon={LogoutIcon}>
 								Déconnexion
 							</SidebarLink>
-							<SidebarLink href="#" icon={HelpIcon} tone="light">
+							<SidebarLink href="#" icon={HelpIcon}>
 								Contact
 							</SidebarLink>
 						</div>
@@ -1953,7 +2425,15 @@ function ProfessionalDashboardShell({ profile }) {
 				<div className="min-w-0">
 					<header className="flex h-[132px] items-center justify-between border-b border-black/6 bg-[rgba(255,255,255,0.72)] px-9 backdrop-blur-sm">
 						<div>
-							<h1 className="text-[3rem] font-semibold tracking-[-0.05em] text-[#1a1a1a]">Dashboard</h1>
+							<h1 className="text-[3rem] font-semibold tracking-[-0.05em] text-[#1a1a1a]">
+								{activeProfessionalTab === 'settings'
+									? 'Paramètres'
+									: activeProfessionalTab === 'favorites'
+										? 'Favoris'
+										: activeProfessionalTab === 'profile'
+											? 'Profil'
+											: 'Dashboard'}
+							</h1>
 							<p className="mt-1 text-[1.05rem] text-black/72">Bienvenue, {displayName}</p>
 							<div className="mt-1 flex items-center gap-3">
 								<p className="text-[1rem] font-semibold uppercase tracking-[0.02em] text-[#171717]">{companyName}</p>
@@ -1965,10 +2445,6 @@ function ProfessionalDashboardShell({ profile }) {
 						</div>
 
 						<div className="flex items-center gap-4">
-							<div className="relative flex h-14 w-14 items-center justify-center rounded-[16px] border border-black/8 bg-white text-[#151515] shadow-[0_12px_24px_rgba(20,20,20,0.05)]">
-								<BellOutlineIcon className="h-6 w-6" />
-								<span className="absolute right-4 top-4 h-2.5 w-2.5 rounded-full bg-[#ff4f4f]" />
-							</div>
 							<button
 								type="button"
 								onClick={() => setIsCreateServiceOpen(true)}
@@ -1980,9 +2456,17 @@ function ProfessionalDashboardShell({ profile }) {
 						</div>
 					</header>
 
-					{activeProfessionalTab === 'profile' ? (
+					{activeProfessionalTab === 'settings' ? (
+						<div className="px-9 pb-10 pt-9">
+							<ProfessionalSettingsPanel profile={currentProfile} onProfileUpdated={setCurrentProfile} />
+						</div>
+					) : activeProfessionalTab === 'favorites' ? (
+						<div className="px-9 pb-10 pt-9">
+							<FavoritesPanel />
+						</div>
+					) : activeProfessionalTab === 'profile' ? (
 						<ProfessionalProfile
-							profile={profile}
+							profile={currentProfile}
 							serviceTiles={serviceTiles}
 							onAddService={() => setIsCreateServiceOpen(true)}
 							onEditService={openEditServiceModal}

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import prestatLogo from '../../assets/prestat-logo.svg';
 import navigationPlaceholder from '../../assets/navigation-placeholder.jpg';
-import { providers } from '../../data/providers';
+import { getAllProviders } from '../../data/providers';
 import { navigateTo } from '../../lib/navigation';
 import Reveal from '../Reveal/Reveal';
 
@@ -268,6 +268,7 @@ export default function NavigationPage() {
 	const [selectedId, setSelectedId] = useState(null);
 	const [favorites, setFavorites] = useState(() => new Set());
 	const [toast, setToast] = useState(null);
+	const providers = getAllProviders();
 
 	function toggleFavorite(id) {
 		setFavorites((prev) => {
