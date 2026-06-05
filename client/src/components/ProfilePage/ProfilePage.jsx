@@ -494,8 +494,43 @@ function SidebarLink({ href, active = false, icon: Icon, onNavigate, tone = 'dar
 	);
 }
 
+function DevelopmentNoticeModal({ open, onClose }) {
+	if (!open) {
+		return null;
+	}
+
+	return (
+		<div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(17,15,13,0.32)] px-6 backdrop-blur-[3px]">
+			<div className="w-full max-w-[420px] rounded-[28px] bg-white p-7 shadow-[0_28px_80px_rgba(17,19,30,0.18)] animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]">
+				<div className="flex items-start justify-between gap-6">
+					<div>
+						<p className="text-[0.82rem] font-semibold uppercase tracking-[0.16em] text-black/42">Prestat</p>
+						<h2 className="mt-1.5 text-[1.8rem] font-semibold tracking-[-0.04em] text-[#171717]">Documents</h2>
+					</div>
+					<button
+						type="button"
+						onClick={onClose}
+						className="rounded-full border border-black/10 px-4 py-2 text-[0.9rem] font-medium text-black/56 transition hover:border-black/18 hover:text-black"
+					>
+						Fermer
+					</button>
+				</div>
+				<p className="mt-6 text-[1rem] leading-8 text-black/62">
+					Cette page est en cours de développement.
+				</p>
+			</div>
+		</div>
+	);
+}
+
 function SettingsPanel({ profile, onProfileUpdated }) {
 	const [uploadState, setUploadState] = useState({ loading: false, message: '', error: '' });
+	const [preferenceToggles, setPreferenceToggles] = useState({
+		privateMessages: true,
+		emailMessages: false,
+		showAddress: false,
+		showPhone: true,
+	});
 	const [passwordState, setPasswordState] = useState({
 		previousPassword: '',
 		newPassword: '',
@@ -570,6 +605,34 @@ function SettingsPanel({ profile, onProfileUpdated }) {
 			message: '',
 			error: '',
 		}));
+	}
+
+	function togglePreference(key) {
+		setPreferenceToggles((current) => ({
+			...current,
+			[key]: !current[key],
+		}));
+	}
+
+	function PreferenceToggle({ checked, onClick, label }) {
+		return (
+			<button
+				type="button"
+				role="switch"
+				aria-checked={checked}
+				aria-label={label}
+				onClick={onClick}
+				className={`relative inline-flex h-7 w-12 shrink-0 rounded-full transition ${
+					checked ? 'bg-[#101010]' : 'bg-black/12'
+				}`}
+			>
+				<span
+					className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.16)] transition ${
+						checked ? 'left-6' : 'left-1'
+					}`}
+				/>
+			</button>
+		);
 	}
 
 	async function handlePasswordSubmit(event) {
@@ -772,15 +835,19 @@ function SettingsPanel({ profile, onProfileUpdated }) {
 						<div className="mt-5 space-y-4">
 							<div className="flex items-center justify-between gap-6">
 								<p className="text-[0.98rem] text-[#242424]">Recevoir des messages privés</p>
-								<span className="relative inline-flex h-7 w-12 shrink-0 rounded-full bg-[#101010] transition">
-									<span className="absolute left-6 top-1 h-5 w-5 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.16)] transition" />
-								</span>
+								<PreferenceToggle
+									checked={preferenceToggles.privateMessages}
+									onClick={() => togglePreference('privateMessages')}
+									label="Recevoir des messages privés"
+								/>
 							</div>
 							<div className="flex items-center justify-between gap-6">
 								<p className="text-[0.98rem] text-[#242424]">Recevoir les nouveaux messages par mails</p>
-								<span className="relative inline-flex h-7 w-12 shrink-0 rounded-full bg-black/12 transition">
-									<span className="absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.16)] transition" />
-								</span>
+								<PreferenceToggle
+									checked={preferenceToggles.emailMessages}
+									onClick={() => togglePreference('emailMessages')}
+									label="Recevoir les nouveaux messages par mails"
+								/>
 							</div>
 						</div>
 					</div>
@@ -790,15 +857,19 @@ function SettingsPanel({ profile, onProfileUpdated }) {
 						<div className="mt-5 space-y-4">
 							<div className="flex items-center justify-between gap-6">
 								<p className="text-[0.98rem] text-[#242424]">Afficher mon adresse sur mon profil</p>
-								<span className="relative inline-flex h-7 w-12 shrink-0 rounded-full bg-black/12 transition">
-									<span className="absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.16)] transition" />
-								</span>
+								<PreferenceToggle
+									checked={preferenceToggles.showAddress}
+									onClick={() => togglePreference('showAddress')}
+									label="Afficher mon adresse sur mon profil"
+								/>
 							</div>
 							<div className="flex items-center justify-between gap-6">
 								<p className="text-[0.98rem] text-[#242424]">Afficher mon numéro de téléphone sur mon profil</p>
-								<span className="relative inline-flex h-7 w-12 shrink-0 rounded-full bg-[#101010] transition">
-									<span className="absolute left-6 top-1 h-5 w-5 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.16)] transition" />
-								</span>
+								<PreferenceToggle
+									checked={preferenceToggles.showPhone}
+									onClick={() => togglePreference('showPhone')}
+									label="Afficher mon numéro de téléphone sur mon profil"
+								/>
 							</div>
 						</div>
 					</div>
@@ -1397,6 +1468,7 @@ function DashboardShell({ profile, reservations, onProfileUpdated }) {
 
 	const [activeTab, setActiveTab] = useState(() => getProfileTabFromLocation());
 	const [contentVisible, setContentVisible] = useState(true);
+	const [isDocumentsNoticeOpen, setIsDocumentsNoticeOpen] = useState(false);
 
 	const reservationList = reservations.length
 		? reservations.slice(0, 7)
@@ -1478,6 +1550,9 @@ function DashboardShell({ profile, reservations, onProfileUpdated }) {
 							</SidebarLink>
 							<SidebarLink href="/app/profil?tab=settings" active={activeTab === 'settings'} icon={SettingsIcon} onNavigate={handleSidebarNavigation}>
 								Paramètres
+							</SidebarLink>
+							<SidebarLink href="/documents" icon={DocumentIcon} onNavigate={() => setIsDocumentsNoticeOpen(true)}>
+								Documents
 							</SidebarLink>
 						</div>
 
@@ -1646,6 +1721,7 @@ function DashboardShell({ profile, reservations, onProfileUpdated }) {
 					</div>
 				</div>
 			</div>
+			<DevelopmentNoticeModal open={isDocumentsNoticeOpen} onClose={() => setIsDocumentsNoticeOpen(false)} />
 		</main>
 	);
 }
@@ -2052,6 +2128,7 @@ function ProfessionalDashboardShell({ profile }) {
 	const [isDayPlannerOpen, setIsDayPlannerOpen] = useState(false);
 	const [isNewsOpen, setIsNewsOpen] = useState(false);
 	const [isServicesPanelOpen, setIsServicesPanelOpen] = useState(false);
+	const [isDocumentsNoticeOpen, setIsDocumentsNoticeOpen] = useState(false);
 	const [selectedDayIndex, setSelectedDayIndex] = useState(0);
 	const [isCreateServiceOpen, setIsCreateServiceOpen] = useState(false);
 	const [editingServiceId, setEditingServiceId] = useState(null);
@@ -2442,7 +2519,7 @@ function ProfessionalDashboardShell({ profile }) {
 							<SidebarLink href="/app/profil/professionnel?tab=favorites" active={activeProfessionalTab === 'favorites'} icon={BookmarkOutlineIcon} onNavigate={handleProfessionalSidebarNavigation}>
 								Favoris
 							</SidebarLink>
-							<SidebarLink href="/app/profil/professionnel" icon={DocumentIcon}>
+							<SidebarLink href="/documents" icon={DocumentIcon} onNavigate={() => setIsDocumentsNoticeOpen(true)}>
 								Documents
 							</SidebarLink>
 						</div>
@@ -3137,6 +3214,7 @@ function ProfessionalDashboardShell({ profile }) {
 					</div>
 				</div>
 			) : null}
+			<DevelopmentNoticeModal open={isDocumentsNoticeOpen} onClose={() => setIsDocumentsNoticeOpen(false)} />
 		</main>
 	);
 }
