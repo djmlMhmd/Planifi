@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import prestatLogo from '../../assets/prestat-logo.svg';
 import navigationPlaceholder from '../../assets/navigation-placeholder.jpg';
-import { getAllProviders } from '../../data/providers';
 import { navigateTo } from '../../lib/navigation';
 import Reveal from '../Reveal/Reveal';
 
@@ -237,25 +236,11 @@ function NavigationCard({ item, selected, onSelect, isFavorite, onToggleFavorite
 					<span>{item.location}</span>
 				</div>
 
-				<div className="mt-5 space-y-2.5">
-					{item.slots.map((slotGroup) => (
-						<div key={slotGroup.label} className="grid grid-cols-[56px_1fr] items-center gap-3">
-							<span className="text-[0.95rem] font-semibold text-[#1e1e1e]">{slotGroup.label}</span>
-							<div className="flex flex-wrap gap-2">
-								{slotGroup.days.map((day) => (
-									<span
-										key={`${slotGroup.label}-${day.label}`}
-										className={`rounded-[10px] border px-2.5 py-1 text-[0.9rem] ${
-											day.active
-												? 'border-[#131313] text-[#131313]'
-												: 'border-black/12 text-black/28'
-										}`}
-									>
-										{day.label}
-									</span>
-								))}
-							</div>
-						</div>
+				<div className="mt-5 flex flex-wrap gap-2.5">
+					{item.servicesPreview.map((service) => (
+						<span key={`${item.id}-${service.name}`} className="rounded-[10px] border border-black/10 bg-[#fafaf8] px-3 py-1.5 text-[0.88rem] text-black/68">
+							{service.name}
+						</span>
 					))}
 				</div>
 			</div>
@@ -263,12 +248,84 @@ function NavigationCard({ item, selected, onSelect, isFavorite, onToggleFavorite
 	);
 }
 
+function formatServiceDuration(duration) {
+	if (!duration) {
+		return '';
+	}
+
+	if (typeof duration === 'object') {
+		const hours = Number(duration.hours) || 0;
+		const minutes = Number(duration.minutes) || 0;
+
+		if (hours && minutes) return `${hours}h${String(minutes).padStart(2, '0')}`;
+		if (hours) return `${hours}h`;
+		if (minutes) return `${minutes}min`;
+		return '';
+	}
+
+	const parts = String(duration).split(':');
+	if (parts.length >= 2) {
+		const hours = Number(parts[0]) || 0;
+		const minutes = Number(parts[1]) || 0;
+
+		if (hours && minutes) return `${hours}h${String(minutes).padStart(2, '0')}`;
+		if (hours) return `${hours}h`;
+		if (minutes) return `${minutes}min`;
+	}
+
+	return String(duration);
+}
+
+function buildNavigationProviders(serviceRows) {
+	const providersMap = new Map();
+
+	serviceRows.forEach((serviceRow) => {
+		const providerId = String(serviceRow.professional_id);
+		const existingProvider = providersMap.get(providerId);
+		const serviceItem = {
+			id: String(serviceRow.service_id),
+			name: serviceRow.service_name,
+			duration: formatServiceDuration(serviceRow.duration),
+			price: serviceRow.service_price,
+		};
+
+		if (existingProvider) {
+			existingProvider.servicesPreview.push(serviceItem);
+			return;
+		}
+
+		providersMap.set(providerId, {
+			id: providerId,
+			company: serviceRow.company_name,
+			location: serviceRow.company_address || '[localisation]',
+			rating: '5,0',
+			reviews: 0,
+			policy: 'Réservation en ligne disponible. Les détails du prestataire seront enrichis directement depuis son profil.',
+			hours: [
+				['Lundi', '09:00 - 18:00'],
+				['Mardi', '09:00 - 18:00'],
+				['Mercredi', '09:00 - 18:00'],
+				['Jeudi', '09:00 - 18:00'],
+				['Vendredi', '09:00 - 18:00'],
+				['Samedi', 'Fermé'],
+			],
+			servicesPreview: [serviceItem],
+		});
+	});
+
+	return Array.from(providersMap.values()).map((provider) => ({
+		...provider,
+		reviews: provider.servicesPreview.length * 18 + 24,
+		servicesPreview: provider.servicesPreview.slice(0, 4),
+	}));
+}
+
 export default function NavigationPage() {
 	const [profile, setProfile] = useState(null);
 	const [selectedId, setSelectedId] = useState(null);
 	const [favorites, setFavorites] = useState(() => new Set());
 	const [toast, setToast] = useState(null);
-	const providers = getAllProviders();
+	const [providers, setProviders] = useState([]);
 
 	function toggleFavorite(id) {
 		setFavorites((prev) => {
@@ -301,24 +358,37 @@ export default function NavigationPage() {
 	useEffect(() => {
 		let cancelled = false;
 
-		async function loadProfile() {
+		async function loadPageData() {
 			try {
-				const response = await fetch('/profil', { credentials: 'same-origin' });
-				if (!response.ok) {
+				const [profileResponse, servicesResponse] = await Promise.all([
+					fetch('/profil', { credentials: 'same-origin' }),
+					fetch('/service', { credentials: 'same-origin' }),
+				]);
+
+				if (!profileResponse.ok || !servicesResponse.ok) {
 					return;
 				}
 
-				const payload = await response.json();
-				const loadedProfile = payload?.message;
-				if (!cancelled && loadedProfile) {
-					setProfile(loadedProfile);
+				const [profilePayload, servicesPayload] = await Promise.all([
+					profileResponse.json(),
+					servicesResponse.json(),
+				]);
+
+				if (!cancelled) {
+					if (profilePayload?.message) {
+						setProfile(profilePayload.message);
+					}
+
+					const nextProviders = buildNavigationProviders(servicesPayload?.message || []);
+					setProviders(nextProviders);
+					setSelectedId((currentSelectedId) => currentSelectedId || nextProviders[0]?.id || null);
 				}
 			} catch {
-				// Keep the fallback display when the profile request is unavailable.
+				// On garde un écran vide si le backend n'est pas joignable.
 			}
 		}
 
-		loadProfile();
+		loadPageData();
 
 		return () => {
 			cancelled = true;
@@ -345,7 +415,7 @@ export default function NavigationPage() {
 							<h1 className="text-[clamp(1.8rem,3vw,2.55rem)] font-semibold tracking-[-0.04em] text-[#161616]">
 								[Prestation recherché] : [Localisation]
 							</h1>
-							<p className="mt-4 text-[1.1rem] font-medium text-[#202020]">10 000 prestataires</p>
+							<p className="mt-4 text-[1.1rem] font-medium text-[#202020]">{providers.length} prestataires</p>
 						</Reveal>
 
 						<div className="flex flex-col gap-5">
@@ -363,7 +433,12 @@ export default function NavigationPage() {
 						</div>
 					</div>
 
-					<Reveal as="aside" from="right" delay={140} className="xl:sticky xl:top-6 xl:self-start">
+						<Reveal
+							as="aside"
+							from="right"
+							delay={140}
+							className="xl:sticky xl:top-[7.25rem] xl:self-start xl:max-h-[calc(100vh-8.5rem)] xl:overflow-y-auto xl:pr-1"
+						>
 						<div
 							key={selectedProvider?.id ?? 'empty-selection'}
 							className="animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]"

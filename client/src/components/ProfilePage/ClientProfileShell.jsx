@@ -26,12 +26,14 @@ import {
 } from './ProfilePage.shared';
 
 export default function DashboardShell({ profile, reservations, onProfileUpdated }) {
+	// Ces cartes restent décoratives pour le moment, elles servent juste à remplir le dashboard.
 	const reviewCards = useMemo(
 		() => ['Prestige Services', 'Élite Solutions', 'Pro Connect', 'Services Faciles'],
 		[]
 	);
 
 	const invoiceItems = useMemo(
+		// Je génère des libellés cohérents à partir du profil client.
 		() => [
 			`FACTURES - [${profile.city || 'Paris'}] : [${profile.firstName} ${profile.lastName}] [Prestation].pdf`,
 			`FACTURES - [${profile.city || 'Paris'}] : [${profile.firstName} ${profile.lastName}] [Prestataire].pdf`,
@@ -45,10 +47,13 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 		window.location.href = '/connexion/';
 	}
 
+	// L'onglet actif reste synchronisé avec l'URL pour éviter d'ajouter un router plus lourd ici.
 	const [activeTab, setActiveTab] = useState(() => getProfileTabFromLocation());
 	const [contentVisible, setContentVisible] = useState(true);
 	const [isDocumentsNoticeOpen, setIsDocumentsNoticeOpen] = useState(false);
+	const [isReservationsModalOpen, setIsReservationsModalOpen] = useState(false);
 
+	// Si le backend a déjà des réservations je les prends, sinon je garde un fallback visuel.
 	const reservationList = reservations.length
 		? reservations.slice(0, 7)
 		: [
@@ -60,8 +65,11 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 				{ reservation_id: 'demo-6', service_name: 'Pet-sitting', title: 'Toutou Services', start: 'Vendredi 20 14:00 - 15:30' },
 				{ reservation_id: 'demo-7', service_name: 'Coaching perso', title: 'Fit&Go Domicile', start: 'Vendredi 20 14:00 - 15:30' },
 		  ];
+	const shouldShowAllReservationsButton = reservations.length >= 6;
+	const fullReservationList = reservations.length ? reservations : reservationList;
 
 	useEffect(() => {
+		// Je resynchronise l'onglet si l'utilisateur navigue avec précédent / suivant.
 		function handlePopState() {
 			startTransition(() => {
 				setActiveTab(getProfileTabFromLocation());
@@ -73,6 +81,7 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 	}, []);
 
 	useEffect(() => {
+		// Petite transition d'entrée quand on change d'onglet.
 		setContentVisible(false);
 
 		const animationFrameId = window.requestAnimationFrame(() => {
@@ -83,6 +92,7 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 	}, [activeTab]);
 
 	function handleSidebarNavigation(href) {
+		// Si on ne change pas de page, je gère juste le changement d'onglet localement.
 		const targetUrl = new URL(href, window.location.origin);
 		const nextTab = getProfileTabFromLocation(targetUrl.search);
 
@@ -291,17 +301,54 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 												))}
 											</div>
 
-										<button type="button" className="mt-3 w-full text-center text-[0.96rem] font-semibold text-[#111111]">
-											Tous voir
-										</button>
-									</aside>
-								</Reveal>
+											{shouldShowAllReservationsButton ? (
+												<button
+													type="button"
+													onClick={() => setIsReservationsModalOpen(true)}
+													className="mt-3 w-full text-center text-[0.96rem] font-semibold text-[#111111] transition hover:opacity-70"
+												>
+													Tous voir
+												</button>
+											) : null}
+										</aside>
+									</Reveal>
 							) : null}
 					</div>
 				</div>
-			</div>
-			<DevelopmentNoticeModal open={isDocumentsNoticeOpen} onClose={() => setIsDocumentsNoticeOpen(false)} />
-		</main>
+				</div>
+				<DevelopmentNoticeModal open={isDocumentsNoticeOpen} onClose={() => setIsDocumentsNoticeOpen(false)} />
+				{isReservationsModalOpen ? (
+					<div
+						className="fixed inset-0 z-[90] flex items-center justify-center bg-[rgba(10,10,14,0.5)] px-4 backdrop-blur-[2px]"
+						onClick={() => setIsReservationsModalOpen(false)}
+					>
+						<div
+							className="w-full max-w-[720px] rounded-[28px] bg-white p-6 shadow-[0_30px_80px_rgba(0,0,0,0.22)]"
+							onClick={(event) => event.stopPropagation()}
+						>
+							<div className="mb-5 flex items-center justify-between gap-4">
+								<div>
+									<h2 className="text-[1.5rem] font-semibold tracking-[-0.04em] text-[#171717]">Tous mes rendez-vous</h2>
+									<p className="mt-1 text-[0.92rem] text-black/40">{fullReservationList.length} rendez-vous</p>
+								</div>
+								<button
+									type="button"
+									onClick={() => setIsReservationsModalOpen(false)}
+									className="text-[1.8rem] leading-none text-black/32 transition hover:text-black/62"
+									aria-label="Fermer la liste des rendez-vous"
+								>
+									×
+								</button>
+							</div>
+
+							<div className="max-h-[70vh] overflow-y-auto pr-1">
+								{fullReservationList.map((reservation) => (
+									<ReservationItem key={`modal-${reservation.reservation_id}`} reservation={reservation} />
+								))}
+							</div>
+						</div>
+					</div>
+				) : null}
+			</main>
 	);
 }
-

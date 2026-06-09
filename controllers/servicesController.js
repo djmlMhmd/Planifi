@@ -84,7 +84,7 @@ module.exports.service_all_get =  async (req, res) => {
         const client = getClientsCollection();
         const services = await client.query(
             `SELECT services.service_id, services.service_name,services.service_description,services.service_price, services.duration,
-                    pro.email, pro.phone, pa.company_name, pa.company_address 
+                    pro.users_id AS professional_id, pro.email, pro.phone, pa.company_name, pa.company_address 
             FROM services 
             INNER JOIN users as pro 
             ON services.professional_id = pro.users_id

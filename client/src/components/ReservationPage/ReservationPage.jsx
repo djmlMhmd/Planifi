@@ -197,6 +197,121 @@ function formatMonthLabel(date) {
 	return `${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`;
 }
 
+function formatApiDate(date) {
+	const day = String(date.getDate()).padStart(2, '0');
+	const month = String(date.getMonth() + 1).padStart(2, '0');
+	return `${day}-${month}-${date.getFullYear()}`;
+}
+
+function normalizeTimeLabel(value) {
+	// Je garde toutes les heures au format HH:mm pour éviter les comparaisons bancales.
+	if (!value) {
+		return '';
+	}
+
+	return String(value).slice(0, 5);
+}
+
+function timeLabelToMinutes(value) {
+	// Je passe tout en minutes pour simplifier les calculs de chevauchement.
+	const normalizedValue = normalizeTimeLabel(value);
+	const [hours, minutes] = normalizedValue.split(':');
+	return (Number(hours) || 0) * 60 + (Number(minutes) || 0);
+}
+
+function durationLabelToMinutes(duration) {
+	// Ici je normalise toutes les formes possibles de durée pour n'avoir qu'une valeur en minutes.
+	if (!duration) {
+		return 60;
+	}
+
+	if (typeof duration === 'string') {
+		const timeMatch = duration.match(/^(\d{1,2}):(\d{2})$/);
+		if (timeMatch) {
+			return Number(timeMatch[1]) * 60 + Number(timeMatch[2]);
+		}
+
+		const hourMinuteMatch = duration.match(/(\d+)h(?:(\d{1,2}))?/i);
+		if (hourMinuteMatch) {
+			return (Number(hourMinuteMatch[1]) || 0) * 60 + (Number(hourMinuteMatch[2]) || 0);
+		}
+
+		const minuteMatch = duration.match(/(\d+)\s*min/i);
+		if (minuteMatch) {
+			return Number(minuteMatch[1]) || 0;
+		}
+	}
+
+	if (typeof duration === 'object') {
+		return (Number(duration.hours) || 0) * 60 + (Number(duration.minutes) || 0);
+	}
+
+	return 60;
+}
+
+function isSlotInsideAvailability(slotStartMinutes, slotEndMinutes, availabilityRanges) {
+	// Le créneau doit tenir entièrement dans au moins une plage du pro.
+	return availabilityRanges.some((range) => {
+		const rangeStartMinutes = timeLabelToMinutes(range.start_time);
+		const rangeEndMinutes = timeLabelToMinutes(range.end_time);
+		return slotStartMinutes >= rangeStartMinutes && slotEndMinutes <= rangeEndMinutes;
+	});
+}
+
+function doesSlotOverlapReservation(slotStartMinutes, slotEndMinutes, reservedRanges) {
+	// Je bloque tout départ qui mord sur une réservation existante.
+	return reservedRanges.some((range) => {
+		const reservedStartMinutes = timeLabelToMinutes(range.start_time);
+		const reservedEndMinutes = timeLabelToMinutes(range.end_time);
+		return slotStartMinutes < reservedEndMinutes && slotEndMinutes > reservedStartMinutes;
+	});
+}
+
+function formatDurationLabel(duration) {
+	// J'affiche la durée dans un format lisible même si le back renvoie un interval brut.
+	if (!duration) {
+		return '1h';
+	}
+
+	if (typeof duration === 'string') {
+		const parts = duration.split(':');
+
+		if (parts.length >= 2) {
+			const hours = Number(parts[0]) || 0;
+			const minutes = Number(parts[1]) || 0;
+
+			if (hours && minutes) return `${hours}h${String(minutes).padStart(2, '0')}`;
+			if (hours) return `${hours}h`;
+			if (minutes) return `${minutes}min`;
+		}
+
+		return duration;
+	}
+
+	return String(duration);
+}
+
+function formatPriceLabel(price) {
+	const amount = Number(price);
+
+	if (Number.isNaN(amount)) {
+		return price || '--';
+	}
+
+	return Number.isInteger(amount) ? `${amount}€` : `${amount.toFixed(2)}€`;
+}
+
+function mapBackendService(service) {
+	// Je mappe les services backend une seule fois pour garder une structure stable côté front.
+	return {
+		id: String(service.service_id),
+		name: service.service_name,
+		duration: formatDurationLabel(service.duration),
+		price: formatPriceLabel(service.service_price),
+		description: service.service_description || '',
+	};
+}
+
 function getMonthDays(date) {
 	const first = new Date(date.getFullYear(), date.getMonth(), 1);
 	const last = new Date(date.getFullYear(), date.getMonth() + 1, 0);
@@ -219,21 +334,8 @@ function getMonthDays(date) {
 	return cells;
 }
 
-function buildTimesForDate(date) {
-	if (date.getDay() === 0 || date.getDay() === 6) {
-		return [];
-	}
-
-	return TIME_VALUES.map((value, index) => {
-		const availabilitySeed = (date.getDate() + date.getMonth() + index) % 5;
-		return {
-			value,
-			available: availabilitySeed !== 0,
-		};
-	});
-}
-
-function buildScheduleDays(weekStartDate) {
+function buildFallbackScheduleDays(weekStartDate) {
+	// Ce fallback sert surtout quand le back n'est pas encore prêt ou si la page charge trop tôt.
 	return Array.from({ length: 7 }, (_, index) => {
 		const date = addDays(weekStartDate, index);
 		return {
@@ -242,13 +344,24 @@ function buildScheduleDays(weekStartDate) {
 			longDate: formatLongDate(date),
 			shortDate: formatShortDate(date),
 			isoDate: date.toISOString().slice(0, 10),
-			times: buildTimesForDate(date),
+			times:
+				date.getDay() === 0 || date.getDay() === 6
+					? []
+					: TIME_VALUES.map((value, timeIndex) => {
+							const availabilitySeed = (date.getDate() + date.getMonth() + timeIndex) % 5;
+							return {
+								value,
+								available: availabilitySeed !== 0,
+							};
+						}),
 		};
 	});
 }
 
 export default function ReservationPage() {
+	// Toute la logique de réservation vit ici: contexte, calendrier, sélection et confirmation.
 	const [profile, setProfile] = useState(null);
+	const [backendProvider, setBackendProvider] = useState(null);
 	const [selectedSlot, setSelectedSlot] = useState(null);
 	const [showSchedulePicker, setShowSchedulePicker] = useState(true);
 	const [contact, setContact] = useState('[nom prénom - mail@mail.com - 06123456789]');
@@ -256,23 +369,57 @@ export default function ReservationPage() {
 	const [weekOffset, setWeekOffset] = useState(0);
 	const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 	const [calendarMonthDate, setCalendarMonthDate] = useState(() => new Date(2026, 5, 4));
+	const [backendProfessionalId, setBackendProfessionalId] = useState(null);
+	const [backendService, setBackendService] = useState(null);
+	const [scheduleDays, setScheduleDays] = useState([]);
+	const [scheduleLoading, setScheduleLoading] = useState(true);
+	const [pageError, setPageError] = useState('');
+	const [bookingState, setBookingState] = useState({ loading: false, error: '' });
 	const calendarRef = useRef(null);
 
 	const searchParams = new URLSearchParams(window.location.search);
 	const providerId = searchParams.get('professionalId') || 'tressa';
 	const serviceId = searchParams.get('serviceId') || 'srv-1';
-	const { provider, service } = getProviderAndService(providerId, serviceId);
+	const isBackendProviderId = /^[0-9]+$/.test(providerId);
+	const { provider: fallbackProvider, service: fallbackService } = !isBackendProviderId
+		? getProviderAndService(providerId, serviceId)
+		: {
+			provider: {
+				id: providerId,
+				company: 'Prestataire',
+				location: '[localisation]',
+			},
+			service: {
+				id: serviceId,
+				name: 'Prestation',
+				duration: '1h',
+				price: '--',
+				description: '',
+			},
+		};
 	const today = new Date();
 	const currentWeekStart = useMemo(() => startOfWeek(today), []);
 	const displayedWeekStart = useMemo(() => addDays(currentWeekStart, weekOffset * 7), [currentWeekStart, weekOffset]);
-	const scheduleDays = useMemo(() => buildScheduleDays(displayedWeekStart), [displayedWeekStart]);
 	const isCurrentWeek = weekOffset === 0;
 	const displayedWeekLabel = useMemo(() => {
 		return formatWeekRangeLabel(displayedWeekStart);
 	}, [displayedWeekStart]);
 	const monthDays = useMemo(() => getMonthDays(calendarMonthDate), [calendarMonthDate]);
+	const displayedProvider = backendProvider || fallbackProvider;
+	const displayedService = backendService || fallbackService;
+	const displayedServiceDurationMinutes = useMemo(() => durationLabelToMinutes(displayedService?.duration), [displayedService?.duration]);
+	const scheduleDaysWithVisibleTimes = useMemo(
+		() =>
+			scheduleDays.map((day) => ({
+				...day,
+				// Je n'affiche que les vrais créneaux réservables pour éviter un calendrier plein de cases grisées.
+				visibleTimes: day.times.filter((time) => time.available),
+			})),
+		[scheduleDays]
+	);
 
 	useEffect(() => {
+		// Je préremplis les coordonnées du client connecté pour éviter une ressaisie.
 		let cancelled = false;
 
 		async function loadProfile() {
@@ -298,10 +445,76 @@ export default function ReservationPage() {
 	}, []);
 
 	useEffect(() => {
+		// Je relie ici les ids de l'URL au vrai prestataire et au vrai service backend.
+		let cancelled = false;
+
+		async function loadBookingContext() {
+			setPageError('');
+
+			try {
+				const professionalsResponse = await fetch('/professionals', { credentials: 'same-origin' });
+				if (!professionalsResponse.ok) {
+					throw new Error('Impossible de récupérer la liste des prestataires.');
+				}
+
+				const professionalsPayload = await professionalsResponse.json();
+				const professionals = professionalsPayload?.message || [];
+				const matchedProfessional = isBackendProviderId
+					? professionals.find((item) => String(item.users_id) === providerId)
+					: professionals.find((item) => {
+						return item.company_name?.trim().toLowerCase() === fallbackProvider.company.trim().toLowerCase();
+					});
+
+				if (!matchedProfessional) {
+					if (!cancelled) {
+						setPageError('Ce prestataire n’est pas encore relié au backend de réservation.');
+					}
+					return;
+				}
+
+				const professionalNumericId = matchedProfessional.users_id;
+				const servicesResponse = await fetch(`/service/${professionalNumericId}/liste`, { credentials: 'same-origin' });
+				if (!servicesResponse.ok) {
+					throw new Error('Impossible de récupérer les services du prestataire.');
+				}
+
+				const servicesPayload = await servicesResponse.json();
+				const services = (servicesPayload?.message || []).map(mapBackendService);
+				const matchedService =
+					services.find((item) => item.id === serviceId) ||
+					services.find((item) => item.name?.trim().toLowerCase() === fallbackService.name.trim().toLowerCase()) ||
+					services[0] ||
+					null;
+
+				if (!cancelled) {
+					setBackendProfessionalId(professionalNumericId);
+					setBackendProvider({
+						id: String(professionalNumericId),
+						company: matchedProfessional.company_name,
+						location: servicesPayload?.message?.[0]?.company_address || '[localisation]',
+					});
+					setBackendService(matchedService);
+				}
+			} catch (error) {
+				if (!cancelled) {
+					setPageError(error.message || 'Impossible de préparer la réservation.');
+				}
+			}
+		}
+
+		loadBookingContext();
+		return () => {
+			cancelled = true;
+		};
+	}, [isBackendProviderId, providerId, fallbackProvider.company, fallbackService.name, serviceId]);
+
+	useEffect(() => {
+		// Le mini calendrier suit toujours la semaine affichée.
 		setCalendarMonthDate(displayedWeekStart);
 	}, [displayedWeekStart]);
 
 	useEffect(() => {
+		// Je ferme le calendrier si on clique à côté pour garder un comportement standard.
 		if (!isCalendarOpen) return undefined;
 
 		function handleClickOutside(event) {
@@ -314,20 +527,152 @@ export default function ReservationPage() {
 		return () => document.removeEventListener('mousedown', handleClickOutside);
 	}, [isCalendarOpen]);
 
+	useEffect(() => {
+		// Je reconstruis les jours affichés à partir des dispos + des réservations déjà prises.
+		let cancelled = false;
+
+		async function loadScheduleDays() {
+			if (!backendProfessionalId) {
+				setScheduleDays(buildFallbackScheduleDays(displayedWeekStart));
+				setScheduleLoading(false);
+				return;
+			}
+
+			setScheduleLoading(true);
+
+			try {
+				const days = await Promise.all(
+					Array.from({ length: 7 }, async (_, index) => {
+						const date = addDays(displayedWeekStart, index);
+						const apiDate = formatApiDate(date);
+						const dayOfWeek = String(date.getDay());
+
+						const baseDay = {
+							dayName: DAY_NAMES[date.getDay()],
+							dayShortName: DAY_SHORT_NAMES[date.getDay()],
+							longDate: formatLongDate(date),
+							shortDate: formatShortDate(date),
+							isoDate: date.toISOString().slice(0, 10),
+							backendDate: apiDate,
+							times: [],
+						};
+
+						if (date.getDay() === 0 || date.getDay() === 6) {
+							return baseDay;
+						}
+
+						const [availabilityResponse, reservedHoursResponse] = await Promise.all([
+							fetch(`/availability/${backendProfessionalId}/${dayOfWeek}`, { credentials: 'same-origin' }),
+							fetch(`/reservation/reservedHours?selectedDate=${encodeURIComponent(apiDate)}&professionalId=${backendProfessionalId}`, {
+								credentials: 'same-origin',
+							}),
+						]);
+
+						if (!availabilityResponse.ok || !reservedHoursResponse.ok) {
+							throw new Error('Impossible de récupérer les créneaux disponibles.');
+						}
+
+							const availabilityPayload = await availabilityResponse.json();
+							const reservedHoursPayload = await reservedHoursResponse.json();
+							const availableHoursPayload = availabilityPayload?.message || {};
+							const availableHours = Array.isArray(availableHoursPayload) ? availableHoursPayload : availableHoursPayload.slots || [];
+							const availabilityRanges = Array.isArray(availableHoursPayload?.ranges) ? availableHoursPayload.ranges : [];
+							const reservedRanges = Array.isArray(reservedHoursPayload?.message) ? reservedHoursPayload.message : [];
+
+							return {
+								...baseDay,
+								times: availableHours.map((time) => {
+									const normalizedTime = normalizeTimeLabel(time);
+									const slotStartMinutes = timeLabelToMinutes(normalizedTime);
+									const slotEndMinutes = slotStartMinutes + displayedServiceDurationMinutes;
+
+									return {
+										value: normalizedTime,
+										// Un slot est valide seulement s'il tient dans la dispo du pro et qu'il ne chevauche rien.
+										available:
+											isSlotInsideAvailability(slotStartMinutes, slotEndMinutes, availabilityRanges) &&
+											!doesSlotOverlapReservation(slotStartMinutes, slotEndMinutes, reservedRanges),
+									};
+								}),
+							};
+					})
+				);
+
+				if (!cancelled) {
+					setScheduleDays(days);
+				}
+			} catch (error) {
+				if (!cancelled) {
+					setPageError(error.message || 'Impossible de charger les disponibilités.');
+					setScheduleDays(buildFallbackScheduleDays(displayedWeekStart));
+				}
+			} finally {
+				if (!cancelled) {
+					setScheduleLoading(false);
+				}
+			}
+		}
+
+		loadScheduleDays();
+		return () => {
+			cancelled = true;
+		};
+		}, [backendProfessionalId, displayedWeekStart, displayedServiceDurationMinutes]);
+
 	const selectedLabel = useMemo(() => {
 		if (!selectedSlot) return '';
 		return `${selectedSlot.longDate} - ${selectedSlot.time}`;
 	}, [selectedSlot]);
 
-	function handleConfirmReservation() {
-		if (!selectedSlot) return;
-		const params = new URLSearchParams({
-			professionalId: provider.id,
-			confirmed: '1',
-			date: selectedSlot.longDate,
-			time: selectedSlot.time,
-		});
-		navigateTo(`/services?${params.toString()}`);
+	async function handleConfirmReservation() {
+		if (!selectedSlot || !profile || !backendProfessionalId || !backendService?.id) {
+			setBookingState({
+				loading: false,
+				error: 'Impossible de créer la réservation pour le moment.',
+			});
+			return;
+		}
+
+		setBookingState({ loading: true, error: '' });
+
+		try {
+			const response = await fetch('/reservation', {
+				method: 'POST',
+				credentials: 'same-origin',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					professional_id: backendProfessionalId,
+					users_id: profile.users_id,
+					service_id: Number(backendService.id),
+					start_time: selectedSlot.time,
+					day_of_week: selectedSlot.backendDate,
+				}),
+			});
+
+			const payload = await response.json().catch(() => null);
+
+			if (!response.ok) {
+				throw new Error(payload?.message || 'Erreur lors de la création du rendez-vous.');
+			}
+
+			const params = new URLSearchParams({
+				professionalId: displayedProvider.id,
+				confirmed: '1',
+				date: selectedSlot.longDate,
+				time: selectedSlot.time,
+			});
+			navigateTo(`/services?${params.toString()}`);
+		} catch (error) {
+			setBookingState({
+				loading: false,
+				error: error.message || 'Erreur lors de la création du rendez-vous.',
+			});
+			return;
+		}
+
+		setBookingState({ loading: false, error: '' });
 	}
 
 	function handleBack() {
@@ -336,7 +681,7 @@ export default function ReservationPage() {
 			return;
 		}
 
-		navigateTo(`/services?professionalId=${provider.id}`);
+		navigateTo(`/services?professionalId=${displayedProvider.id}`);
 	}
 
 	function handleDateJump(date) {
@@ -373,7 +718,7 @@ export default function ReservationPage() {
 						</div>
 
 						<div className="pt-4">
-							<h1 className="text-[clamp(2rem,3vw,2.8rem)] font-semibold tracking-[-0.04em] text-[#181818]">{provider.company}</h1>
+							<h1 className="text-[clamp(2rem,3vw,2.8rem)] font-semibold tracking-[-0.04em] text-[#181818]">{displayedProvider.company}</h1>
 							<div className="mt-3 flex items-center gap-2 text-[0.96rem] text-black/48">
 								<VerifiedBadge className="h-[18px] w-[18px]" />
 								<span>utilisateur vérifié</span>
@@ -387,7 +732,7 @@ export default function ReservationPage() {
 							<div className="rounded-[22px] border border-black/8 bg-white px-6 py-7 shadow-[0_14px_34px_rgba(17,19,30,0.04)]">
 								<div className="flex items-start justify-between gap-4">
 									<p className="text-[1.05rem] text-[#191919]">
-										À partir de {service.price} <span className="text-black/34">- {service.duration}</span>
+										À partir de {displayedService.price} <span className="text-black/34">- {displayedService.duration}</span>
 									</p>
 									<div className="flex items-center gap-3 text-[#161616]">
 										{selectedSlot ? <EditIcon className="h-5 w-5" /> : null}
@@ -489,41 +834,46 @@ export default function ReservationPage() {
 									</div>
 
 									<div className="overflow-x-auto">
-										<div className="grid min-w-[700px] grid-cols-7 gap-4">
-											{scheduleDays.map((day) => (
-												<div key={day.dayName}>
+										{scheduleLoading ? (
+											<p className="pb-2 text-[0.92rem] text-black/42">Chargement des disponibilités…</p>
+										) : null}
+											<div className="grid min-w-[700px] grid-cols-7 gap-4">
+												{scheduleDaysWithVisibleTimes.map((day) => (
+													<div key={day.dayName}>
 													<p className={`text-center text-[1rem] font-medium uppercase ${isSameDay(new Date(day.isoDate), today) ? 'text-[#161616]' : 'text-[#1b1b1d]'}`}>
 														{day.dayShortName}
 													</p>
 													<p className={`mt-1 text-center text-[0.92rem] ${isSameDay(new Date(day.isoDate), today) ? 'font-semibold text-[#161616]' : 'text-black/28'}`}>
 														{day.shortDate}
 													</p>
-													<div className="mt-3 space-y-2">
-														{day.times.length ? (
-															day.times.map((time) => (
-																<button
-																	key={`${day.dayName}-${time.value}`}
-																	type="button"
-																	disabled={!time.available}
-																	onClick={() => {
-																		if (!time.available) return;
-																		setSelectedSlot({ longDate: day.longDate, time: time.value, isoDate: day.isoDate });
-																		setShowSchedulePicker(false);
-																	}}
-																	className={`block w-full rounded-[8px] border px-2 py-1.5 text-[0.95rem] font-medium transition ${
-																		time.available
-																			? 'border-black/10 bg-transparent text-[#1f1f1f] hover:-translate-y-px hover:border-black/25 hover:bg-black/[0.03]'
-																			: 'cursor-not-allowed border-black/6 bg-[#efefed] text-black/24'
-																	}`}
-																>
-																	{time.value}
-																</button>
-															))
-														) : (
-															<div className="pt-3 text-center text-[0.9rem] text-black/22">-</div>
-														)}
+														<div className="mt-3 space-y-2">
+															{day.visibleTimes.length ? (
+																day.visibleTimes.map((time) => (
+																	<button
+																		key={`${day.dayName}-${time.value}`}
+																		type="button"
+																		onClick={() => {
+																			setSelectedSlot({
+																				longDate: day.longDate,
+																				time: time.value,
+																			isoDate: day.isoDate,
+																			backendDate: day.backendDate,
+																		});
+																			setShowSchedulePicker(false);
+																			setBookingState({ loading: false, error: '' });
+																		}}
+																		className="block w-full rounded-[8px] border border-black/10 bg-transparent px-2 py-1.5 text-[0.95rem] font-medium text-[#1f1f1f] transition hover:-translate-y-px hover:border-black/25 hover:bg-black/[0.03]"
+																	>
+																		{time.value}
+																	</button>
+																))
+															) : (
+																<div className="rounded-[10px] border border-dashed border-black/8 px-2 py-2 text-center text-[0.82rem] text-black/26">
+																	Aucun créneau
+																</div>
+															)}
+														</div>
 													</div>
-												</div>
 											))}
 										</div>
 									</div>
@@ -569,17 +919,20 @@ export default function ReservationPage() {
 							</div>
 						</section>
 
+						{pageError ? <p className="text-[0.95rem] font-medium text-[#c35555]">{pageError}</p> : null}
+						{bookingState.error ? <p className="text-[0.95rem] font-medium text-[#c35555]">{bookingState.error}</p> : null}
+
 						<button
 							type="button"
 							onClick={handleConfirmReservation}
-							disabled={!selectedSlot}
+							disabled={!selectedSlot || bookingState.loading}
 							className={`inline-flex min-w-[240px] items-center justify-center rounded-full px-6 py-4 text-[1rem] font-medium transition ${
-								selectedSlot
+								selectedSlot && !bookingState.loading
 									? 'bg-[linear-gradient(135deg,#161616_0%,#35332d_100%)] text-white shadow-[0_14px_30px_rgba(22,22,22,0.18)] hover:-translate-y-px hover:opacity-92'
 									: 'cursor-not-allowed border border-black/8 bg-[#ecebe7] text-black/34 shadow-none'
 							}`}
 						>
-							Valider la réservation
+							{bookingState.loading ? 'Validation…' : 'Valider la réservation'}
 						</button>
 					</div>
 				</div>

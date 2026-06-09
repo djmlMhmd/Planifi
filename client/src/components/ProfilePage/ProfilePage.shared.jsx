@@ -5,6 +5,7 @@ import providerUserPlaceholder from '../../assets/provider-user-placeholder.png'
 import Reveal from '../Reveal/Reveal';
 
 export async function readJsonSafely(response) {
+	// Certaines routes renvoient 204, donc je protège la lecture JSON ici.
 	if (response.status === 204) {
 		return null;
 	}
@@ -18,6 +19,7 @@ export async function readJsonSafely(response) {
 }
 
 export async function fetchWithTimeout(url, options = {}, timeoutMs = 7000) {
+	// Je coupe les appels trop longs pour éviter une UI bloquée si le back ne répond pas.
 	const controller = new AbortController();
 	const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
 
@@ -344,7 +346,9 @@ export function ClientReviewCard({ title }) {
 }
 
 export function ReservationItem({ reservation }) {
-	const [dateLabel, timeLabel] = reservation.start.split(' ');
+	// Le back prépare déjà les libellés, donc ici je me contente de les afficher proprement.
+	const dateLabel = reservation.date_label || reservation.start || '--';
+	const timeLabel = reservation.time_label || '';
 
 	return (
 		<div className="flex items-center gap-4 border-b border-black/6 py-3 last:border-b-0">
@@ -353,7 +357,8 @@ export function ReservationItem({ reservation }) {
 				<p className="truncate text-[1rem] font-semibold text-[#171717]">{reservation.service_name}</p>
 				<p className="truncate text-[0.9rem] text-black/50">{reservation.title}</p>
 				<p className="mt-1 text-[0.78rem] text-black/35">
-					<span className="font-semibold text-black/65">{dateLabel}</span> {timeLabel}
+					<span className="font-semibold text-black/65">{dateLabel}</span>
+					{timeLabel ? ` ${timeLabel}` : ''}
 				</p>
 			</div>
 			<ArrowRightCircle className="h-6 w-6 shrink-0 text-[#0f0f12]" />
@@ -387,6 +392,7 @@ export function InfoRow({ label, value }) {
 }
 
 export function getProfileTabFromLocation(search = window.location.search) {
+	// Je centralise la lecture du tab ici pour garder la même logique partout.
 	const tabParam = new URLSearchParams(search).get('tab');
 	if (tabParam === 'settings' || tabParam === 'favorites') {
 		return tabParam;
@@ -1334,4 +1340,3 @@ export function FavoritesPanel() {
 		</div>
 	);
 }
-

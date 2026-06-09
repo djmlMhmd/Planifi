@@ -11,12 +11,39 @@ const moment = require("moment/moment");
 const {getClientsCollection} = require("../db/database");
 const {sendConfirmationRendezVousClient, sendRendezVousPrisPro, sendRendezVousAnnuleClient, sendRendezVousAnnulePro} = require("../mail/send-email");
 
+function getDurationInMinutes(duration) {
+    if (typeof duration === 'number') {
+        return duration;
+    }
+
+    if (typeof duration === 'string') {
+        const durationParts = duration.split(':');
+
+        if (durationParts.length >= 2) {
+            const hours = Number(durationParts[0]) || 0;
+            const minutes = Number(durationParts[1]) || 0;
+            return hours * 60 + minutes;
+        }
+
+        return Number(duration) || 0;
+    }
+
+    if (duration && typeof duration === 'object') {
+        const hours = Number(duration.hours) || 0;
+        const minutes = Number(duration.minutes) || 0;
+        return hours * 60 + minutes;
+    }
+
+    return 0;
+}
+
 
 module.exports.reservation_post = async (req, res) => {
-    const { professional_id, users_id, service_id } = req.body;
+    const { professional_id, service_id } = req.body;
     const { id } = decodeJWT(req.cookies.jwt)
+    const users_id = req.body.users_id || id;
 
-    if (isUndefinedOrEmpty(professional_id) || isUndefinedOrEmpty(users_id) || isUndefinedOrEmpty(service_id)) {
+    if (isUndefinedOrEmpty(professional_id) || isUndefinedOrEmpty(service_id)) {
         errorLogger(`Les champs "professional_id", "users_id" et "service_id" doivent être renseignés`, '','reservationController.js' ,'/reservation', constants.POST_HTTP)
         return sendBadRequest(res, "Les données envoyées sont incorrectes")
     }
@@ -54,11 +81,17 @@ module.exports.reservation_post = async (req, res) => {
         return sendBadRequest(res,  'Service non valide')
     }
 
-    const duration = service.rows[0].duration; // Durée du service enregistrée dans la table
+    const durationInMinutes = getDurationInMinutes(service.rows[0].duration); // On convertit la durée du service en minutes pour garder un calcul simple.
+
+    if (durationInMinutes <= 0) {
+        warnLogger(`Durée non valide pour le service: ${service_id}`, '','reservationController.js' ,'/reservation', constants.POST_HTTP)
+        return sendBadRequest(res, 'Durée de service non valide')
+    }
+
     const startTime = moment(start_time, 'HH:mm');
     const endTime = startTime
         .clone()
-        .add(duration, 'minutes')
+        .add(durationInMinutes, 'minutes')
         .format('HH:mm:ss');
 
     // Vérifie si le temps de début est valide
@@ -216,17 +249,25 @@ module.exports.reservation_client_get =  async (req, res) => {
             text: `
                 SELECT
                     reservations.reservation_id,
+                    reservations.day_of_week,
                     reservations.start_time,
+                    reservations.end_time,
                     services.service_name,
-                    CONCAT(pro."firstName", ' ', pro."lastName") AS professional_name
+                    CONCAT(pro."firstName", ' ', pro."lastName") AS professional_name,
+                    pro_account.company_name
                 FROM
                     reservations
                 JOIN
                     services ON reservations.service_id = services.service_id
                 JOIN
                     users as pro ON reservations.professional_id = pro.users_id
+                LEFT JOIN
+                    pro_account ON pro_account.user_id = pro.users_id
                 WHERE
                     reservations.users_id = $1
+                ORDER BY
+                    TO_DATE(reservations.day_of_week, 'DD-MM-YYYY') DESC,
+                    reservations.start_time DESC
             `,
             values: [id],
         };
@@ -236,11 +277,11 @@ module.exports.reservation_client_get =  async (req, res) => {
         if (result.rows.length > 0) {
             const reservations = result.rows.map((reservation) => ({
                 reservation_id: reservation.reservation_id,
-                title: reservation.professional_name,
+                title: reservation.company_name || reservation.professional_name,
                 service_name: reservation.service_name,
-                start: moment(reservation.start_time, 'HH:mm:ss').format(
-                    'DD/MM/YY HH:mm'
-                ),
+                start: `${moment(reservation.day_of_week, 'DD-MM-YYYY').format('DD/MM/YY')} ${String(reservation.start_time).slice(0, 5)} - ${String(reservation.end_time).slice(0, 5)}`,
+                date_label: moment(reservation.day_of_week, 'DD-MM-YYYY').format('DD/MM/YY'),
+                time_label: `${String(reservation.start_time).slice(0, 5)} - ${String(reservation.end_time).slice(0, 5)}`,
             }));
             verboseLogger(`Reservations client ${id} trouvées`,'' ,'reservationController.js' ,'/reservations/client', constants.GET_HTTP)
             return sendSuccess(res, reservations)
@@ -256,17 +297,31 @@ module.exports.reservation_client_get =  async (req, res) => {
 
 module.exports.reservation_byHour_get = async (req, res) => {
     try {
-        const {selectedDate} = req.query;
-        const query = `
-            SELECT start_time
+        const { selectedDate, professionalId } = req.query;
+        let query = `
+            SELECT start_time, end_time
             FROM reservations
             WHERE day_of_week = $1
         `;
+        const queryValues = [selectedDate];
+
+        if (professionalId) {
+            if (!isANumber(professionalId)) {
+                return sendBadRequest(res, "le professionalId doit etre un entier");
+            }
+
+            query += ' AND professional_id = $2';
+            queryValues.push(professionalId);
+        }
 
         const client = getClientsCollection();
-        const result = await client.query(query, [selectedDate]);
-        const reservedHours = result.rows.map((row) => row.start_time);
-        verboseLogger(`Récupération des heures réservées sur la date: ${JSON.stringify(selectedDate)}`, '','reservationController.js', '/reservedHours', constants.GET_HTTP)
+        const result = await client.query(query, queryValues);
+        // Je renvoie les plages complètes pour que le front puisse bloquer tous les créneaux qui se chevauchent.
+        const reservedHours = result.rows.map((row) => ({
+            start_time: String(row.start_time).slice(0, 5),
+            end_time: String(row.end_time).slice(0, 5),
+        }));
+        verboseLogger(`Récupération des heures réservées sur la date: ${JSON.stringify(selectedDate)}, professionalId: ${JSON.stringify(professionalId)}`, '','reservationController.js', '/reservedHours', constants.GET_HTTP)
         return sendSuccess(res, reservedHours)
     } catch (error) {
         errorLogger(`Erreur lors de la récupération des heures réservées: ${JSON.stringify(error)}`, '','reservationController.js', '/reservedHours', constants.GET_HTTP)

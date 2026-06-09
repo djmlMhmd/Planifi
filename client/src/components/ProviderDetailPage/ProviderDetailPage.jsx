@@ -4,6 +4,92 @@ import navigationPlaceholder from '../../assets/navigation-placeholder.jpg';
 import { getProviderById } from '../../data/providers';
 import { navigateTo } from '../../lib/navigation';
 
+function formatBackendDuration(duration) {
+	// Le backend peut me renvoyer un interval PostgreSQL, donc je le normalise avant affichage.
+	if (!duration) {
+		return '1h';
+	}
+
+	if (typeof duration === 'object') {
+		const hours = Number(duration.hours) || 0;
+		const minutes = Number(duration.minutes) || 0;
+
+		if (hours && minutes) return `${hours}h${String(minutes).padStart(2, '0')}`;
+		if (hours) return `${hours}h`;
+		if (minutes) return `${minutes}min`;
+		return '1h';
+	}
+
+	const parts = String(duration).split(':');
+	if (parts.length >= 2) {
+		const hours = Number(parts[0]) || 0;
+		const minutes = Number(parts[1]) || 0;
+
+		if (hours && minutes) return `${hours}h${String(minutes).padStart(2, '0')}`;
+		if (hours) return `${hours}h`;
+		if (minutes) return `${minutes}min`;
+	}
+
+	return String(duration);
+}
+
+function formatBackendPrice(price) {
+	// Je garde un affichage simple et homogène pour les prix côté UI.
+	const amount = Number(price);
+
+	if (Number.isNaN(amount)) {
+		return price || '--';
+	}
+
+	return Number.isInteger(amount) ? `${amount}€` : `${amount.toFixed(2)}€`;
+}
+
+function buildBackendProvider(professionalId, serviceRows) {
+	// Ici je reconstruis un objet compatible avec la page prestataire à partir des lignes SQL.
+	const firstRow = serviceRows[0];
+
+	if (!firstRow) {
+		return null;
+	}
+
+	return {
+		id: String(professionalId),
+		company: firstRow.company_name,
+		location: firstRow.company_address || '[localisation]',
+		rating: '5,0',
+		reviews: serviceRows.length * 18 + 24,
+		policy: 'Réservation en ligne disponible. Les informations détaillées de ce prestataire seront enrichies depuis son profil professionnel.',
+		description: `Découvrez ${firstRow.company_name}, un prestataire disponible à ${firstRow.company_address || 'son adresse professionnelle'}. Les informations publiques détaillées sont en cours de synchronisation avec le profil professionnel.`,
+		news: 'Ce prestataire propose maintenant la réservation en ligne directement depuis Prestat.',
+		contact: '[nom prénom - mail@mail.com - 06123456789]',
+		socials: [
+			{ id: 'instagram', label: 'Instagram', href: '#' },
+			{ id: 'tiktok', label: 'TikTok', href: '#' },
+			{ id: 'link', label: 'Site', href: '#' },
+		],
+		gallery: [
+			{ id: 'g1', image: navigationPlaceholder, alt: firstRow.company_name },
+			{ id: 'g2', image: navigationPlaceholder, alt: `${firstRow.company_name} - vue 2` },
+			{ id: 'g3', image: navigationPlaceholder, alt: `${firstRow.company_name} - vue 3` },
+		],
+		services: serviceRows.map((serviceRow) => ({
+			id: String(serviceRow.service_id),
+			name: serviceRow.service_name,
+			duration: formatBackendDuration(serviceRow.duration),
+			price: formatBackendPrice(serviceRow.service_price),
+			description: serviceRow.service_description || 'Description à venir.',
+		})),
+		hours: [
+			['Lundi', '09:00 - 18:00'],
+			['Mardi', '09:00 - 18:00'],
+			['Mercredi', '09:00 - 18:00'],
+			['Jeudi', '09:00 - 18:00'],
+			['Vendredi', '09:00 - 18:00'],
+			['Samedi', 'Fermé'],
+		],
+	};
+}
+
 function SearchIcon({ className = '' }) {
 	return (
 		<svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
@@ -128,6 +214,7 @@ function SocialIcon({ kind }) {
 }
 
 function UserAvatar({ profile }) {
+	// Si l'utilisateur n'a pas de photo, je bascule sur un avatar à initiales.
 	const displayName = `${profile?.firstName || ''} ${profile?.lastName || ''}`.trim() || 'Bob Alves';
 	const initials =
 		`${profile?.firstName?.[0] || ''}${profile?.lastName?.[0] || ''}`.toUpperCase() ||
@@ -151,55 +238,59 @@ function UserAvatar({ profile }) {
 
 function ServiceCard({ service, providerId, onOpenDetails }) {
 	return (
-		<button
-			type="button"
-			onClick={() => onOpenDetails(service)}
-			className="h-full w-full rounded-[24px] border border-black/8 bg-white p-4 text-left shadow-[0_14px_34px_rgba(17,19,30,0.045)] transition hover:-translate-y-px hover:shadow-[0_18px_40px_rgba(17,19,30,0.06)]"
-		>
-			<div className="mb-4 flex items-start justify-between gap-4">
-				<h3 className="text-[1.15rem] font-semibold text-[#191919]">{service.name}</h3>
-				<span className="text-[1rem] text-black/34">{service.duration}</span>
-			</div>
-			<div className="grid min-h-[168px] grid-cols-[96px_1fr] gap-4">
-				<div className="flex h-full flex-col">
-					<div className="h-24 rounded-[14px] bg-[linear-gradient(135deg,#aba79c_0%,#7c786f_100%)]" />
-					<p
-						className="mt-3 text-center text-[2rem] tracking-[-0.04em] text-[#161616]"
-						style={{ fontFamily: '"TAN Meringue", "Iowan Old Style", "Times New Roman", serif' }}
-					>
-						{service.price}
-					</p>
+		<div className="flex h-full w-full max-w-[480px] flex-col gap-2.5">
+			<h3 className="px-1 text-[1.1rem] font-semibold tracking-[-0.03em] text-[#191919]">{service.name}</h3>
+
+			<button
+				type="button"
+				onClick={() => onOpenDetails(service)}
+				// La carte ouvre le détail complet, mais le bouton garde sa propre navigation de réservation.
+				className="relative w-full rounded-[22px] border border-black/8 bg-white px-4 pb-4 pt-4 text-left shadow-[0_18px_42px_rgba(17,19,30,0.04)] transition hover:-translate-y-px hover:shadow-[0_20px_44px_rgba(17,19,30,0.055)]"
+			>
+				<span className="absolute right-4 top-4 text-[0.98rem] font-medium text-[#c7c7c7]">{service.duration}</span>
+				<div className="flex items-start gap-6">
+					<div className="flex w-[108px] shrink-0 flex-col items-center">
+						<div className="h-[108px] w-[108px] rounded-[14px] bg-[linear-gradient(135deg,#aba79c_0%,#7c786f_100%)]" />
+						<p
+							className="mt-3 text-center text-[2.05rem] tracking-[-0.045em] text-[#161616]"
+							style={{ fontFamily: '"TAN Meringue", "Iowan Old Style", "Times New Roman", serif' }}
+						>
+							{service.price}
+						</p>
+					</div>
+					<div className="flex min-h-[156px] flex-1 flex-col justify-between pt-8">
+						<p
+							className="max-w-[24ch] text-[0.96rem] leading-[1.7] text-black/64"
+							style={{
+								display: '-webkit-box',
+								WebkitLineClamp: 3,
+								WebkitBoxOrient: 'vertical',
+								overflow: 'hidden',
+							}}
+						>
+							{service.description}
+						</p>
+						<button
+							type="button"
+							onClick={(event) => {
+								event.stopPropagation();
+								navigateTo(`/app/reservation?professionalId=${providerId}&serviceId=${service.id}`);
+							}}
+							className="mt-6 inline-flex items-center justify-center self-center rounded-[14px] bg-[linear-gradient(135deg,#181818_0%,#343434_100%)] px-6 py-[0.9rem] text-[0.94rem] font-medium text-white shadow-[0_10px_22px_rgba(22,22,22,0.14)] transition hover:-translate-y-px hover:opacity-92"
+						>
+							Prendre RDV
+						</button>
+					</div>
 				</div>
-				<div className="flex h-full min-h-[96px] flex-col">
-					<p
-						className="text-[0.96rem] leading-7 text-black/62"
-						style={{
-							display: '-webkit-box',
-							WebkitLineClamp: 4,
-							WebkitBoxOrient: 'vertical',
-							overflow: 'hidden',
-						}}
-					>
-						{service.description}
-					</p>
-					<button
-						type="button"
-						onClick={(event) => {
-							event.stopPropagation();
-							navigateTo(`/app/reservation?professionalId=${providerId}&serviceId=${service.id}`);
-						}}
-						className="mt-auto inline-flex items-center justify-center self-start rounded-full bg-[linear-gradient(135deg,#161616_0%,#35332d_100%)] px-5 py-3 text-[0.92rem] font-medium text-white shadow-[0_12px_26px_rgba(22,22,22,0.16)] transition hover:-translate-y-px hover:opacity-92"
-					>
-						Prendre RDV
-					</button>
-				</div>
-			</div>
-		</button>
+			</button>
+		</div>
 	);
 }
 
 export default function ProviderDetailPage() {
+	// Je garde ici uniquement l'état utile à la page et à ses modales.
 	const [profile, setProfile] = useState(null);
+	const [backendProvider, setBackendProvider] = useState(null);
 	const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 	const [activePhotoIndex, setActivePhotoIndex] = useState(0);
 	const [selectedService, setSelectedService] = useState(null);
@@ -207,11 +298,13 @@ export default function ProviderDetailPage() {
 	const searchParams = new URLSearchParams(search);
 	const [showConfirmation, setShowConfirmation] = useState(() => searchParams.get('confirmed') === '1');
 	const providerId = searchParams.get('professionalId') || 'tressa';
-	const provider = getProviderById(providerId);
+	const isBackendProviderId = /^[0-9]+$/.test(providerId);
+	const provider = backendProvider || (!isBackendProviderId ? getProviderById(providerId) : null);
 	const confirmedDate = searchParams.get('date') || '[date]';
 	const confirmedTime = searchParams.get('time') || '[heure]';
 
 	useEffect(() => {
+		// Je charge le profil connecté pour alimenter la navbar / l'avatar.
 		let cancelled = false;
 
 		async function loadProfile() {
@@ -234,10 +327,46 @@ export default function ProviderDetailPage() {
 	}, []);
 
 	useEffect(() => {
+		// Si l'id vient du backend, je reconstruis toute la page prestataire depuis les services SQL.
+		if (!isBackendProviderId) {
+			setBackendProvider(null);
+			return undefined;
+		}
+
+		let cancelled = false;
+
+		async function loadBackendProvider() {
+			try {
+				const response = await fetch(`/service/${providerId}/liste`, { credentials: 'same-origin' });
+				if (!response.ok) {
+					return;
+				}
+
+				const payload = await response.json();
+				const nextProvider = buildBackendProvider(providerId, payload?.message || []);
+
+				if (!cancelled) {
+					setBackendProvider(nextProvider);
+				}
+			} catch {
+				// On garde un écran vide si le backend ne répond pas.
+			}
+		}
+
+		loadBackendProvider();
+		return () => {
+			cancelled = true;
+		};
+	}, [isBackendProviderId, providerId]);
+
+	useEffect(() => {
+		// Je resynchronise l'état de confirmation quand l'URL change après une réservation.
 		setShowConfirmation(searchParams.get('confirmed') === '1');
 	}, [search]);
 
 	useEffect(() => {
+		// J'écoute le clavier seulement quand la galerie est ouverte.
+		if (!provider) return undefined;
 		if (!isGalleryOpen) return undefined;
 
 		function handleKeyDown(event) {
@@ -254,9 +383,10 @@ export default function ProviderDetailPage() {
 
 		window.addEventListener('keydown', handleKeyDown);
 		return () => window.removeEventListener('keydown', handleKeyDown);
-	}, [isGalleryOpen, provider.gallery.length]);
+	}, [isGalleryOpen, provider]);
 
 	function openGallery(index) {
+		// J'ouvre la galerie directement sur la photo cliquée.
 		setActivePhotoIndex(index);
 		setIsGalleryOpen(true);
 	}
@@ -266,7 +396,12 @@ export default function ProviderDetailPage() {
 	}
 
 	function showPreviousPhoto() {
+		// Navigation circulaire pour ne jamais bloquer l'utilisateur en bout de galerie.
 		setActivePhotoIndex((value) => (value - 1 + provider.gallery.length) % provider.gallery.length);
+	}
+
+	if (!provider) {
+		return null;
 	}
 
 	return (

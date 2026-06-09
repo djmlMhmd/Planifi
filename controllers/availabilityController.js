@@ -4,6 +4,19 @@ const {constants} = require("../constants/constants");
 const {sendBadRequest, sendSuccessfullyCreated, sendInternalServerError, sendSuccess} = require("../utils/error_message.utils");
 const {isANumber} = require("../utils/methods.utils");
 
+function timeToMinutes(timeValue) {
+    // Je passe les heures en minutes pour comparer et découper les plages plus facilement.
+    const [hours, minutes] = String(timeValue).slice(0, 5).split(':');
+    return (Number(hours) || 0) * 60 + (Number(minutes) || 0);
+}
+
+function minutesToTime(totalMinutes) {
+    // Je retransforme en HH:mm pour garder un format simple côté front.
+    const hours = String(Math.floor(totalMinutes / 60)).padStart(2, '0');
+    const minutes = String(totalMinutes % 60).padStart(2, '0');
+    return `${hours}:${minutes}`;
+}
+
 
 module.exports.availability_post =  async (req, res) => {
     const { pro_id, day_of_week, start_time, end_time } = req.body;
@@ -52,25 +65,48 @@ module.exports.availability_post =  async (req, res) => {
 }
 
 module.exports.availability_get =  async (req, res) => {
-    const { pro_id, dayOfWeek } = req.params;
+    const { professionalId, dayOfWeek } = req.params;
     try {
         const client = getClientsCollection();
 
-        if (!isANumber(pro_id) ) {
-            return sendBadRequest(res, "le pro_id doit etre un entier")
+        if (!isANumber(professionalId) ) {
+            return sendBadRequest(res, "le professionalId doit etre un entier")
         }
 
-        // Récupére les heures disponibles pour le professionnel et le jour de la semaine
+        // On récupère les plages horaires du professionnel pour le jour demandé.
         const availability = await client.query(
-            'SELECT start_time FROM default_availability WHERE professional_id = $1 AND day_of_week = $2 AND is_available = TRUE',
-            [pro_id, dayOfWeek]
+            `SELECT start_time, end_time
+             FROM availability
+             WHERE professional_id = $1 AND day_of_week = $2
+             ORDER BY start_time ASC`,
+            [professionalId, dayOfWeek]
         );
 
-        const availableHours = availability.rows.map((row) => row.start_time);
-        verboseLogger(`Récuperation des disponibilités pour le profesionnel": ${pro_id}, pour le jour de la semaine ${dayOfWeek}`,'', 'availability.js',`/availability/${pro_id}/${dayOfWeek}`, constants.GET_HTTP)
-        return sendSuccess(res, availableHours);
+        const slotSet = new Set();
+
+        availability.rows.forEach((row) => {
+            const startMinutes = timeToMinutes(row.start_time);
+            const endMinutes = timeToMinutes(row.end_time);
+
+            // On découpe la plage en créneaux de 30 minutes pour l'affichage côté réservation.
+            for (let cursor = startMinutes; cursor <= endMinutes; cursor += 30) {
+                slotSet.add(minutesToTime(cursor));
+            }
+        });
+
+        // Je renvoie à la fois les slots découpés et les vraies plages d'origine.
+        const availableHours = Array.from(slotSet).sort();
+        const availabilityRanges = availability.rows.map((row) => ({
+            start_time: String(row.start_time).slice(0, 5),
+            end_time: String(row.end_time).slice(0, 5),
+        }));
+        verboseLogger(`Récuperation des disponibilités pour le profesionnel": ${professionalId}, pour le jour de la semaine ${dayOfWeek}`,'', 'availability.js',`/availability/${professionalId}/${dayOfWeek}`, constants.GET_HTTP)
+        return sendSuccess(res, {
+            slots: availableHours,
+            ranges: availabilityRanges,
+        });
     } catch (error) {
-        errorLogger("Erreur lors de la récupération des disponibilités" + JSON.stringify(error),'', 'availability.js',`/availability/${pro_id}/${dayOfWeek}`, constants.GET_HTTP)
+        errorLogger("Erreur lors de la récupération des disponibilités" + JSON.stringify(error),'', 'availability.js',`/availability/${professionalId}/${dayOfWeek}`, constants.GET_HTTP)
         return sendInternalServerError(res, 'Erreur lors de la récupération des disponibilités')
     }
 }

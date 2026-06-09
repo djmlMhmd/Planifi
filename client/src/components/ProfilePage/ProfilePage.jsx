@@ -4,6 +4,7 @@ import ProfessionalDashboardShell from './ProfessionalProfileShell';
 import { fetchWithTimeout, readJsonSafely } from './ProfilePage.shared';
 
 export default function ProfilePage({ variant = 'client' }) {
+	// Je garde l'état global du profil ici pour partager la même logique entre client et pro.
 	const [state, setState] = useState({
 		loading: true,
 		error: '',
@@ -15,6 +16,7 @@ export default function ProfilePage({ variant = 'client' }) {
 		let cancelled = false;
 
 		async function loadProfile() {
+			// Je recharge le profil et les réservations selon la variante affichée.
 			setState({ loading: true, error: '', profile: null, reservations: [] });
 			const endpoint = variant === 'professional' ? '/profil/professionnel/' : '/profil';
 
@@ -97,6 +99,7 @@ export default function ProfilePage({ variant = 'client' }) {
 	}
 
 	function handleClientProfileUpdated(nextProfile) {
+		// Je mets à jour seulement le profil local après une édition réussie.
 		setState((current) => ({
 			...current,
 			profile: nextProfile,
