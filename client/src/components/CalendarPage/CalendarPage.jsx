@@ -6,7 +6,7 @@ import listPlugin from '@fullcalendar/list';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import frLocale from '@fullcalendar/core/locales/fr';
 import Reveal from '../Reveal/Reveal';
-import { fetchWithTimeout, readJsonSafely } from '../ProfilePage/ProfilePage.shared';
+import { fetchWithTimeout, ModalPortal, readJsonSafely } from '../ProfilePage/ProfilePage.shared';
 import './CalendarPage.css';
 
 const VIEW_OPTIONS = [
@@ -293,18 +293,18 @@ export default function CalendarPage() {
 								<button
 									type="button"
 									onClick={goToToday}
-									className="rounded-full border border-black/10 bg-white px-4 py-2.5 text-[0.92rem] font-medium text-[#17181d] shadow-[0_10px_24px_rgba(17,19,30,0.035)] transition hover:-translate-y-px"
+									className="rounded-full border border-black/10 bg-white px-4 py-2.5 text-[0.92rem] font-medium text-[var(--accent-mauve)] shadow-[0_10px_24px_rgba(17,19,30,0.035)] transition hover:-translate-y-px"
 								>
 									Aujourd’hui
 								</button>
-								<div className="flex items-center gap-2 rounded-full border border-black/10 bg-white p-1 shadow-[0_10px_24px_rgba(17,19,30,0.035)]">
+								<div className="flex w-full flex-wrap items-center gap-2 rounded-[22px] border border-black/10 bg-white p-1 shadow-[0_10px_24px_rgba(17,19,30,0.035)] sm:w-auto sm:rounded-full">
 									{VIEW_OPTIONS.map((option) => (
 										<button
 											key={option.id}
 											type="button"
 											onClick={() => changeView(option.id)}
 											className={`rounded-full px-4 py-2 text-[0.9rem] font-medium transition ${
-												currentView === option.id ? 'bg-[#16171d] text-white shadow-[0_10px_22px_rgba(20,21,29,0.14)]' : 'text-black/54 hover:text-[#17181d]'
+												currentView === option.id ? 'bg-[var(--accent-mauve-soft)] text-[var(--accent-mauve)] shadow-[0_10px_22px_rgba(139,99,199,0.16)]' : 'text-black/54 hover:text-[var(--accent-mauve)]'
 											}`}
 										>
 											{option.label}
@@ -318,23 +318,23 @@ export default function CalendarPage() {
 					<div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px]">
 						<div className="min-w-0">
 							<Reveal from="bottom" delay={90}>
-								<div className="mb-5 flex flex-col gap-4 px-1 py-1 sm:flex-row sm:items-center sm:justify-between">
-									<div className="flex items-center gap-3">
+									<div className="mb-5 flex flex-col gap-4 px-1 py-1 sm:flex-row sm:items-center sm:justify-between">
+									<div className="flex flex-wrap items-center gap-3">
 										<button
 											type="button"
 											onClick={goToPrevious}
-											className="flex h-11 w-11 items-center justify-center rounded-full border border-black/8 bg-[#fafaf8] text-[#16171d] transition hover:-translate-y-px"
+											className="flex h-11 w-11 items-center justify-center rounded-full border border-black/8 bg-[#fafaf8] text-[var(--accent-mauve)] transition hover:-translate-y-px"
 											aria-label="Période précédente"
 										>
 											<ChevronLeft className="h-5 w-5" />
 										</button>
-										<div className="rounded-full border border-black/8 bg-[#fafaf8] px-5 py-3 text-[1.02rem] font-semibold text-[#17181d]">
+										<div className="rounded-full border border-black/8 bg-[#fafaf8] px-4 py-3 text-[0.96rem] font-semibold text-[var(--accent-mauve)] sm:px-5 sm:text-[1.02rem]">
 											{currentTitle}
 										</div>
 										<button
 											type="button"
 											onClick={goToNext}
-											className="flex h-11 w-11 items-center justify-center rounded-full border border-black/8 bg-[#fafaf8] text-[#16171d] transition hover:-translate-y-px"
+											className="flex h-11 w-11 items-center justify-center rounded-full border border-black/8 bg-[#fafaf8] text-[var(--accent-mauve)] transition hover:-translate-y-px"
 											aria-label="Période suivante"
 										>
 											<ChevronRight className="h-5 w-5" />
@@ -545,11 +545,13 @@ export default function CalendarPage() {
 			</section>
 
 			{selectedEvent ? (
-				<div className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(10,10,14,0.42)] px-4" onClick={() => setSelectedEvent(null)}>
-					<div
-						className="w-full max-w-[560px] rounded-[28px] bg-white p-6 shadow-[0_30px_80px_rgba(0,0,0,0.22)] animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]"
-						onClick={(event) => event.stopPropagation()}
-					>
+				<ModalPortal>
+					<div className="fixed inset-0 z-[80] overflow-y-auto bg-[rgba(10,10,14,0.42)]" onClick={() => setSelectedEvent(null)}>
+						<div className="flex min-h-full items-center justify-center px-4 py-6">
+							<div
+								className="w-full max-w-[560px] rounded-[28px] bg-white p-6 shadow-[0_30px_80px_rgba(0,0,0,0.22)] animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]"
+								onClick={(event) => event.stopPropagation()}
+							>
 						<div className="flex items-start justify-between gap-4">
 							<div>
 								<p className="text-[0.82rem] font-semibold uppercase tracking-[0.18em] text-black/38">
@@ -630,7 +632,9 @@ export default function CalendarPage() {
 							</div>
 						</div>
 					</div>
-				</div>
+						</div>
+					</div>
+				</ModalPortal>
 			) : null}
 		</main>
 	);

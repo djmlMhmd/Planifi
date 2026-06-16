@@ -8,6 +8,9 @@
 		--black: #0a0a0a;
 		--white: #ffffff;
 		--app-bg: #faf9f5;
+		--accent-mauve: #8b63c7;
+		--accent-mauve-soft: rgba(139, 99, 199, 0.16);
+		--accent-mauve-fog: rgba(139, 99, 199, 0.08);
 		--grey-50: #f6f6f4;
 		--grey-100: #ebebeb;
 		--grey-400: rgba(10, 10, 10, 0.38);

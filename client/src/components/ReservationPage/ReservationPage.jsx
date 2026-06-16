@@ -704,12 +704,12 @@ export default function ReservationPage() {
 						Retour
 					</button>
 
-					<div className="mb-12 flex items-start gap-5">
-						<div className="relative flex h-32 w-32 items-center justify-center rounded-full border border-[#dbc78f] bg-white shadow-[0_16px_34px_rgba(17,19,30,0.04)]">
+					<div className="mb-12 flex flex-col items-start gap-5 sm:flex-row">
+						<div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-[#dbc78f] bg-white shadow-[0_16px_34px_rgba(17,19,30,0.04)] sm:h-32 sm:w-32">
 							<div className="absolute left-1 top-1 flex h-9 w-9 items-center justify-center rounded-full bg-[#f2ecdd] text-[#6a5a34]">
 								<BookmarkIcon className="h-[18px] w-[18px]" />
 							</div>
-							<svg viewBox="0 0 64 64" className="h-20 w-20 text-[#cfb16d]" fill="none" aria-hidden="true">
+							<svg viewBox="0 0 64 64" className="h-16 w-16 text-[#cfb16d] sm:h-20 sm:w-20" fill="none" aria-hidden="true">
 								<path d="M32 13C24 19 21 27 21 34C21 42 26 49 32 53C38 49 43 42 43 34C43 27 40 19 32 13Z" stroke="currentColor" strokeWidth="2.8" />
 								<path d="M32 18V49" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
 								<path d="M24.5 24.5C29 28 30.8 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
@@ -717,16 +717,16 @@ export default function ReservationPage() {
 							</svg>
 						</div>
 
-						<div className="pt-4">
+						<div className="pt-1 sm:pt-4">
 							<h1 className="text-[clamp(2rem,3vw,2.8rem)] font-semibold tracking-[-0.04em] text-[#181818]">{displayedProvider.company}</h1>
 							<div className="mt-3 flex items-center gap-2 text-[0.96rem] text-black/48">
 								<VerifiedBadge className="h-[18px] w-[18px]" />
-								<span>utilisateur vérifié</span>
+								<span className="text-[var(--accent-mauve)]">utilisateur vérifié</span>
 							</div>
 						</div>
 					</div>
 
-					<div className="max-w-[760px] space-y-10">
+					<div className="max-w-[760px] space-y-8 sm:space-y-10">
 						<section>
 							<h2 className="mb-5 text-[1.9rem] font-semibold tracking-[-0.04em] text-[#1a1a1a]">Détail de la réservation</h2>
 							<div className="rounded-[22px] border border-black/8 bg-white px-6 py-7 shadow-[0_14px_34px_rgba(17,19,30,0.04)]">
@@ -746,11 +746,11 @@ export default function ReservationPage() {
 							<h2 className="mb-5 text-[1.9rem] font-semibold tracking-[-0.04em] text-[#1a1a1a]">Date & heure</h2>
 							{showSchedulePicker ? (
 								<div className="rounded-[22px] border border-black/8 bg-white px-5 py-6 shadow-[0_14px_34px_rgba(17,19,30,0.04)]">
-									<div className="mb-6 flex items-center justify-between gap-3">
+									<div className="mb-6 flex flex-wrap items-center justify-between gap-3">
 										<button
 											type="button"
 											onClick={() => setWeekOffset((value) => value - 1)}
-											className="inline-flex items-center gap-2 text-[0.95rem] font-medium text-black/46 transition hover:text-[#1b1b1d]"
+											className="inline-flex items-center gap-2 text-[0.95rem] font-medium text-[var(--accent-mauve)] transition hover:opacity-75"
 											aria-label="Semaine précédente"
 										>
 											<ChevronIcon direction="left" className="h-4 w-4" />
@@ -760,17 +760,17 @@ export default function ReservationPage() {
 											<button
 												type="button"
 												onClick={() => setIsCalendarOpen((value) => !value)}
-												className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-[#faf9f5] px-4 py-2 text-[0.96rem] font-semibold text-[#1b1b1d] shadow-[0_8px_20px_rgba(17,19,30,0.04)] transition hover:border-black/20 hover:bg-white"
+												className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-[#faf9f5] px-4 py-2 text-[0.96rem] font-semibold text-[var(--accent-mauve)] shadow-[0_8px_20px_rgba(17,19,30,0.04)] transition hover:border-black/20 hover:bg-white"
 												aria-expanded={isCalendarOpen}
 												aria-label="Choisir une date dans le calendrier"
 											>
-												<CalendarGridIcon className="h-4 w-4 text-black/52" />
+												<CalendarGridIcon className="h-4 w-4 text-[var(--accent-mauve)]" />
 												<span>{displayedWeekLabel}</span>
 											</button>
 											{isCurrentWeek ? <div className="mt-1 text-[0.8rem] text-black/34">Semaine en cours</div> : null}
 
 											{isCalendarOpen ? (
-												<div className="absolute left-1/2 top-[calc(100%+14px)] z-30 w-[320px] -translate-x-1/2 rounded-[22px] border border-black/8 bg-white p-4 text-left shadow-[0_28px_70px_rgba(17,19,30,0.16)]">
+												<div className="absolute left-1/2 top-[calc(100%+14px)] z-30 w-[min(320px,calc(100vw-40px))] -translate-x-1/2 rounded-[22px] border border-black/8 bg-white p-4 text-left shadow-[0_28px_70px_rgba(17,19,30,0.16)]">
 													<div className="mb-4 flex items-center justify-between">
 														<button
 															type="button"
@@ -826,7 +826,7 @@ export default function ReservationPage() {
 										<button
 											type="button"
 											onClick={() => setWeekOffset((value) => value + 1)}
-											className="inline-flex items-center gap-2 text-[0.95rem] font-medium text-black/46 transition hover:text-[#1b1b1d]"
+											className="inline-flex items-center gap-2 text-[0.95rem] font-medium text-[var(--accent-mauve)] transition hover:opacity-75"
 											aria-label="Semaine suivante"
 										>
 											<ChevronIcon direction="right" className="h-4 w-4" />
@@ -837,7 +837,7 @@ export default function ReservationPage() {
 										{scheduleLoading ? (
 											<p className="pb-2 text-[0.92rem] text-black/42">Chargement des disponibilités…</p>
 										) : null}
-											<div className="grid min-w-[700px] grid-cols-7 gap-4">
+											<div className="grid min-w-[700px] grid-cols-7 gap-3 sm:gap-4">
 												{scheduleDaysWithVisibleTimes.map((day) => (
 													<div key={day.dayName}>
 													<p className={`text-center text-[1rem] font-medium uppercase ${isSameDay(new Date(day.isoDate), today) ? 'text-[#161616]' : 'text-[#1b1b1d]'}`}>
@@ -885,7 +885,7 @@ export default function ReservationPage() {
 										<button
 											type="button"
 											onClick={() => setShowSchedulePicker(true)}
-											className="text-[#161616] transition hover:opacity-70"
+											className="text-[var(--accent-mauve)] transition hover:opacity-70"
 											aria-label="Modifier la date"
 										>
 											<EditIcon className="h-5 w-5" />
@@ -900,7 +900,7 @@ export default function ReservationPage() {
 							<div className="rounded-[22px] border border-black/8 bg-white px-6 py-7 shadow-[0_14px_34px_rgba(17,19,30,0.04)]">
 								<div className="flex items-start justify-between gap-4">
 									<p className="text-[1.05rem] text-[#191919]">{contact}</p>
-									<button type="button" className="text-[#161616] transition hover:opacity-70" aria-label="Modifier les coordonnées">
+									<button type="button" className="text-[var(--accent-mauve)] transition hover:opacity-70" aria-label="Modifier les coordonnées">
 										<EditIcon className="h-5 w-5" />
 									</button>
 								</div>
@@ -926,7 +926,7 @@ export default function ReservationPage() {
 							type="button"
 							onClick={handleConfirmReservation}
 							disabled={!selectedSlot || bookingState.loading}
-							className={`inline-flex min-w-[240px] items-center justify-center rounded-full px-6 py-4 text-[1rem] font-medium transition ${
+							className={`inline-flex w-full items-center justify-center rounded-full px-6 py-4 text-[1rem] font-medium transition sm:min-w-[240px] sm:w-auto ${
 								selectedSlot && !bookingState.loading
 									? 'bg-[linear-gradient(135deg,#161616_0%,#35332d_100%)] text-white shadow-[0_14px_30px_rgba(22,22,22,0.18)] hover:-translate-y-px hover:opacity-92'
 									: 'cursor-not-allowed border border-black/8 bg-[#ecebe7] text-black/34 shadow-none'

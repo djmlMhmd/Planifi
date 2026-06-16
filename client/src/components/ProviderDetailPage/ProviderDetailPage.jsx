@@ -3,6 +3,7 @@ import prestatLogo from '../../assets/prestat-logo.svg';
 import navigationPlaceholder from '../../assets/navigation-placeholder.jpg';
 import { getProviderById } from '../../data/providers';
 import { navigateTo } from '../../lib/navigation';
+import { ModalPortal } from '../ProfilePage/ProfilePage.shared';
 
 function formatBackendDuration(duration) {
 	// Le backend peut me renvoyer un interval PostgreSQL, donc je le normalise avant affichage.
@@ -429,15 +430,15 @@ export default function ProviderDetailPage() {
 			<section className="px-4 pb-14 pt-6 xl:px-8">
 				<div className="mx-auto w-full max-w-[1480px]">
 					<div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-						<div className="flex items-start gap-5">
-					<div className="relative flex h-32 w-32 items-center justify-center rounded-full border border-[#dbc78f] bg-white shadow-[0_16px_34px_rgba(17,19,30,0.04)]">
+						<div className="flex flex-col items-start gap-5 sm:flex-row">
+					<div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-[#dbc78f] bg-white shadow-[0_16px_34px_rgba(17,19,30,0.04)] sm:h-32 sm:w-32">
 						<div className="absolute left-1 top-1 flex h-9 w-9 items-center justify-center rounded-full bg-[#f2ecdd] text-[#6a5a34]">
 							<BookmarkIcon className="h-[18px] w-[18px]" />
 						</div>
 						{provider.profile_picture ? (
 							<img src={provider.profile_picture} alt={provider.company} className="h-full w-full rounded-full object-cover" />
 						) : (
-							<svg viewBox="0 0 64 64" className="h-20 w-20 text-[#cfb16d]" fill="none" aria-hidden="true">
+							<svg viewBox="0 0 64 64" className="h-16 w-16 text-[#cfb16d] sm:h-20 sm:w-20" fill="none" aria-hidden="true">
 								<path d="M32 13C24 19 21 27 21 34C21 42 26 49 32 53C38 49 43 42 43 34C43 27 40 19 32 13Z" stroke="currentColor" strokeWidth="2.8" />
 								<path d="M32 18V49" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
 								<path d="M24.5 24.5C29 28 30.8 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
@@ -446,7 +447,7 @@ export default function ProviderDetailPage() {
 						)}
 					</div>
 
-							<div className="pt-2">
+							<div className="pt-1 sm:pt-2">
 								<h1 className="text-[clamp(2rem,3vw,2.8rem)] font-semibold tracking-[-0.04em] text-[#181818]">{provider.company}</h1>
 								<div className="mt-3 flex items-center gap-2 text-[1rem] font-medium text-[#1f1f1f]">
 									<PinIcon className="h-[18px] w-[18px]" />
@@ -459,7 +460,7 @@ export default function ProviderDetailPage() {
 								</div>
 								<div className="mt-2 flex items-center gap-2 text-[0.96rem] text-black/48">
 									<VerifiedBadge className="h-[18px] w-[18px]" />
-									<span>utilisateur vérifié</span>
+									<span className="text-[var(--accent-mauve)]">utilisateur vérifié</span>
 								</div>
 							</div>
 						</div>
@@ -504,9 +505,9 @@ export default function ProviderDetailPage() {
 										<p key={paragraph} className="mb-6 last:mb-0">{paragraph}</p>
 									))}
 								</div>
-								<div className="mt-8 flex flex-wrap gap-8 text-[1rem] font-medium text-[#7b6335]">
-									<a href="#" className="transition hover:text-[#5f4b26]">&gt; Demander un devis</a>
-									<a href="#" className="transition hover:text-[#5f4b26]">&gt; Demander une facture</a>
+								<div className="mt-8 flex flex-wrap gap-8 text-[1rem] font-medium text-[var(--accent-mauve)]">
+									<a href="#" className="transition hover:opacity-72">&gt; Demander un devis</a>
+									<a href="#" className="transition hover:opacity-72">&gt; Demander une facture</a>
 								</div>
 							</section>
 						</div>
@@ -524,18 +525,18 @@ export default function ProviderDetailPage() {
 								</div>
 							</div>
 
-							<div className="rounded-[24px] border border-black/8 bg-white p-6 shadow-[0_16px_38px_rgba(17,19,30,0.045)]">
+							<div className="rounded-[24px] border border-black/8 bg-white p-5 shadow-[0_16px_38px_rgba(17,19,30,0.045)] sm:p-6">
 								<h3 className="text-center text-[1.15rem] font-semibold text-[#222222]">Politique de prestation</h3>
 								<p className="mt-5 text-[0.96rem] leading-7 text-black/62">{provider.policy}</p>
-								<a href="#" className="mt-5 inline-block font-medium text-[#7b6335] transition hover:text-[#5f4b26]">&gt; En savoir plus</a>
+								<a href="#" className="mt-5 inline-block font-medium text-[var(--accent-mauve)] transition hover:opacity-72">&gt; En savoir plus</a>
 							</div>
 
-							<div className="rounded-[24px] border border-black/8 bg-white p-6 shadow-[0_16px_38px_rgba(17,19,30,0.045)]">
+							<div className="rounded-[24px] border border-black/8 bg-white p-5 shadow-[0_16px_38px_rgba(17,19,30,0.045)] sm:p-6">
 								<h3 className="text-center text-[1.15rem] font-semibold text-[#222222]">Actualités</h3>
 								<p className="mt-5 text-[0.96rem] leading-7 text-black/62">{provider.news}</p>
 							</div>
 
-							<div className="rounded-[24px] border border-black/8 bg-white p-6 shadow-[0_16px_38px_rgba(17,19,30,0.045)]">
+							<div className="rounded-[24px] border border-black/8 bg-white p-5 shadow-[0_16px_38px_rgba(17,19,30,0.045)] sm:p-6">
 								<h3 className="text-center text-[1.15rem] font-semibold text-[#222222]">Horaires d’ouvertures</h3>
 								<div className="mt-6 overflow-hidden rounded-[16px] border border-black/6">
 									{provider.hours.map(([day, hours]) => (
@@ -547,7 +548,7 @@ export default function ProviderDetailPage() {
 								</div>
 							</div>
 
-							<div className="rounded-[24px] border border-black/8 bg-white p-6 shadow-[0_16px_38px_rgba(17,19,30,0.045)]">
+							<div className="rounded-[24px] border border-black/8 bg-white p-5 shadow-[0_16px_38px_rgba(17,19,30,0.045)] sm:p-6">
 								<h3 className="text-center text-[1.15rem] font-semibold text-[#222222]">Avis</h3>
 								<div className="mt-5 rounded-[18px] border border-black/6 p-5">
 									<div className="flex items-center gap-2 text-[0.95rem] text-[#1d1d1d]">
@@ -559,7 +560,7 @@ export default function ProviderDetailPage() {
 								</div>
 							</div>
 
-							<div className="rounded-[24px] border border-black/8 bg-white p-6 shadow-[0_16px_38px_rgba(17,19,30,0.045)]">
+							<div className="rounded-[24px] border border-black/8 bg-white p-5 shadow-[0_16px_38px_rgba(17,19,30,0.045)] sm:p-6">
 								<h3 className="text-center text-[1.15rem] font-semibold text-[#222222]">Nous suivre</h3>
 								<div className="mt-6 flex items-center justify-center gap-8 rounded-[18px] border border-black/6 px-6 py-7 text-[#111111]">
 									{provider.socials.map((social) => (
@@ -575,31 +576,37 @@ export default function ProviderDetailPage() {
 			</section>
 
 			{showConfirmation ? (
-				<div className="fixed inset-0 z-[70] flex items-center justify-center bg-[rgba(17,17,24,0.16)] px-4">
-					<div className="w-full max-w-[360px] rounded-[22px] bg-white p-7 shadow-[0_26px_70px_rgba(17,19,30,0.22)]">
-						<div className="flex justify-end">
-							<button
-								type="button"
-								onClick={() => setShowConfirmation(false)}
-								className="text-[1.4rem] leading-none text-black/35 transition hover:text-black/65"
-								aria-label="Fermer"
-							>
-								×
-							</button>
+				<ModalPortal>
+					<div className="fixed inset-0 z-[70] overflow-y-auto bg-[rgba(17,17,24,0.16)]">
+						<div className="flex min-h-full items-center justify-center px-4 py-6">
+							<div className="w-full max-w-[360px] rounded-[22px] bg-white p-7 shadow-[0_26px_70px_rgba(17,19,30,0.22)]">
+								<div className="flex justify-end">
+									<button
+										type="button"
+										onClick={() => setShowConfirmation(false)}
+										className="text-[1.4rem] leading-none text-black/35 transition hover:text-black/65"
+										aria-label="Fermer"
+									>
+										×
+									</button>
+								</div>
+								<p className="mt-6 text-[1.15rem] leading-8 text-[#1b1b1d]">
+									Rendez-vous confirmé le <span className="font-medium">{confirmedDate}</span> à <span className="font-medium">{confirmedTime}</span>
+								</p>
+								<p className="mt-3 text-[0.98rem] leading-7 text-black/56">
+									Vous recevrez un rappel la veille de votre rendez-vous.
+								</p>
+							</div>
 						</div>
-						<p className="mt-6 text-[1.15rem] leading-8 text-[#1b1b1d]">
-							Rendez-vous confirmé le <span className="font-medium">{confirmedDate}</span> à <span className="font-medium">{confirmedTime}</span>
-						</p>
-						<p className="mt-3 text-[0.98rem] leading-7 text-black/56">
-							Vous recevrez un rappel la veille de votre rendez-vous.
-						</p>
 					</div>
-				</div>
+				</ModalPortal>
 			) : null}
 
 			{isGalleryOpen ? (
-				<div className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(10,10,14,0.78)] px-4" onClick={() => setIsGalleryOpen(false)}>
-					<div className="relative w-full max-w-[980px]" onClick={(event) => event.stopPropagation()}>
+				<ModalPortal>
+					<div className="fixed inset-0 z-[80] overflow-y-auto bg-[rgba(10,10,14,0.78)]" onClick={() => setIsGalleryOpen(false)}>
+						<div className="flex min-h-full items-center justify-center px-4 py-6">
+							<div className="relative w-full max-w-[980px]" onClick={(event) => event.stopPropagation()}>
 						<button
 							type="button"
 							onClick={() => setIsGalleryOpen(false)}
@@ -659,15 +666,19 @@ export default function ProviderDetailPage() {
 							))}
 						</div>
 					</div>
-				</div>
+						</div>
+					</div>
+				</ModalPortal>
 			) : null}
 
 			{selectedService ? (
-				<div className="fixed inset-0 z-[85] flex items-center justify-center bg-[rgba(10,10,14,0.54)] px-4 backdrop-blur-[2px]" onClick={() => setSelectedService(null)}>
-					<div
-						className="w-full max-w-[760px] rounded-[28px] bg-white p-6 shadow-[0_30px_80px_rgba(0,0,0,0.24)] animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]"
-						onClick={(event) => event.stopPropagation()}
-					>
+				<ModalPortal>
+					<div className="fixed inset-0 z-[85] overflow-y-auto bg-[rgba(10,10,14,0.54)] backdrop-blur-[2px]" onClick={() => setSelectedService(null)}>
+						<div className="flex min-h-full items-center justify-center px-4 py-6">
+							<div
+								className="w-full max-w-[760px] rounded-[28px] bg-white p-6 shadow-[0_30px_80px_rgba(0,0,0,0.24)] animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]"
+								onClick={(event) => event.stopPropagation()}
+							>
 						<div className="mb-5 flex items-start justify-between gap-4">
 							<div>
 								<h3 className="text-[1.65rem] font-semibold tracking-[-0.04em] text-[#191919]">{selectedService.name}</h3>
@@ -708,7 +719,9 @@ export default function ProviderDetailPage() {
 							</div>
 						</div>
 					</div>
-				</div>
+						</div>
+					</div>
+				</ModalPortal>
 			) : null}
 		</main>
 	);

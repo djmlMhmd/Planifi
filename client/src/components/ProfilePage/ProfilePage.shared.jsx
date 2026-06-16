@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import favoritesPlaceholder from '../../assets/favorites-placeholder.jpg';
 import pdfFileIcon from '../../assets/pdf-file-icon.png';
 import providerUserPlaceholder from '../../assets/provider-user-placeholder.png';
@@ -31,6 +32,43 @@ export async function fetchWithTimeout(url, options = {}, timeoutMs = 7000) {
 	} finally {
 		window.clearTimeout(timeoutId);
 	}
+}
+
+export function useBodyScrollLock(locked) {
+	useEffect(() => {
+		if (!locked) {
+			return undefined;
+		}
+
+		const { body, documentElement } = document;
+		const previousBodyOverflow = body.style.overflow;
+		const previousHtmlOverflow = documentElement.style.overflow;
+		const previousBodyPaddingRight = body.style.paddingRight;
+		const scrollbarWidth = window.innerWidth - documentElement.clientWidth;
+
+		body.style.overflow = 'hidden';
+		documentElement.style.overflow = 'hidden';
+
+		if (scrollbarWidth > 0) {
+			body.style.paddingRight = `${scrollbarWidth}px`;
+		}
+
+		return () => {
+			body.style.overflow = previousBodyOverflow;
+			documentElement.style.overflow = previousHtmlOverflow;
+			body.style.paddingRight = previousBodyPaddingRight;
+		};
+	}, [locked]);
+}
+
+export function ModalPortal({ open = true, children }) {
+	useBodyScrollLock(open);
+
+	if (!open || typeof document === 'undefined') {
+		return null;
+	}
+
+	return createPortal(children, document.body);
 }
 
 export function DashboardIcon({ className = '' }) {
@@ -291,7 +329,7 @@ export function ChevronIcon({ className = '', direction = 'right' }) {
 
 export function StarRow() {
 	return (
-		<div className="flex gap-1 text-[#1f1f1f]">
+		<div className="flex gap-1 text-[var(--accent-mauve)]">
 			{Array.from({ length: 5 }).map((_, index) => (
 				<svg key={index} viewBox="0 0 20 20" className="h-[18px] w-[18px]" fill="none" aria-hidden="true">
 					<path d="M10 2.8L12.1 7.1L16.9 7.8L13.4 11.2L14.2 16L10 13.8L5.8 16L6.6 11.2L3.1 7.8L7.9 7.1L10 2.8Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
@@ -377,18 +415,21 @@ export function ReservationItem({ reservation }) {
 	);
 }
 
-export function InvoiceItem({ label }) {
+export function InvoiceItem({ label, kind = 'invoice' }) {
+	const isQuote = kind === 'quote';
+
 	return (
-		<div className="flex items-center gap-3 py-3 text-black/62">
+		<div className={`flex items-center gap-3 rounded-[14px] px-3 py-3 ${isQuote ? 'bg-white text-black/62' : 'text-black/62'}`}>
 			<img src={pdfFileIcon} alt="PDF" className="h-5 w-5 shrink-0 object-contain" />
-			<p className="min-w-0 flex-1 truncate text-[0.88rem]">{label}</p>
-			<button type="button" className="text-black/45 transition hover:text-[#0a0a0a]">
-				<svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" aria-hidden="true">
-					<path d="M10 3V12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-					<path d="M6.5 8.5L10 12L13.5 8.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-					<path d="M4 16H16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-				</svg>
-			</button>
+			<div className="min-w-0 flex-1">
+				<p className="truncate text-[0.88rem]">{label}</p>
+				<p className={`mt-1 text-[0.72rem] ${isQuote ? 'text-[var(--accent-mauve)]' : 'text-black/36'}`}>
+					{isQuote ? 'En attente de validation' : 'PDF disponible'}
+				</p>
+			</div>
+			<span className={`rounded-full px-2.5 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.04em] ${isQuote ? 'bg-[var(--accent-mauve-soft)] text-[var(--accent-mauve)]' : 'bg-black/5 text-black/45'}`}>
+				{isQuote ? 'Voir' : 'Télécharger'}
+			</span>
 		</div>
 	);
 }
@@ -439,7 +480,7 @@ export function SidebarLink({ href, active = false, icon: Icon, onNavigate, tone
 		}
 	}
 
-	const activeClass = tone === 'light' ? 'text-[#c7a45f]' : 'text-[#c9a25f]';
+	const activeClass = tone === 'light' ? 'text-[var(--accent-mauve)]' : 'text-[#c7b2ec]';
 	const idleClass = tone === 'light' ? 'text-black/82 hover:text-black' : 'text-white/62 hover:text-white';
 
 	return (
@@ -451,23 +492,25 @@ export function SidebarLink({ href, active = false, icon: Icon, onNavigate, tone
 }
 
 export function DevelopmentNoticeModal({ open, onClose }) {
-	if (!open) return null;
-
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(17,15,13,0.32)] px-6 backdrop-blur-[3px]">
-			<div className="w-full max-w-[420px] rounded-[28px] bg-white p-7 shadow-[0_28px_80px_rgba(17,19,30,0.18)] animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]">
-				<div className="flex items-start justify-between gap-6">
-					<div>
-						<p className="text-[0.82rem] font-semibold uppercase tracking-[0.16em] text-black/42">Prestat</p>
-						<h2 className="mt-1.5 text-[1.8rem] font-semibold tracking-[-0.04em] text-[#171717]">Documents</h2>
+		<ModalPortal open={open}>
+			<div className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(17,15,13,0.32)] backdrop-blur-[3px]">
+				<div className="flex min-h-full items-center justify-center px-6 py-6">
+					<div className="w-full max-w-[420px] rounded-[28px] bg-white p-7 shadow-[0_28px_80px_rgba(17,19,30,0.18)] animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]">
+						<div className="flex items-start justify-between gap-6">
+							<div>
+								<p className="text-[0.82rem] font-semibold uppercase tracking-[0.16em] text-black/42">Prestat</p>
+								<h2 className="mt-1.5 text-[1.8rem] font-semibold tracking-[-0.04em] text-[#171717]">Documents</h2>
+							</div>
+							<button type="button" onClick={onClose} className="rounded-full border border-black/10 px-4 py-2 text-[0.9rem] font-medium text-black/56 transition hover:border-black/18 hover:text-black">
+								Fermer
+							</button>
+						</div>
+						<p className="mt-6 text-[1rem] leading-8 text-black/62">Cette page est en cours de développement.</p>
 					</div>
-					<button type="button" onClick={onClose} className="rounded-full border border-black/10 px-4 py-2 text-[0.9rem] font-medium text-black/56 transition hover:border-black/18 hover:text-black">
-						Fermer
-					</button>
 				</div>
-				<p className="mt-6 text-[1rem] leading-8 text-black/62">Cette page est en cours de développement.</p>
 			</div>
-		</div>
+		</ModalPortal>
 	);
 }
 

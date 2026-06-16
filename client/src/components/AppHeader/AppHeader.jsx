@@ -66,7 +66,7 @@ function UserMenu() {
 					<div className="pt-2">
 						<a
 							href={profileHref}
-							className="block rounded-xl px-3 py-2.5 text-sm text-white/85 transition hover:bg-white/8 hover:text-white"
+							className="block rounded-xl px-3 py-2.5 text-sm text-[#d4c3f1] transition hover:bg-white/8 hover:text-white"
 						>
 							Voir mon profil
 						</a>
@@ -93,7 +93,7 @@ export default function AppHeader({ ctaHref, ctaLabel, navHref = '/app/proposer-
 
 	return (
 		<header className="pointer-events-none fixed inset-x-0 top-0 z-30 py-6 max-[640px]:py-[18px]">
-			<div className="pointer-events-auto mx-auto flex w-content items-center justify-between">
+			<div className="pointer-events-auto mx-auto flex w-[min(1140px,calc(100%-28px))] items-center justify-between sm:w-content">
 				<a href={homeHref} aria-label="Prestat accueil">
 					<img
 						className="h-auto w-40 brightness-0 invert max-[640px]:w-[120px]"
@@ -101,9 +101,9 @@ export default function AppHeader({ ctaHref, ctaLabel, navHref = '/app/proposer-
 						alt="Prestat"
 					/>
 				</a>
-				<nav className="flex items-center gap-8 max-[640px]:gap-4">
+				<nav className="flex items-center gap-4 sm:gap-6 lg:gap-8">
 					<a
-						className="text-[0.95rem] font-normal tracking-[0.01em] text-white/80 transition hover:text-white max-[640px]:hidden"
+						className="hidden text-[0.95rem] font-normal tracking-[0.01em] text-[#d4c3f1] transition hover:text-white md:inline"
 						href={navLinkHref}
 					>
 						{navLinkLabel}
@@ -112,7 +112,7 @@ export default function AppHeader({ ctaHref, ctaLabel, navHref = '/app/proposer-
 						<UserMenu />
 					) : (
 						<a
-							className="inline-flex items-center gap-2.5 rounded-full bg-white px-[22px] py-3 text-[0.95rem] font-medium text-[#0a0a0a] transition hover:-translate-y-px hover:opacity-90 max-[640px]:px-[18px] max-[640px]:py-[10px] max-[640px]:text-[0.9rem]"
+							className="inline-flex items-center gap-2.5 rounded-full bg-white px-[22px] py-3 text-[0.95rem] font-medium text-[var(--accent-mauve)] transition hover:-translate-y-px hover:opacity-90 max-[640px]:px-[18px] max-[640px]:py-[10px] max-[640px]:text-[0.9rem]"
 							href={ctaHref}
 						>
 							{ctaLabel}

@@ -19,7 +19,7 @@
 	font-weight: 600;
 	letter-spacing: 0.16em;
 	text-transform: uppercase;
-	color: var(--grey-400);
+	color: var(--accent-mauve);
 }
 
 .header h2 {
@@ -75,6 +75,10 @@
 
 .itemOpen .body {
 	max-height: 300px;
+}
+
+.itemOpen .trigger span {
+	color: var(--accent-mauve);
 }
 
 .body p {

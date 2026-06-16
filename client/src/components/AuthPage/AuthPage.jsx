@@ -140,15 +140,15 @@ export default function AuthPage({ initialMode = 'signup' }) {
 			/>
 			<div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.72)_0%,rgba(0,0,0,0.18)_100%)]" />
 
-			<section className="relative z-[1] mx-auto flex min-h-screen w-content items-center px-0 pb-12 pt-28">
+			<section className="relative z-[1] mx-auto flex min-h-screen w-[min(1140px,calc(100%-28px))] items-center px-0 pb-12 pt-24 sm:w-content sm:pt-28">
 				<Reveal from="left" className="w-full max-w-[440px]">
-					<div className="relative flex min-h-[688px] w-full overflow-hidden rounded-[30px] bg-[linear-gradient(90deg,rgba(12,12,12,0.16)_0%,rgba(17,17,17,0.38)_18%,rgba(25,25,25,0.72)_54%,rgba(56,56,56,0.9)_100%)] p-10 shadow-[0_22px_44px_rgba(0,0,0,0.18)] backdrop-blur-[22px]">
+					<div className="relative flex min-h-[620px] w-full overflow-hidden rounded-[26px] bg-[linear-gradient(90deg,rgba(12,12,12,0.16)_0%,rgba(17,17,17,0.38)_18%,rgba(25,25,25,0.72)_54%,rgba(56,56,56,0.9)_100%)] p-5 shadow-[0_22px_44px_rgba(0,0,0,0.18)] backdrop-blur-[22px] sm:min-h-[688px] sm:rounded-[30px] sm:p-10">
 						<div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.3)_0%,rgba(0,0,0,0.12)_14%,rgba(255,255,255,0.015)_46%,rgba(255,255,255,0.05)_100%)] [mask-image:linear-gradient(90deg,rgba(0,0,0,0.45)_0%,rgba(0,0,0,0.9)_16%,rgba(0,0,0,1)_36%)] [-webkit-mask-image:linear-gradient(90deg,rgba(0,0,0,0.45)_0%,rgba(0,0,0,0.9)_16%,rgba(0,0,0,1)_36%)]" />
 						<div className="pointer-events-none absolute inset-[1px] rounded-[29px] bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0))] shadow-[inset_0_1px_0_rgba(255,255,255,0.03),inset_-1px_0_0_rgba(255,255,255,0.03),inset_0_-1px_0_rgba(255,255,255,0.02)] [clip-path:inset(0_0_0_10px_round_29px)]" />
 
 						<div className="relative z-[1] flex min-h-full w-full flex-col">
-							<div className="mb-[30px] flex items-center justify-between gap-4">
-								<h1 className="m-0 text-[1.7rem] font-semibold tracking-[-0.02em]">
+							<div className="mb-[24px] flex items-center justify-between gap-4 sm:mb-[30px]">
+								<h1 className="m-0 text-[1.45rem] font-semibold tracking-[-0.02em] sm:text-[1.7rem]">
 									{isLogin ? 'Se connecter' : 'Créer un compte'}
 								</h1>
 								<AuthSwitch
@@ -189,12 +189,12 @@ export default function AuthPage({ initialMode = 'signup' }) {
 											</div>
 										) : null}
 
-										<a className="mt-4 inline-block text-[0.9rem] text-white/90 underline underline-offset-2 hover:text-white" href="#">
+										<a className="mt-4 inline-block text-[0.9rem] text-[#d4c3f1] underline underline-offset-2 hover:text-white" href="#">
 											Mot de passe oublié ?
 										</a>
 									</form>
 
-									<div className="mb-[22px] mt-[42px] flex items-center gap-4">
+									<div className="mb-[18px] mt-[30px] flex items-center gap-4 sm:mb-[22px] sm:mt-[42px]">
 										<div className="h-px flex-1 bg-white/15" />
 										<span className="text-[0.9rem] text-white/55">Ou</span>
 										<div className="h-px flex-1 bg-white/15" />
@@ -203,7 +203,7 @@ export default function AuthPage({ initialMode = 'signup' }) {
 									<button
 										type="button"
 										onClick={() => setMode('signup')}
-										className="mx-auto flex w-[calc(100%-64px)] min-w-[230px] justify-center rounded-xl bg-white px-[18px] py-[14px] text-center text-[1rem] font-semibold text-[#141414] transition hover:opacity-90"
+										className="mx-auto flex w-full justify-center rounded-xl bg-white px-[18px] py-[14px] text-center text-[1rem] font-semibold text-[var(--accent-mauve)] transition hover:opacity-90 sm:w-[calc(100%-64px)] sm:min-w-[230px]"
 									>
 										Inscription
 									</button>
@@ -275,7 +275,7 @@ export default function AuthPage({ initialMode = 'signup' }) {
 											/>
 											<span>
 												J&apos;accepte les{' '}
-												<a className="underline underline-offset-2" href="/">
+												<a className="text-[#d4c3f1] underline underline-offset-2" href="/">
 													CGU
 												</a>{' '}
 												de Prestat
@@ -297,19 +297,19 @@ export default function AuthPage({ initialMode = 'signup' }) {
 
 										<p className="mt-4 text-center text-[0.74rem] leading-[1.65] text-white/55">
 											Vos informations sont traitées par Prestat, consultez notre{' '}
-											<a className="text-white/70 underline underline-offset-2" href="/">
+											<a className="text-[#d4c3f1] underline underline-offset-2" href="/">
 												politique de confidentialité
 											</a>
 											. Ce site est protégé par reCAPTCHA et est soumis à la{' '}
 											<a
-												className="text-white/70 underline underline-offset-2"
+												className="text-[#d4c3f1] underline underline-offset-2"
 												href="https://policies.google.com/privacy"
 											>
 												Politique de Confidentialité
 											</a>{' '}
 											et aux{' '}
 											<a
-												className="text-white/70 underline underline-offset-2"
+												className="text-[#d4c3f1] underline underline-offset-2"
 												href="https://policies.google.com/terms"
 											>
 												Conditions d&apos;Utilisation

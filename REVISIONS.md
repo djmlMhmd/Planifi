@@ -445,6 +445,219 @@ Les deux coexistent dans le même projet car certaines pages sont en EJS (ancien
 
 ## 16. Concepts JavaScript utiles
 
+## 16. Hooks React — à quoi ils servent dans Planifi
+
+Un **hook** est une fonction spéciale de React qui permet à un composant fonctionnel de :
+- stocker un état (`useState`)
+- lancer un effet quand quelque chose change (`useEffect`)
+- garder une référence vers un élément ou une valeur persistante (`useRef`)
+- factoriser de la logique réutilisable (hooks custom comme `useSession`)
+
+### Pourquoi on les utilise
+
+Sans hooks, un composant React afficherait juste du HTML.  
+Avec les hooks, il peut :
+- charger des données depuis le back
+- ouvrir/fermer une modale
+- suivre ce que l'utilisateur tape dans un champ
+- animer un bloc quand il entre dans l'écran
+- partager la même logique entre plusieurs composants
+
+### `useState` — mémoriser une valeur dans l'interface
+
+`useState` sert à stocker une donnée qui peut changer pendant la vie du composant.
+
+```jsx
+const [open, setOpen] = useState(false);
+```
+
+Exemples dans le projet :
+- [AuthPage.jsx](/Users/djamal/Projets/Planifi/client/src/components/AuthPage/AuthPage.jsx)  
+  `mode`, `isProfessional`, `signupError`, `loginError`
+- [ReservationPage.jsx](/Users/djamal/Projets/Planifi/client/src/components/ReservationPage/ReservationPage.jsx)  
+  `selectedSlot`, `note`, `weekOffset`, `scheduleLoading`
+- [ConnectedNavbar.jsx](/Users/djamal/Projets/Planifi/client/src/components/ConnectedNavbar/ConnectedNavbar.jsx)  
+  `open` pour ouvrir/fermer le menu mobile
+
+Exemple simple tiré de l'idée du projet :
+```jsx
+const [selectedSlot, setSelectedSlot] = useState(null);
+// → mémorise le créneau choisi par le client avant confirmation
+```
+
+### `useEffect` — exécuter du code au bon moment
+
+`useEffect` sert à exécuter un code :
+- au chargement d'une page
+- quand une valeur change
+- pour s'abonner à un événement puis se désabonner proprement
+
+Exemple réel dans [useSession.js](/Users/djamal/Projets/Planifi/client/src/hooks/useSession.js) :
+```jsx
+useEffect(() => {
+  let cancelled = false;
+
+  async function loadSession() {
+    const response = await fetch('/profil', { credentials: 'same-origin' });
+    ...
+  }
+
+  loadSession();
+  return () => {
+    cancelled = true;
+  };
+}, []);
+```
+
+Ici :
+- l'effet tourne au montage du composant
+- il appelle le backend pour savoir si l'utilisateur est connecté
+- `return () => { ... }` sert au nettoyage
+
+Autres exemples :
+- [App.jsx](/Users/djamal/Projets/Planifi/client/src/App.jsx)  
+  écoute les changements de navigation
+- [CalendarPage.jsx](/Users/djamal/Projets/Planifi/client/src/components/CalendarPage/CalendarPage.jsx)  
+  charge les réservations du calendrier
+- [NavigationPage.jsx](/Users/djamal/Projets/Planifi/client/src/components/NavigationPage/NavigationPage.jsx)  
+  recharge les données selon la recherche
+
+### `useRef` — garder une référence stable
+
+`useRef` sert à garder une valeur qui persiste entre les renders sans provoquer de re-render.
+
+Exemple simple :
+```jsx
+const menuRef = useRef(null);
+```
+
+Exemples dans le projet :
+- [ConnectedNavbar.jsx](/Users/djamal/Projets/Planifi/client/src/components/ConnectedNavbar/ConnectedNavbar.jsx)  
+  `menuRef` pour détecter les clics hors menu
+- [CalendarPage.jsx](/Users/djamal/Projets/Planifi/client/src/components/CalendarPage/CalendarPage.jsx)  
+  `calendarRef` pour piloter FullCalendar
+- [useReveal.js](/Users/djamal/Projets/Planifi/client/src/hooks/useReveal.js)  
+  `ref` pour observer un élément DOM avec `IntersectionObserver`
+
+Exemple concret :
+```jsx
+const calendarRef = useRef(null);
+// → permet d'appeler l'API FullCalendar sans re-render la page
+```
+
+### `useMemo` — éviter de recalculer inutilement
+
+`useMemo` sert à mémoriser le résultat d'un calcul coûteux tant que ses dépendances ne changent pas.
+
+Exemple dans [CalendarPage.jsx](/Users/djamal/Projets/Planifi/client/src/components/CalendarPage/CalendarPage.jsx) :
+```jsx
+const calendarEvents = useMemo(() => buildCalendarEvents(reservations), [reservations]);
+```
+
+Ici :
+- on transforme les réservations backend en événements calendrier
+- React ne refait ce calcul que si `reservations` change
+
+Autres usages :
+- filtrer les événements à venir
+- calculer le label de semaine
+- dériver la liste affichée dans un panneau
+
+### Hooks custom du projet
+
+Un **hook custom** est juste une fonction React qui commence par `use` et qui encapsule une logique réutilisable.
+
+#### `useSession`
+Fichier : [useSession.js](/Users/djamal/Projets/Planifi/client/src/hooks/useSession.js)
+
+Rôle :
+- appelle `/profil`
+- détecte si l'utilisateur est connecté
+- expose `loading`, `isAuthenticated`, `profile`
+
+Utilisé par :
+- [AppHeader.jsx](/Users/djamal/Projets/Planifi/client/src/components/AppHeader/AppHeader.jsx)
+
+Exemple :
+```jsx
+const { loading, isAuthenticated, profile } = useSession();
+```
+
+#### `useNavigationSearch`
+Fichier : [useNavigationSearch.js](/Users/djamal/Projets/Planifi/client/src/hooks/useNavigationSearch.js)
+
+Rôle :
+- gère les champs de recherche
+- gère les suggestions de services et de villes
+- construit l'URL `/navigation?q=...&ville=...`
+- redirige proprement via `navigateTo()`
+
+Utilisé par :
+- [Hero.jsx](/Users/djamal/Projets/Planifi/client/src/components/Hero/Hero.jsx)
+- [ConnectedNavbar.jsx](/Users/djamal/Projets/Planifi/client/src/components/ConnectedNavbar/ConnectedNavbar.jsx)
+
+Exemple :
+```jsx
+const {
+  query,
+  setQuery,
+  ville,
+  setVille,
+  handleSearch,
+} = useNavigationSearch();
+```
+
+#### `useReveal`
+Fichier : [useReveal.js](/Users/djamal/Projets/Planifi/client/src/hooks/useReveal.js)
+
+Rôle :
+- observe un bloc avec `IntersectionObserver`
+- ajoute `data-visible="true"` quand il entre dans l'écran
+- permet de déclencher une animation d'apparition
+
+Utilisé par :
+- [Reveal.jsx](/Users/djamal/Projets/Planifi/client/src/components/Reveal/Reveal.jsx)
+
+Exemple :
+```jsx
+const ref = useReveal();
+// → le composant devient visible avec animation quand il entre dans le viewport
+```
+
+#### `useBodyScrollLock`
+Fichier : [ProfilePage.shared.jsx](/Users/djamal/Projets/Planifi/client/src/components/ProfilePage/ProfilePage.shared.jsx)
+
+Rôle :
+- bloque le scroll du `body` quand une modale est ouverte
+
+Exemple :
+```jsx
+useBodyScrollLock(open);
+```
+
+### Résumé rapide
+
+```txt
+useState   → stocker une valeur qui change
+useEffect  → lancer un effet (fetch, event listener, animation...)
+useRef     → garder une référence persistante
+useMemo    → mémoriser un calcul dérivé
+useSession → savoir si l'utilisateur est connecté
+useNavigationSearch → gérer la recherche et les suggestions
+useReveal  → animer un bloc à l'apparition
+```
+
+### Dans Planifi, les hooks servent donc à :
+- gérer la connexion utilisateur
+- piloter la recherche de prestations
+- charger les réservations et profils depuis le back
+- ouvrir/fermer menus, modales et panneaux
+- animer l'interface React
+
+---
+
+## 17. Concepts JavaScript utiles
+
 ### `event.preventDefault()`
 Empêche le **comportement par défaut** du navigateur sur un événement.
 

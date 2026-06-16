@@ -54,18 +54,18 @@ function UserAvatar({ profile }) {
 			<button
 				type="button"
 				onClick={() => setOpen((value) => !value)}
-				className="flex items-center gap-3 rounded-full transition hover:opacity-90"
+				className="flex items-center gap-2 rounded-full transition hover:opacity-90 md:gap-3"
 			>
 				{profile?.profile_picture ? (
-					<div className="h-14 w-14 overflow-hidden rounded-full">
+					<div className="h-12 w-12 overflow-hidden rounded-full md:h-14 md:w-14">
 						<img src={profile.profile_picture} alt="Profil" className="h-full w-full object-cover" />
 					</div>
 				) : (
-					<div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-[linear-gradient(135deg,#16161c_0%,#2a2a34_100%)] text-[1.2rem] font-semibold text-white shadow-[0_8px_24px_rgba(19,20,28,0.16)]">
+					<div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-[linear-gradient(135deg,#16161c_0%,#2a2a34_100%)] text-[1rem] font-semibold text-white shadow-[0_8px_24px_rgba(19,20,28,0.16)] md:h-14 md:w-14 md:text-[1.2rem]">
 						{initials}
 					</div>
 				)}
-				<p className="min-w-0 truncate text-[0.98rem] font-medium text-[#202020]">{displayName}</p>
+				<p className="hidden min-w-0 truncate text-[0.98rem] font-medium text-[#202020] lg:block">{displayName}</p>
 			</button>
 
 			{open ? (
@@ -76,7 +76,7 @@ function UserAvatar({ profile }) {
 							setOpen(false);
 							navigateTo(profileHref);
 						}}
-						className="block w-full rounded-xl px-3 py-2.5 text-left text-sm text-[#1b1b1d] transition hover:bg-black/5"
+						className="block w-full rounded-xl px-3 py-2.5 text-left text-sm text-[var(--accent-mauve)] transition hover:bg-black/5"
 					>
 						Voir mon profil
 					</button>
@@ -142,21 +142,21 @@ export default function ConnectedNavbar() {
 
 	return (
 		<header className="sticky top-0 z-50 border-b border-black/6 bg-white/78 backdrop-blur-md">
-			<div className="mx-auto grid min-h-[104px] w-full max-w-[1480px] grid-cols-[auto_1fr_auto] items-center gap-6 px-6 py-5 xl:px-8">
+			<div className="mx-auto grid w-full max-w-[1480px] grid-cols-[1fr_auto] items-center gap-x-4 gap-y-4 px-4 py-4 sm:px-6 md:grid-cols-[auto_1fr_auto] md:gap-6 md:py-5 xl:px-8">
 				<button
 					type="button"
 					onClick={() => navigateTo('/')}
 					aria-label="Retour a l'accueil Prestat"
 					className="shrink-0 justify-self-start"
 				>
-					<img src={prestatLogo} alt="Prestat" className="w-[156px]" />
+					<img src={prestatLogo} alt="Prestat" className="w-[136px] sm:w-[156px]" />
 				</button>
 
 				{/* Formulaire de recherche : onSubmit déclenche handleSearch */}
 				<form
 					onSubmit={handleSearch}
 					ref={searchRef}
-					className="mx-auto flex w-full max-w-[372px] items-center rounded-[18px] border border-black/8 bg-white shadow-[0_12px_28px_rgba(17,19,30,0.04)] justify-self-center"
+					className="relative col-span-2 order-3 flex w-full items-center rounded-[18px] border border-black/8 bg-white shadow-[0_12px_28px_rgba(17,19,30,0.04)] md:col-auto md:order-none md:mx-auto md:max-w-[372px] md:justify-self-center"
 				>
 					<div className="relative min-w-0 flex-1">
 						<input
@@ -182,7 +182,7 @@ export default function ConnectedNavbar() {
 									type="button"
 									onMouseDown={(event) => event.preventDefault()}
 									onClick={handleDiscoverProviders}
-									className="block w-full rounded-[12px] px-3 py-3 text-left text-[0.96rem] text-[#1f1f1f] transition hover:bg-black/5"
+									className="block w-full rounded-[12px] px-3 py-3 text-left text-[0.96rem] text-[var(--accent-mauve)] transition hover:bg-black/5"
 								>
 									Pas d&apos;idée ? Découvrez nos prestataires
 								</button>
@@ -244,12 +244,12 @@ export default function ConnectedNavbar() {
 					</button>
 				</form>
 
-				<div className="hidden items-center gap-5 justify-self-end lg:flex">
+				<div className="flex items-center justify-end gap-3 justify-self-end md:gap-5">
 					<button
 						type="button"
 						onClick={() => navigateTo('/app/calendar')}
 						aria-label="Ouvrir mon calendrier"
-						className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-black/6 bg-white/88 text-[#1b1a20] shadow-[0_10px_24px_rgba(24,24,35,0.035)] transition hover:-translate-y-px"
+						className="flex h-11 w-11 items-center justify-center rounded-[14px] border border-black/6 bg-white/88 text-[var(--accent-mauve)] shadow-[0_10px_24px_rgba(24,24,35,0.035)] transition hover:-translate-y-px md:h-10 md:w-10"
 					>
 						<CalendarIcon className="h-[1.15rem] w-[1.15rem]" />
 					</button>

@@ -26,6 +26,7 @@ import {
   getProfessionalTabFromLocation,
   HelpIcon,
   LogoutIcon,
+  ModalPortal,
   PencilIcon,
   PinIcon,
   PlusCircleIcon,
@@ -41,6 +42,16 @@ import {
   UserIcon,
   VerifiedBadge,
 } from './ProfilePage.shared';
+
+function MenuIcon({ className = '' }) {
+	return (
+		<svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+			<path d="M4 7H20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+			<path d="M4 12H20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+			<path d="M4 17H14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+		</svg>
+	);
+}
 
 function ProfessionalProfile({ profile, serviceTiles, onAddService, onEditService }) {
 	const providerId = resolveProfessionalProviderId(profile);
@@ -517,6 +528,7 @@ export default function ProfessionalDashboardShell({ profile }) {
 	];
 	const [tipIndex, setTipIndex] = useState(0);
 	const [statView, setStatView] = useState(0); // 0 = donut, 1 = courbe
+	const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
 	useEffect(() => {
 		setCurrentProfile(profile);
@@ -797,6 +809,7 @@ export default function ProfessionalDashboardShell({ profile }) {
 	}
 
 	function handleProfessionalSidebarNavigation(href) {
+		setIsMobileSidebarOpen(false);
 		const targetUrl = new URL(href, window.location.origin);
 		const nextTab = getProfessionalTabFromLocation(targetUrl.search);
 
@@ -817,9 +830,9 @@ export default function ProfessionalDashboardShell({ profile }) {
 
 	return (
 		<main className="min-h-screen bg-[linear-gradient(180deg,#f7f6f2_0%,#fcfcfa_45%,#f3f1ec_100%)] text-[#181818]">
-			<div className="grid min-h-screen grid-cols-[202px_1fr]">
-				<aside className="sticky top-0 flex h-screen flex-col overflow-hidden border-r border-white/10 bg-[linear-gradient(180deg,#090909_0%,#121212_100%)] text-white">
-					<div className="flex h-[132px] items-center justify-center border-b border-white/10 px-6">
+			<div className="grid min-h-screen xl:grid-cols-[202px_1fr]">
+				<aside className="hidden xl:flex xl:sticky xl:top-0 xl:h-screen xl:flex-col xl:overflow-hidden xl:border-r xl:border-white/10 xl:bg-[linear-gradient(180deg,#090909_0%,#121212_100%)] xl:text-white">
+					<div className="flex h-[92px] items-center justify-center border-b border-white/10 px-6 xl:h-[132px]">
 						<a href="/" aria-label="Retour a l'accueil Prestat" className="transition hover:opacity-80">
 							<img
 								src={prestatLogo}
@@ -830,8 +843,8 @@ export default function ProfessionalDashboardShell({ profile }) {
 						</a>
 					</div>
 
-					<nav className="flex flex-1 flex-col px-7 pb-8 pt-10">
-						<div className="space-y-5">
+					<nav className="flex flex-1 flex-col px-5 pb-6 pt-6 xl:px-7 xl:pb-8 xl:pt-10">
+						<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 xl:gap-5">
 							<SidebarLink href="/app/profil/professionnel" active={activeProfessionalTab === 'dashboard'} icon={DashboardIcon} onNavigate={handleProfessionalSidebarNavigation}>
 								Dashboard
 							</SidebarLink>
@@ -846,7 +859,7 @@ export default function ProfessionalDashboardShell({ profile }) {
 							</SidebarLink>
 						</div>
 
-						<div className="mt-auto space-y-5">
+						<div className="mt-6 grid gap-4 sm:grid-cols-2 xl:mt-auto xl:grid-cols-1 xl:gap-5">
 							<SidebarLink href="/app/profil/professionnel?tab=profile" active={activeProfessionalTab === 'profile'} icon={UserIcon} onNavigate={handleProfessionalSidebarNavigation}>
 								Profil
 							</SidebarLink>
@@ -864,32 +877,42 @@ export default function ProfessionalDashboardShell({ profile }) {
 				</aside>
 
 				<div className="min-w-0">
-					<header className="flex h-[132px] items-center justify-between border-b border-black/6 bg-[rgba(255,255,255,0.72)] px-9 backdrop-blur-sm">
+					<header className="flex flex-col gap-5 border-b border-black/6 bg-[rgba(255,255,255,0.72)] px-5 py-5 backdrop-blur-sm sm:px-7 lg:flex-row lg:items-center lg:justify-between lg:px-9 lg:py-6 xl:h-[132px] xl:py-0">
 						<div>
-							<h1 className="text-[3rem] font-semibold tracking-[-0.05em] text-[#1a1a1a]">
-								{activeProfessionalTab === 'settings'
-									? 'Paramètres'
-									: activeProfessionalTab === 'favorites'
-										? 'Favoris'
-										: activeProfessionalTab === 'profile'
-											? 'Profil'
-											: 'Dashboard'}
-							</h1>
+							<div className="mb-3 flex items-start justify-between gap-4 xl:mb-0">
+								<h1 className="text-[2rem] font-semibold tracking-[-0.05em] text-[#1a1a1a] sm:text-[2.4rem] xl:text-[3rem]">
+									{activeProfessionalTab === 'settings'
+										? 'Paramètres'
+										: activeProfessionalTab === 'favorites'
+											? 'Favoris'
+											: activeProfessionalTab === 'profile'
+												? 'Profil'
+												: 'Dashboard'}
+								</h1>
+								<button
+									type="button"
+									onClick={() => setIsMobileSidebarOpen(true)}
+									className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-black/8 bg-white text-[#151515] shadow-[0_10px_24px_rgba(24,24,35,0.035)] xl:hidden"
+									aria-label="Ouvrir le menu du profil professionnel"
+								>
+									<MenuIcon className="h-5 w-5" />
+								</button>
+							</div>
 							<p className="mt-1 text-[1.05rem] text-black/72">Bienvenue, {displayName}</p>
-							<div className="mt-1 flex items-center gap-3">
-								<p className="text-[1rem] font-semibold uppercase tracking-[0.02em] text-[#171717]">{companyName}</p>
-								<span className="inline-flex items-center gap-2 text-[0.9rem] text-black/42">
+							<div className="mt-1 flex flex-wrap items-center gap-3">
+								<p className="text-[0.96rem] font-semibold uppercase tracking-[0.02em] text-[var(--accent-mauve)] sm:text-[1rem]">{companyName}</p>
+								<span className="inline-flex items-center gap-2 text-[0.84rem] text-[var(--accent-mauve)] sm:text-[0.9rem]">
 									<VerifiedBadge className="h-[18px] w-[18px] shrink-0" />
 									utilisateur vérifié
 								</span>
 							</div>
 						</div>
 
-						<div className="flex items-center gap-4">
+						<div className="flex w-full items-center gap-4 lg:w-auto">
 							<button
 								type="button"
 								onClick={() => setIsCreateServiceOpen(true)}
-								className="flex items-center gap-3 rounded-[16px] bg-[#101010] px-6 py-4 text-[1rem] font-semibold text-white shadow-[0_16px_32px_rgba(10,10,10,0.14)]"
+								className="flex w-full items-center justify-center gap-3 rounded-[16px] bg-[#101010] px-5 py-3.5 text-[0.96rem] font-semibold text-white shadow-[0_16px_32px_rgba(10,10,10,0.14)] sm:w-auto sm:px-6 sm:py-4 sm:text-[1rem]"
 							>
 								<PlusCircleIcon className="h-6 w-6 text-white" />
 								<span>Ajouter un service</span>
@@ -898,11 +921,11 @@ export default function ProfessionalDashboardShell({ profile }) {
 					</header>
 
 					{activeProfessionalTab === 'settings' ? (
-						<div className="px-9 pb-10 pt-9">
+						<div className="px-5 pb-10 pt-8 sm:px-7 lg:px-9 lg:pt-9">
 							<ProfessionalSettingsPanel profile={currentProfile} onProfileUpdated={setCurrentProfile} />
 						</div>
 					) : activeProfessionalTab === 'favorites' ? (
-						<div className="px-9 pb-10 pt-9">
+						<div className="px-5 pb-10 pt-8 sm:px-7 lg:px-9 lg:pt-9">
 							<FavoritesPanel />
 						</div>
 					) : activeProfessionalTab === 'profile' ? (
@@ -913,10 +936,10 @@ export default function ProfessionalDashboardShell({ profile }) {
 							onEditService={openEditServiceModal}
 						/>
 					) : (
-					<section className="px-9 pb-10 pt-9">
+					<section className="px-5 pb-10 pt-8 sm:px-7 lg:px-9 lg:pt-9">
 
 						{/* ── Rangée 1 : Planner · Stats · Astuces ── */}
-						<div className="mb-8 grid gap-5 lg:grid-cols-3" style={{ gridAutoRows: '460px' }}>
+						<div className="mb-8 grid gap-5 lg:grid-cols-3 lg:[grid-auto-rows:460px]">
 
 							{/* 1. Planner */}
 							<Reveal from="bottom" className="h-full">
@@ -1170,9 +1193,9 @@ export default function ProfessionalDashboardShell({ profile }) {
 						<div className="grid items-stretch gap-5 xl:grid-cols-[minmax(0,1.9fr)_minmax(0,1fr)_minmax(0,1fr)]">
 							<Reveal from="bottom" delay={130} className="h-full">
 								<section className="flex h-full flex-col rounded-[26px] border border-black/6 bg-white p-7 shadow-[0_16px_34px_rgba(17,19,30,0.05)]">
-										<div className="mb-6 flex items-center justify-between">
-											<h2 className="text-[1.95rem] font-semibold tracking-[-0.04em] text-[#161616]">Services</h2>
-											<div className="flex items-center gap-4 text-[#161616]">
+											<div className="mb-6 flex items-center justify-between">
+												<h2 className="text-[1.95rem] font-semibold tracking-[-0.04em] text-[#161616]">Services</h2>
+												<div className="flex items-center gap-4 text-[var(--accent-mauve)]">
 												<button type="button" onClick={showPreviousService} className="transition hover:opacity-70" aria-label="Service précédent">
 													<ChevronIcon direction="left" className="h-6 w-6" />
 												</button>
@@ -1190,7 +1213,7 @@ export default function ProfessionalDashboardShell({ profile }) {
 											</div>
 										</div>
 
-										<div className="grid flex-1 gap-4 grid-cols-[1fr_160px]">
+										<div className="grid flex-1 gap-4 lg:grid-cols-[1fr_160px]">
 											<div className="relative min-h-[290px] overflow-hidden rounded-[22px] border border-black/6 bg-[#ebeef4]">
 												<img
 													src={selectedService?.image || favoritesPlaceholder}
@@ -1199,7 +1222,7 @@ export default function ProfessionalDashboardShell({ profile }) {
 												/>
 												<div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.03)_0%,rgba(18,18,18,0.02)_50%,rgba(10,10,10,0.18)_100%)]" />
 												<div className="pointer-events-none absolute inset-x-0 bottom-0 h-[54%] bg-[linear-gradient(180deg,rgba(22,22,24,0.02)_0%,rgba(18,18,20,0.28)_24%,rgba(14,14,16,0.56)_55%,rgba(10,10,12,0.8)_100%)] backdrop-blur-[4px]" />
-												<div className="absolute inset-x-0 bottom-0 z-[1] grid gap-6 px-7 pb-5 pt-8 text-white md:grid-cols-[190px_minmax(0,1fr)] md:items-end">
+												<div className="absolute inset-x-0 bottom-0 z-[1] grid gap-6 px-5 pb-5 pt-8 text-white sm:px-7 md:grid-cols-[190px_minmax(0,1fr)] md:items-end">
 													<div className="self-end">
 														<p className="text-[1.1rem] font-medium leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.14)]">
 															{selectedService?.title || 'Service'}
@@ -1234,7 +1257,7 @@ export default function ProfessionalDashboardShell({ profile }) {
 												</div>
 											</div>
 
-											<div className="grid gap-4">
+											<div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
 												{previewServices.map((tile) => (
 													<button
 														key={tile.id}
@@ -1259,7 +1282,7 @@ export default function ProfessionalDashboardShell({ profile }) {
 								<aside className="flex h-full flex-col rounded-[26px] border border-black/6 bg-white p-6 shadow-[0_16px_34px_rgba(17,19,30,0.05)]">
 									<div className="mb-5 flex items-center justify-between">
 										<h3 className="text-[1.15rem] font-semibold text-[#171717]">Documents</h3>
-										<DocumentIcon className="h-5 w-5 text-black/38" />
+										<DocumentIcon className="h-5 w-5 text-[var(--accent-mauve)]" />
 									</div>
 									<div className="flex flex-1 flex-col gap-3">
 										{documentItems.map((item) => (
@@ -1277,7 +1300,7 @@ export default function ProfessionalDashboardShell({ profile }) {
 								<aside className="flex h-full flex-col rounded-[26px] border border-black/6 bg-white p-6 shadow-[0_16px_34px_rgba(17,19,30,0.05)]">
 									<div className="mb-5 flex items-center justify-between">
 										<h3 className="text-[1.15rem] font-semibold text-[#171717]">Dernières nouvelles</h3>
-										<span className="rounded-full bg-[#0a0a0a] px-2.5 py-0.5 text-[0.72rem] font-medium text-white">Nouveau</span>
+										<span className="rounded-full bg-[var(--accent-mauve-soft)] px-2.5 py-0.5 text-[0.72rem] font-medium text-[var(--accent-mauve)]">Nouveau</span>
 									</div>
 									<div className="flex flex-1 flex-col justify-between gap-3">
 										{newsItems.slice(0, 2).map((item) => (
@@ -1287,7 +1310,7 @@ export default function ProfessionalDashboardShell({ profile }) {
 									<button
 										type="button"
 										onClick={() => setIsNewsOpen(true)}
-										className="mt-4 w-full rounded-[14px] border border-black/8 py-2.5 text-[0.85rem] font-medium text-black/50 transition hover:bg-black/4 hover:text-black/70"
+										className="mt-4 w-full rounded-[14px] border border-black/8 py-2.5 text-[0.85rem] font-medium text-[var(--accent-mauve)] transition hover:bg-black/4 hover:opacity-75"
 									>
 										Tout voir
 									</button>
@@ -1298,66 +1321,142 @@ export default function ProfessionalDashboardShell({ profile }) {
 					)}
 				</div>
 			</div>
-			{isDayPlannerOpen ? (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(17,15,13,0.32)] px-6 backdrop-blur-[3px]">
-					<div className="w-full max-w-[720px] rounded-[28px] bg-white p-7 shadow-[0_28px_80px_rgba(17,19,30,0.18)] animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]">
-						<div className="flex items-start justify-between gap-6">
-							<div>
-								<p className="text-[0.82rem] font-semibold uppercase tracking-[0.16em] text-black/42">Planning du jour</p>
-								<h2 className="mt-2 text-[2rem] font-semibold tracking-[-0.04em] text-[#171717]">
-									{selectedPlannerDay.label} {selectedPlannerDay.dayNumber}
-								</h2>
+			{isMobileSidebarOpen ? (
+				<ModalPortal>
+					<div className="fixed inset-0 z-[95] bg-[rgba(10,10,14,0.42)] backdrop-blur-[3px]" onClick={() => setIsMobileSidebarOpen(false)}>
+						<div
+							className="ml-auto flex h-full w-[min(86vw,340px)] flex-col bg-[linear-gradient(180deg,#090909_0%,#121212_100%)] px-5 pb-6 pt-5 text-white shadow-[-24px_0_50px_rgba(0,0,0,0.22)]"
+							onClick={(event) => event.stopPropagation()}
+						>
+							<div className="flex items-center justify-between border-b border-white/10 pb-4">
+								<img
+									src={prestatLogo}
+									alt="Prestat"
+									className="w-[118px]"
+									style={{ filter: 'brightness(0) invert(1)' }}
+								/>
+								<button
+									type="button"
+									onClick={() => setIsMobileSidebarOpen(false)}
+									className="rounded-full border border-white/12 px-3 py-1.5 text-[0.84rem] text-white/76"
+								>
+									Fermer
+								</button>
 							</div>
-							<button
-								type="button"
-								onClick={() => setIsDayPlannerOpen(false)}
-								className="rounded-full border border-black/10 px-4 py-2 text-[0.9rem] font-medium text-black/56 transition hover:border-black/18 hover:text-black"
-							>
-								Fermer
-							</button>
-						</div>
-						<div className="mt-6 space-y-3">
-							{dailyAppointments.map((appointment) => (
-								<div key={appointment.id} className="grid gap-3 rounded-[18px] border border-black/6 bg-[#f8f8fa] px-5 py-4 md:grid-cols-[120px_1fr_auto] md:items-center">
-									<div className="text-[1rem] font-semibold text-black/48">{appointment.service}</div>
-									<div>
-										<p className="text-[1.05rem] font-semibold text-[#171717]">{appointment.client}</p>
-										<p className="mt-1 text-[0.94rem] text-black/54">{appointment.time}</p>
-									</div>
-									<span className="rounded-full bg-[#eef1f5] px-3 py-1 text-[0.82rem] font-medium text-[#5b6574]">Confirmé</span>
+
+							<div className="mt-5 min-w-0">
+								<p className="truncate text-[1rem] font-semibold text-white">{displayName}</p>
+								<p className="mt-1 truncate text-[0.82rem] font-medium text-[#c7b2ec]">{companyName}</p>
+							</div>
+
+							<nav className="mt-8 flex flex-1 flex-col justify-between">
+								<div className="space-y-6">
+									<SidebarLink href="/app/profil/professionnel" active={activeProfessionalTab === 'dashboard'} icon={DashboardIcon} onNavigate={handleProfessionalSidebarNavigation}>
+										Dashboard
+									</SidebarLink>
+									<SidebarLink href="/navigation" icon={CompassIcon} onNavigate={() => setIsMobileSidebarOpen(false)}>
+										Découvrir
+									</SidebarLink>
+									<SidebarLink href="/app/profil/professionnel?tab=favorites" active={activeProfessionalTab === 'favorites'} icon={BookmarkOutlineIcon} onNavigate={handleProfessionalSidebarNavigation}>
+										Favoris
+									</SidebarLink>
+									<SidebarLink href="/documents" icon={DocumentIcon} onNavigate={() => {
+										setIsMobileSidebarOpen(false);
+										setIsDocumentsNoticeOpen(true);
+									}}>
+										Documents
+									</SidebarLink>
+									<SidebarLink href="/app/profil/professionnel?tab=profile" active={activeProfessionalTab === 'profile'} icon={UserIcon} onNavigate={handleProfessionalSidebarNavigation}>
+										Profil
+									</SidebarLink>
+									<SidebarLink href="/app/profil/professionnel?tab=settings" active={activeProfessionalTab === 'settings'} icon={SettingsIcon} onNavigate={handleProfessionalSidebarNavigation}>
+										Paramètres
+									</SidebarLink>
 								</div>
-							))}
+
+								<div className="space-y-6 pb-1">
+									<SidebarLink href="/deconnexion/client" icon={LogoutIcon} onNavigate={() => setIsMobileSidebarOpen(false)}>
+										Déconnexion
+									</SidebarLink>
+									<SidebarLink href="#" icon={HelpIcon} onNavigate={() => setIsMobileSidebarOpen(false)}>
+										Contact
+									</SidebarLink>
+								</div>
+							</nav>
 						</div>
 					</div>
-				</div>
+				</ModalPortal>
+			) : null}
+			{isDayPlannerOpen ? (
+				<ModalPortal>
+					<div className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(17,15,13,0.32)] backdrop-blur-[3px]">
+						<div className="flex min-h-full items-center justify-center px-6 py-6">
+							<div className="w-full max-w-[720px] rounded-[28px] bg-white p-7 shadow-[0_28px_80px_rgba(17,19,30,0.18)] animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]">
+								<div className="flex items-start justify-between gap-6">
+									<div>
+										<p className="text-[0.82rem] font-semibold uppercase tracking-[0.16em] text-black/42">Planning du jour</p>
+										<h2 className="mt-2 text-[2rem] font-semibold tracking-[-0.04em] text-[#171717]">
+											{selectedPlannerDay.label} {selectedPlannerDay.dayNumber}
+										</h2>
+									</div>
+									<button
+										type="button"
+										onClick={() => setIsDayPlannerOpen(false)}
+										className="rounded-full border border-black/10 px-4 py-2 text-[0.9rem] font-medium text-black/56 transition hover:border-black/18 hover:text-black"
+									>
+										Fermer
+									</button>
+								</div>
+								<div className="mt-6 space-y-3">
+									{dailyAppointments.map((appointment) => (
+										<div key={appointment.id} className="grid gap-3 rounded-[18px] border border-black/6 bg-[#f8f8fa] px-5 py-4 md:grid-cols-[120px_1fr_auto] md:items-center">
+											<div className="text-[1rem] font-semibold text-black/48">{appointment.service}</div>
+											<div>
+												<p className="text-[1.05rem] font-semibold text-[#171717]">{appointment.client}</p>
+												<p className="mt-1 text-[0.94rem] text-black/54">{appointment.time}</p>
+											</div>
+											<span className="rounded-full bg-[#eef1f5] px-3 py-1 text-[0.82rem] font-medium text-[#5b6574]">Confirmé</span>
+										</div>
+									))}
+								</div>
+							</div>
+						</div>
+					</div>
+				</ModalPortal>
 			) : null}
 			{isNewsOpen ? (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(17,15,13,0.32)] px-6 backdrop-blur-[3px]">
-					<div className="w-full max-w-[540px] rounded-[28px] bg-white p-7 shadow-[0_28px_80px_rgba(17,19,30,0.18)] animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]">
-						<div className="mb-6 flex items-start justify-between gap-6">
-							<div>
-								<p className="text-[0.82rem] font-semibold uppercase tracking-[0.16em] text-black/42">Prestat</p>
-								<h2 className="mt-1.5 text-[1.8rem] font-semibold tracking-[-0.04em] text-[#171717]">Dernières nouvelles</h2>
+				<ModalPortal>
+					<div className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(17,15,13,0.32)] backdrop-blur-[3px]">
+						<div className="flex min-h-full items-center justify-center px-6 py-6">
+							<div className="w-full max-w-[540px] rounded-[28px] bg-white p-7 shadow-[0_28px_80px_rgba(17,19,30,0.18)] animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]">
+								<div className="mb-6 flex items-start justify-between gap-6">
+									<div>
+										<p className="text-[0.82rem] font-semibold uppercase tracking-[0.16em] text-black/42">Prestat</p>
+										<h2 className="mt-1.5 text-[1.8rem] font-semibold tracking-[-0.04em] text-[#171717]">Dernières nouvelles</h2>
+									</div>
+									<button
+										type="button"
+										onClick={() => setIsNewsOpen(false)}
+										className="rounded-full border border-black/10 px-4 py-2 text-[0.9rem] font-medium text-black/56 transition hover:border-black/18 hover:text-black"
+									>
+										Fermer
+									</button>
+								</div>
+								<div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+									{newsItems.map((item) => (
+										<NewsCard key={item.title} item={item} />
+									))}
+								</div>
 							</div>
-							<button
-								type="button"
-								onClick={() => setIsNewsOpen(false)}
-								className="rounded-full border border-black/10 px-4 py-2 text-[0.9rem] font-medium text-black/56 transition hover:border-black/18 hover:text-black"
-							>
-								Fermer
-							</button>
-						</div>
-						<div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
-							{newsItems.map((item) => (
-								<NewsCard key={item.title} item={item} />
-							))}
 						</div>
 					</div>
-				</div>
+				</ModalPortal>
 			) : null}
 			{isServicesPanelOpen ? (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(17,15,13,0.32)] px-6 backdrop-blur-[3px]">
-					<div className="w-full max-w-[760px] rounded-[28px] bg-white p-7 shadow-[0_28px_80px_rgba(17,19,30,0.18)] animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]">
+				<ModalPortal>
+					<div className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(17,15,13,0.32)] backdrop-blur-[3px]">
+						<div className="flex min-h-full items-center justify-center px-6 py-6">
+							<div className="w-full max-w-[760px] rounded-[28px] bg-white p-7 shadow-[0_28px_80px_rgba(17,19,30,0.18)] animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]">
 						<div className="mb-6 flex items-start justify-between gap-6">
 							<div>
 								<p className="text-[0.82rem] font-semibold uppercase tracking-[0.16em] text-black/42">Prestat</p>
@@ -1411,11 +1510,15 @@ export default function ProfessionalDashboardShell({ profile }) {
 							))}
 						</div>
 					</div>
-				</div>
+						</div>
+					</div>
+				</ModalPortal>
 			) : null}
 			{isCreateServiceOpen ? (
-				<div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(17,19,30,0.24)] px-6 backdrop-blur-[3px]">
-					<div className="w-full max-w-[680px] rounded-[28px] bg-white p-7 shadow-[0_28px_80px_rgba(17,19,30,0.18)] animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]">
+				<ModalPortal>
+					<div className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(17,19,30,0.24)] backdrop-blur-[3px]">
+						<div className="flex min-h-full items-center justify-center px-6 py-6">
+							<div className="w-full max-w-[680px] rounded-[28px] bg-white p-7 shadow-[0_28px_80px_rgba(17,19,30,0.18)] animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]">
 						<div className="flex items-start justify-between gap-6">
 							<div>
 								<p className="text-[0.82rem] font-semibold uppercase tracking-[0.16em] text-black/42">
@@ -1534,7 +1637,9 @@ export default function ProfessionalDashboardShell({ profile }) {
 							</div>
 						</form>
 					</div>
-				</div>
+						</div>
+					</div>
+				</ModalPortal>
 			) : null}
 			<DevelopmentNoticeModal open={isDocumentsNoticeOpen} onClose={() => setIsDocumentsNoticeOpen(false)} />
 		</main>

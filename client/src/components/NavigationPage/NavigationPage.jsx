@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import prestatLogo from '../../assets/prestat-logo.svg';
 import navigationPlaceholder from '../../assets/navigation-placeholder.jpg';
 import { navigateTo } from '../../lib/navigation';
+import { ModalPortal } from '../ProfilePage/ProfilePage.shared';
 import Reveal from '../Reveal/Reveal';
 
 function SearchIcon({ className = '' }) {
@@ -122,6 +123,15 @@ function FilterIcon({ className = '' }) {
 	);
 }
 
+function CloseIcon({ className = '' }) {
+	return (
+		<svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+			<path d="M6 6L18 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+			<path d="M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+		</svg>
+	);
+}
+
 function UserAvatar({ profile, name = 'Bob Alves' }) {
 	const displayName = `${profile?.firstName || ''} ${profile?.lastName || ''}`.trim() || name;
 	const initials =
@@ -202,11 +212,11 @@ function NavigationCard({ item, selected, onSelect, isFavorite, onToggleFavorite
 					onSelect(item.id);
 				}
 			}}
-			className={`grid w-full max-w-[560px] cursor-pointer grid-cols-[170px_1fr] gap-4 rounded-[24px] border bg-white p-3 text-left shadow-[0_16px_38px_rgba(17,19,30,0.045)] transition duration-200 hover:-translate-y-[1px] hover:shadow-[0_18px_40px_rgba(17,19,30,0.08)] focus:outline-none focus-visible:ring-2 focus-visible:ring-black/60 ${
+			className={`grid w-full max-w-[560px] cursor-pointer gap-4 rounded-[24px] border bg-white p-3 text-left shadow-[0_16px_38px_rgba(17,19,30,0.045)] transition duration-200 hover:-translate-y-[1px] hover:shadow-[0_18px_40px_rgba(17,19,30,0.08)] focus:outline-none focus-visible:ring-2 focus-visible:ring-black/60 sm:grid-cols-[170px_1fr] ${
 				selected ? 'border-black/70 ring-1 ring-black/70' : 'border-black/8 hover:border-black/30'
 			}`}
 		>
-			<div className="relative min-h-[148px] overflow-hidden rounded-[18px]">
+			<div className="relative h-[190px] overflow-hidden rounded-[18px] sm:min-h-[148px] sm:h-auto">
 				<img src={item.previewImage || navigationPlaceholder} alt={item.company} className="absolute inset-0 h-full w-full object-cover" />
 				<button
 					type="button"
@@ -332,6 +342,10 @@ export default function NavigationPage() {
 	const [favorites, setFavorites] = useState(() => new Set());
 	const [toast, setToast] = useState(null);
 	const [providers, setProviders] = useState([]);
+	const [isMobileProviderPanelOpen, setIsMobileProviderPanelOpen] = useState(false);
+	const [mobilePanelOffset, setMobilePanelOffset] = useState(0);
+	const touchStartXRef = useRef(null);
+	const touchCurrentXRef = useRef(null);
 
 	// On lit les paramètres de l'URL dans un state React
 	// → permet de détecter les changements même si le pathname (/navigation) ne change pas
@@ -376,6 +390,53 @@ export default function NavigationPage() {
 			});
 			return next;
 		});
+	}
+
+	function closeMobileProviderPanel() {
+		setIsMobileProviderPanelOpen(false);
+		setMobilePanelOffset(0);
+		touchStartXRef.current = null;
+		touchCurrentXRef.current = null;
+	}
+
+	function handleSelectProvider(nextId) {
+		setSelectedId(nextId);
+		if (typeof window !== 'undefined' && window.innerWidth < 1280) {
+			setIsMobileProviderPanelOpen(true);
+			setMobilePanelOffset(0);
+		}
+	}
+
+	function handlePanelTouchStart(event) {
+		touchStartXRef.current = event.touches[0]?.clientX ?? null;
+		touchCurrentXRef.current = touchStartXRef.current;
+	}
+
+	function handlePanelTouchMove(event) {
+		if (touchStartXRef.current === null) {
+			return;
+		}
+
+		touchCurrentXRef.current = event.touches[0]?.clientX ?? touchCurrentXRef.current;
+		const delta = (touchCurrentXRef.current ?? 0) - touchStartXRef.current;
+		setMobilePanelOffset(delta > 0 ? delta : 0);
+	}
+
+	function handlePanelTouchEnd() {
+		if (touchStartXRef.current === null || touchCurrentXRef.current === null) {
+			setMobilePanelOffset(0);
+			return;
+		}
+
+		const delta = touchCurrentXRef.current - touchStartXRef.current;
+		if (delta > 90) {
+			closeMobileProviderPanel();
+			return;
+		}
+
+		setMobilePanelOffset(0);
+		touchStartXRef.current = null;
+		touchCurrentXRef.current = null;
 	}
 
 	useEffect(() => {
@@ -440,6 +501,18 @@ export default function NavigationPage() {
 	// à chaque fois que l'URL change (nouvelle recherche)
 	}, [searchQuery, searchVille]);
 
+	useEffect(() => {
+		function handleResize() {
+			if (window.innerWidth >= 1280) {
+				setIsMobileProviderPanelOpen(false);
+				setMobilePanelOffset(0);
+			}
+		}
+
+		window.addEventListener('resize', handleResize);
+		return () => window.removeEventListener('resize', handleResize);
+	}, []);
+
 	return (
 		<main className="min-h-screen animate-[pageEnter_280ms_cubic-bezier(0.22,1,0.36,1)] bg-[linear-gradient(180deg,#fafafa_0%,#ffffff_46%,#f4f4f2_100%)] text-[#1b1b1d]">
 			<section className="px-4 pb-12 pt-5 xl:px-8">
@@ -470,7 +543,7 @@ export default function NavigationPage() {
 									<button
 										type="button"
 										onClick={() => navigateTo('/navigation')}
-										className="text-[0.9rem] text-[#666] underline underline-offset-2 hover:text-[#111] transition-colors"
+										className="text-[0.9rem] text-[var(--accent-mauve)] underline underline-offset-2 transition-colors hover:opacity-75"
 									>
 										Voir tous les prestataires
 									</button>
@@ -491,7 +564,7 @@ export default function NavigationPage() {
 									<button
 										type="button"
 										onClick={() => navigateTo('/navigation')}
-										className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#0a0a0a] px-5 py-2.5 text-[0.9rem] font-medium text-white shadow transition hover:opacity-85"
+										className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--accent-mauve-soft)] px-5 py-2.5 text-[0.9rem] font-medium text-[var(--accent-mauve)] shadow transition hover:opacity-85"
 									>
 										Voir tous les prestataires
 									</button>
@@ -502,7 +575,7 @@ export default function NavigationPage() {
 										<NavigationCard
 											item={provider}
 											selected={provider.id === selectedProvider?.id}
-											onSelect={setSelectedId}
+											onSelect={handleSelectProvider}
 											isFavorite={favorites.has(provider.id)}
 											onToggleFavorite={toggleFavorite}
 										/>
@@ -516,85 +589,91 @@ export default function NavigationPage() {
 							as="aside"
 							from="right"
 							delay={140}
-							className="xl:sticky xl:top-[7.25rem] xl:self-start xl:max-h-[calc(100vh-8.5rem)] xl:overflow-y-auto xl:pr-1"
+							className="hidden xl:sticky xl:top-[7.25rem] xl:block xl:self-start xl:max-h-[calc(100vh-8.5rem)] xl:overflow-y-auto xl:pr-1"
 						>
 						<div className="transition-[opacity,filter] duration-180 ease-out">
 						{selectedProvider ? (
 							<>
-						<div className="rounded-[28px] border border-black/6 bg-white/96 p-6 shadow-[0_16px_38px_rgba(17,19,30,0.05)]">
-							<div className="flex items-start justify-between gap-4">
-								<div className="flex items-start gap-4">
-									<div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-black/12 text-[#1a1a1a]">
-										{selectedProvider.profile_picture ? (
-											<img src={selectedProvider.profile_picture} alt={selectedProvider.company} className="h-full w-full object-cover" />
-										) : (
-											<svg viewBox="0 0 64 64" className="h-10 w-10" fill="none" aria-hidden="true">
-												<path d="M32 13C24 19 21 27 21 34C21 42 26 49 32 53C38 49 43 42 43 34C43 27 40 19 32 13Z" stroke="currentColor" strokeWidth="2.8" />
-												<path d="M32 18V49" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
-												<path d="M24.5 24.5C29 28 30.8 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
-												<path d="M39.5 24.5C35 28 33.2 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
-											</svg>
-										)}
+						<div className="rounded-[28px] border border-black/8 bg-white px-5 py-5 shadow-[0_14px_34px_rgba(17,19,30,0.045)] sm:px-6 sm:py-6">
+							<div className="flex flex-col gap-5 border-b border-black/8 pb-5 sm:flex-row sm:items-start sm:justify-between">
+								<div className="flex min-w-0 items-start gap-4">
+									<div className="flex h-[62px] w-[62px] shrink-0 items-center justify-center overflow-hidden rounded-full border border-black/12 text-[#1a1a1a]">
+											{selectedProvider.profile_picture ? (
+												<img src={selectedProvider.profile_picture} alt={selectedProvider.company} className="h-full w-full object-cover" />
+											) : (
+												<svg viewBox="0 0 64 64" className="h-10 w-10" fill="none" aria-hidden="true">
+													<path d="M32 13C24 19 21 27 21 34C21 42 26 49 32 53C38 49 43 42 43 34C43 27 40 19 32 13Z" stroke="currentColor" strokeWidth="2.8" />
+													<path d="M32 18V49" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
+													<path d="M24.5 24.5C29 28 30.8 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+													<path d="M39.5 24.5C35 28 33.2 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+												</svg>
+											)}
+										</div>
+									<div className="min-w-0">
+											<h2 className="truncate text-[1.05rem] font-semibold tracking-[-0.02em] text-[#242424]">
+												{selectedProvider.company}
+											</h2>
+											<div className="mt-1 flex items-center gap-2 text-[0.98rem] font-medium text-[#252525]">
+												<PinIcon className="h-4 w-4 shrink-0" />
+												<span className="truncate">{selectedProvider.location}</span>
+											</div>
+											<div className="mt-1 flex items-center gap-2 text-[0.82rem] text-black/45">
+												<VerifiedBadge className="h-4 w-4" />
+												<span>utilisateur vérifié</span>
+											</div>
+											<div className="mt-1.5 flex items-center gap-1.5 text-[0.86rem] text-[#1c1c1c]">
+												<StarIcon className="h-[0.92rem] w-[0.92rem]" />
+												<span>{selectedProvider.rating}</span>
+												<span className="text-black/40">({selectedProvider.reviews} avis)</span>
+											</div>
+										</div>
 									</div>
-									<div>
-										<h2 className="text-[1.7rem] font-semibold tracking-[-0.03em] text-[#242424]">{selectedProvider.company}</h2>
-										<div className="mt-1 flex items-center gap-2 text-[1rem] font-medium text-[#252525]">
-											<PinIcon className="h-[18px] w-[18px] shrink-0" />
-											<span>{selectedProvider.location}</span>
-										</div>
-										<div className="mt-1 flex items-center gap-2 text-[0.92rem] text-black/45">
-											<VerifiedBadge className="h-[18px] w-[18px]" />
-											<span>utilisateur vérifié</span>
-										</div>
-										<div className="mt-2 flex items-center gap-2 text-[0.94rem] text-[#1c1c1c]">
-											<StarIcon className="h-4 w-4" />
-											<span>{selectedProvider.rating}</span>
-											<span className="text-black/40">({selectedProvider.reviews} avis)</span>
-										</div>
-									</div>
-								</div>
 
-								<button
-									type="button"
-									aria-label={favorites.has(selectedProvider.id) ? 'Supprimer des favoris' : 'Ajouter aux favoris'}
-									aria-pressed={favorites.has(selectedProvider.id)}
-									onClick={() => toggleFavorite(selectedProvider.id)}
-									className={`flex h-12 w-12 items-center justify-center rounded-full border transition hover:scale-105 ${
-										favorites.has(selectedProvider.id)
-											? 'border-transparent bg-[#0a0a0a] text-white'
-											: 'border-black/12 text-[#1a1a1a] hover:border-black/30'
-									}`}
-								>
-									<BookmarkIcon className="h-5 w-5" filled={favorites.has(selectedProvider.id)} />
-								</button>
+								<div className="flex shrink-0 flex-row items-center justify-between gap-4 sm:flex-col sm:items-end">
+									<button
+										type="button"
+										aria-label={favorites.has(selectedProvider.id) ? 'Supprimer des favoris' : 'Ajouter aux favoris'}
+										aria-pressed={favorites.has(selectedProvider.id)}
+										onClick={() => toggleFavorite(selectedProvider.id)}
+										className={`flex h-11 w-11 items-center justify-center rounded-full border transition hover:scale-105 ${
+											favorites.has(selectedProvider.id)
+												? 'border-transparent bg-[#0a0a0a] text-white'
+												: 'border-black/12 text-[#1a1a1a] hover:border-black/30'
+										}`}
+									>
+										<BookmarkIcon className="h-[1.05rem] w-[1.05rem]" filled={favorites.has(selectedProvider.id)} />
+									</button>
+
+									<button
+										type="button"
+										onClick={() => navigateTo(`/services?professionalId=${selectedProvider.id}`)}
+										className="text-[0.94rem] font-medium text-[var(--accent-mauve)] transition hover:opacity-72"
+									>
+										Prendre RDV
+									</button>
+								</div>
 							</div>
 
-							<button
-								type="button"
-								onClick={() => navigateTo(`/services?professionalId=${selectedProvider.id}`)}
-								className="mt-6 flex w-full items-center justify-center rounded-full bg-[#0a0a0a] px-5 py-3.5 text-[0.95rem] font-medium text-white transition hover:-translate-y-px hover:opacity-90"
-							>
-								Prendre RDV
-							</button>
-						</div>
+							<div className="mt-6 space-y-5">
+								<section className="rounded-[18px] border border-black/8 bg-white px-6 py-5">
+									<h3 className="text-center text-[1.02rem] font-semibold text-[#222222]">Politique de prestation</h3>
+									<p className="mt-4 text-[0.92rem] leading-6 text-[#404040]">{selectedProvider.policy}</p>
+									<button type="button" className="mt-3 text-[0.92rem] font-medium text-[var(--accent-mauve)] transition hover:opacity-72">
+										&gt; En savoir plus
+									</button>
+								</section>
 
-						<div className="mt-5 rounded-[24px] border border-black/6 bg-white/96 p-6 shadow-[0_16px_38px_rgba(17,19,30,0.05)]">
-							<h3 className="text-center text-[1.15rem] font-semibold text-[#222222]">Politique de prestation</h3>
-							<p className="mt-5 text-[0.98rem] leading-7 text-[#404040]">{selectedProvider.policy}</p>
-							<button type="button" className="mt-5 text-[0.98rem] font-medium text-[#0a0a0a] underline underline-offset-2 transition hover:opacity-70">
-								En savoir plus
-							</button>
-						</div>
-
-						<div className="mt-5 rounded-[24px] border border-black/6 bg-white/96 p-6 shadow-[0_16px_38px_rgba(17,19,30,0.05)]">
-							<h3 className="text-center text-[1.15rem] font-semibold text-[#222222]">Horaires d’ouvertures</h3>
-							<div className="mt-6 overflow-hidden rounded-[16px] border border-black/6">
-								{selectedProvider.hours.map(([day, hours]) => (
-									<div key={day} className="grid grid-cols-[1fr_auto] gap-4 border-b border-black/6 px-5 py-3.5 text-[1rem] last:border-b-0">
-										<span className="text-[#2c2c2c]">{day}</span>
-										<span className={`${hours === 'Fermé' ? 'text-black/34' : 'text-[#2c2c2c]'}`}>{hours}</span>
+								<section>
+									<h3 className="text-center text-[1.02rem] font-semibold text-[#222222]">Horaires d’ouvertures</h3>
+									<div className="mt-4 overflow-hidden rounded-[16px] border border-black/8 bg-white">
+										{selectedProvider.hours.map(([day, hours]) => (
+											<div key={day} className="grid grid-cols-[1fr_auto] gap-4 border-b border-black/8 px-5 py-3 text-[0.95rem] last:border-b-0">
+												<span className="text-[#2c2c2c]">{day}</span>
+												<span className={`${hours === 'Fermé' ? 'text-black/34' : 'text-[#2c2c2c]'}`}>{hours}</span>
+											</div>
+										))}
 									</div>
-								))}
+								</section>
 							</div>
 						</div>
 							</>
@@ -611,6 +690,122 @@ export default function NavigationPage() {
 				</div>
 				</div>
 			</section>
+
+			{selectedProvider && isMobileProviderPanelOpen ? (
+				<ModalPortal>
+					<div
+						className="fixed inset-0 z-[90] bg-[rgba(10,10,14,0.42)] backdrop-blur-[3px] xl:hidden"
+						onClick={closeMobileProviderPanel}
+					>
+						<div className="flex min-h-full items-center justify-center px-4 py-6">
+							<div
+								className="w-full max-w-[420px] rounded-[30px] border border-black/8 bg-white shadow-[0_28px_80px_rgba(17,19,30,0.18)] transition-transform duration-200 ease-out"
+								style={{ transform: `translateX(${mobilePanelOffset}px)` }}
+								onClick={(event) => event.stopPropagation()}
+								onTouchStart={handlePanelTouchStart}
+								onTouchMove={handlePanelTouchMove}
+								onTouchEnd={handlePanelTouchEnd}
+							>
+								<div className="flex items-center justify-between border-b border-black/8 px-5 py-4">
+									<div>
+										<h2 className="text-[1.2rem] font-semibold tracking-[-0.03em] text-[#242424]">
+											{selectedProvider.company}
+										</h2>
+									</div>
+									<button
+										type="button"
+										onClick={closeMobileProviderPanel}
+										className="flex h-10 w-10 items-center justify-center rounded-full border border-black/10 text-black/55 transition hover:bg-black/5 hover:text-black"
+										aria-label="Fermer le panneau prestataire"
+									>
+										<CloseIcon className="h-5 w-5" />
+									</button>
+								</div>
+
+								<div className="max-h-[min(78vh,760px)] overflow-y-auto px-5 py-5">
+									<div className="space-y-6">
+										<section className="border-b border-black/8 pb-6">
+											<div className="flex min-w-0 items-start gap-4">
+												<div className="flex h-[62px] w-[62px] shrink-0 items-center justify-center overflow-hidden rounded-full border border-black/12 text-[#1a1a1a]">
+													{selectedProvider.profile_picture ? (
+														<img src={selectedProvider.profile_picture} alt={selectedProvider.company} className="h-full w-full object-cover" />
+													) : (
+														<svg viewBox="0 0 64 64" className="h-10 w-10" fill="none" aria-hidden="true">
+															<path d="M32 13C24 19 21 27 21 34C21 42 26 49 32 53C38 49 43 42 43 34C43 27 40 19 32 13Z" stroke="currentColor" strokeWidth="2.8" />
+															<path d="M32 18V49" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
+															<path d="M24.5 24.5C29 28 30.8 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+															<path d="M39.5 24.5C35 28 33.2 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+														</svg>
+													)}
+												</div>
+												<div className="min-w-0 flex-1">
+													<div className="mt-1 flex items-center gap-2 text-[0.98rem] font-medium text-[#252525]">
+														<PinIcon className="h-4 w-4 shrink-0" />
+														<span className="truncate">{selectedProvider.location}</span>
+													</div>
+													<div className="mt-1 flex items-center gap-2 text-[0.82rem] text-black/45">
+														<VerifiedBadge className="h-4 w-4" />
+														<span>utilisateur vérifié</span>
+													</div>
+													<div className="mt-1.5 flex items-center gap-1.5 text-[0.86rem] text-[#1c1c1c]">
+														<StarIcon className="h-[0.92rem] w-[0.92rem]" />
+														<span>{selectedProvider.rating}</span>
+														<span className="text-black/40">({selectedProvider.reviews} avis)</span>
+													</div>
+												</div>
+											</div>
+
+											<div className="mt-5 flex items-center justify-between gap-4">
+												<button
+													type="button"
+													aria-label={favorites.has(selectedProvider.id) ? 'Supprimer des favoris' : 'Ajouter aux favoris'}
+													aria-pressed={favorites.has(selectedProvider.id)}
+													onClick={() => toggleFavorite(selectedProvider.id)}
+													className={`flex h-11 w-11 items-center justify-center rounded-full border transition hover:scale-105 ${
+														favorites.has(selectedProvider.id)
+															? 'border-transparent bg-[#0a0a0a] text-white'
+															: 'border-black/12 text-[#1a1a1a] hover:border-black/30'
+													}`}
+												>
+													<BookmarkIcon className="h-[1.05rem] w-[1.05rem]" filled={favorites.has(selectedProvider.id)} />
+												</button>
+
+												<button
+													type="button"
+													onClick={() => navigateTo(`/services?professionalId=${selectedProvider.id}`)}
+													className="text-[0.94rem] font-medium text-[var(--accent-mauve)] transition hover:opacity-72"
+												>
+													Prendre RDV
+												</button>
+											</div>
+										</section>
+
+										<section className="rounded-[22px] border border-black/8 bg-[#fdfdfc] px-5 py-5">
+											<h3 className="text-center text-[1.02rem] font-semibold text-[#222222]">Politique de prestation</h3>
+											<p className="mt-4 text-[0.92rem] leading-6 text-[#404040]">{selectedProvider.policy}</p>
+											<button type="button" className="mt-3 text-[0.92rem] font-medium text-[var(--accent-mauve)] transition hover:opacity-72">
+												&gt; En savoir plus
+											</button>
+										</section>
+
+										<section>
+											<h3 className="text-center text-[1.02rem] font-semibold text-[#222222]">Horaires d’ouvertures</h3>
+											<div className="mt-4 overflow-hidden rounded-[20px] border border-black/8 bg-[#fdfdfc]">
+												{selectedProvider.hours.map(([day, hours]) => (
+													<div key={day} className="grid grid-cols-[1fr_auto] gap-4 border-b border-black/8 px-5 py-3 text-[0.95rem] last:border-b-0">
+														<span className="text-[#2c2c2c]">{day}</span>
+														<span className={`${hours === 'Fermé' ? 'text-black/34' : 'text-[#2c2c2c]'}`}>{hours}</span>
+													</div>
+												))}
+											</div>
+										</section>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</ModalPortal>
+			) : null}
 
 			{toast ? (
 				<div
