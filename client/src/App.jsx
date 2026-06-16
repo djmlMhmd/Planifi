@@ -2,7 +2,6 @@ import { startTransition, useEffect, useRef, useState } from 'react';
 import AppHeader from './components/AppHeader/AppHeader';
 import About from './components/About/About';
 import AuthPage from './components/AuthPage/AuthPage';
-import CalendarPage from './components/CalendarPage/CalendarPage';
 import CitiesCarousel from './components/CitiesCarousel/CitiesCarousel';
 import ConnectedNavbar from './components/ConnectedNavbar/ConnectedNavbar';
 import Faq from './components/Faq/Faq';
@@ -40,6 +39,12 @@ export default function App() {
 			window.removeEventListener('codex:navigation', handleLocationChange);
 		};
 	}, []);
+
+	useEffect(() => {
+		if (location.pathname === '/app/calendar') {
+			navigateTo('/app/profil?tab=calendar', { replace: true });
+		}
+	}, [location.pathname]);
 
 	useEffect(() => {
 		if (
@@ -138,12 +143,7 @@ export default function App() {
 			</>
 		);
 	} else if (isCalendarPage) {
-		page = (
-			<>
-				<ConnectedNavbar />
-				<CalendarPage />
-			</>
-		);
+		page = null;
 	} else if (isSignupPage || isLoginPage) {
 		page = (
 			<>

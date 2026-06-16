@@ -375,7 +375,7 @@ export function ProviderAvatar({ size = 'h-20 w-20' }) {
 	);
 }
 
-export function ClientReviewCard({ title }) {
+export function ClientReviewCard({ title, onLeaveReview }) {
 	return (
 		<div className="rounded-[22px] border border-black/5 bg-[linear-gradient(180deg,#ffffff_0%,#fbfbf8_100%)] p-5 shadow-[0_14px_34px_rgba(17,19,30,0.045)]">
 			<div className="flex items-center gap-5">
@@ -385,7 +385,11 @@ export function ClientReviewCard({ title }) {
 					<div className="mt-2">
 						<StarRow />
 					</div>
-					<button type="button" className="mt-4 text-sm font-medium text-[#5a5a5a] transition hover:text-[#0a0a0a]">
+					<button
+						type="button"
+						onClick={() => onLeaveReview?.(title)}
+						className="mt-4 text-sm font-medium text-[#5a5a5a] transition hover:text-[#0a0a0a]"
+					>
 						&gt; Laisser un avis
 					</button>
 				</div>
@@ -580,7 +584,7 @@ export function InfoRow({ label, value }) {
 export function getProfileTabFromLocation(search = window.location.search) {
 	// Je centralise la lecture du tab ici pour garder la même logique partout.
 	const tabParam = new URLSearchParams(search).get('tab');
-	if (tabParam === 'settings' || tabParam === 'favorites') {
+	if (tabParam === 'settings' || tabParam === 'favorites' || tabParam === 'calendar') {
 		return tabParam;
 	}
 	return 'dashboard';

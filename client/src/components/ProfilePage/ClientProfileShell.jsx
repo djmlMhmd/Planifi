@@ -2,6 +2,7 @@ import { startTransition, useEffect, useMemo, useState } from 'react';
 import favoritesPlaceholder from '../../assets/favorites-placeholder.jpg';
 import prestatLogo from '../../assets/prestat-logo.svg';
 import { navigateTo } from '../../lib/navigation';
+import CalendarPage from '../CalendarPage/CalendarPage';
 import Reveal from '../Reveal/Reveal';
 import {
   BookmarkIcon,
@@ -94,6 +95,11 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 	const [billingQuery, setBillingQuery] = useState('');
 	const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 	const [dashboardHighlight, setDashboardHighlight] = useState('reviews');
+	const [reviewModalProvider, setReviewModalProvider] = useState('');
+	const [reviewRating, setReviewRating] = useState(0);
+	const [reviewComment, setReviewComment] = useState('');
+	const [reviewHoverRating, setReviewHoverRating] = useState(0);
+	const [reviewStep, setReviewStep] = useState('form');
 
 	// Si le backend a déjà des réservations je les prends, sinon je garde un fallback visuel.
 	const reservationList = reservations.length
@@ -118,6 +124,33 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 		profile_picture: '',
 		profile_picture_preview: '',
 	};
+
+	function openReviewModal(providerName) {
+		setReviewModalProvider(providerName);
+		setReviewRating(0);
+		setReviewComment('');
+		setReviewHoverRating(0);
+		setReviewStep('form');
+	}
+
+	function closeReviewModal() {
+		setReviewModalProvider('');
+		setReviewHoverRating(0);
+		setReviewStep('form');
+	}
+
+	function handleReviewSubmit(event) {
+		event.preventDefault();
+
+		if (!reviewRating) {
+			return;
+		}
+
+		setReviewStep('success');
+		window.setTimeout(() => {
+			closeReviewModal();
+		}, 1800);
+	}
 
 	useEffect(() => {
 		// Je resynchronise l'onglet si l'utilisateur navigue avec précédent / suivant.
@@ -186,6 +219,27 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 		);
 	}
 
+	function ReviewStar({ index }) {
+		const isActive = index <= (reviewHoverRating || reviewRating);
+
+		return (
+			<button
+				type="button"
+				onMouseEnter={() => setReviewHoverRating(index)}
+				onMouseLeave={() => setReviewHoverRating(0)}
+				onFocus={() => setReviewHoverRating(index)}
+				onBlur={() => setReviewHoverRating(0)}
+				onClick={() => setReviewRating(index)}
+				className={`transition ${isActive ? 'text-[var(--accent-mauve)]' : 'text-black/15 hover:text-black/35'}`}
+				aria-label={`${index} étoile${index > 1 ? 's' : ''}`}
+			>
+				<svg viewBox="0 0 20 20" className="h-8 w-8" fill={isActive ? 'currentColor' : 'none'} aria-hidden="true">
+					<path d="M10 2.8L12.1 7.1L16.9 7.8L13.4 11.2L14.2 16L10 13.8L5.8 16L6.6 11.2L3.1 7.8L7.9 7.1L10 2.8Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+				</svg>
+			</button>
+		);
+	}
+
 	return (
 		<main className="min-h-screen bg-[linear-gradient(180deg,#f7f6f2_0%,#fcfcfa_45%,#f3f1ec_100%)] text-[#1f1f1f]">
 			<div className="grid min-h-screen xl:grid-cols-[210px_1fr]">
@@ -205,6 +259,9 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 						<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 xl:gap-8">
 							<SidebarLink href="/app/profil" active={activeTab === 'dashboard'} icon={DashboardIcon} onNavigate={handleSidebarNavigation}>
 								Dashboard
+							</SidebarLink>
+							<SidebarLink href="/app/profil?tab=calendar" active={activeTab === 'calendar'} icon={CalendarIcon} onNavigate={handleSidebarNavigation}>
+								Calendrier
 							</SidebarLink>
 							<SidebarLink href="/navigation" icon={CompassIcon}>
 								Découvrir
@@ -246,6 +303,8 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 									? 'Paramètres'
 									: activeTab === 'favorites'
 										? 'Favoris'
+										: activeTab === 'calendar'
+											? 'Calendrier'
 										: 'Dashboard'}
 							</h1>
 
@@ -258,17 +317,6 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 										className="w-full border-0 bg-transparent text-[0.95rem] text-[#1e1e1e] outline-none placeholder:text-black/35"
 									/>
 								</div>
-
-								<button
-									type="button"
-									onClick={() => {
-										navigateTo('/app/calendar');
-									}}
-									className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-black/6 bg-white/88 text-[#1b1a20] shadow-[0_10px_24px_rgba(24,24,35,0.035)] transition hover:-translate-y-px sm:flex"
-									aria-label="Ouvrir le calendrier"
-								>
-									<CalendarIcon className="h-[1.15rem] w-[1.15rem]" />
-								</button>
 
 								<div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
 									<div className="text-right">
@@ -292,6 +340,8 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 											? 'Paramètres'
 											: activeTab === 'favorites'
 												? 'Favoris'
+												: activeTab === 'calendar'
+													? 'Calendrier'
 												: 'Dashboard'}
 									</h1>
 									<p className="mt-1 text-[0.82rem] text-black/40">Espace client</p>
@@ -315,19 +365,6 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 								/>
 							</div>
 
-							<div className="flex items-center justify-between gap-3">
-								<button
-									type="button"
-									onClick={() => {
-										navigateTo('/app/calendar');
-									}}
-									className="flex h-10 items-center justify-center gap-2 rounded-[14px] border border-black/6 bg-white/88 px-4 text-[#1b1a20] shadow-[0_10px_24px_rgba(24,24,35,0.035)] transition hover:-translate-y-px"
-									aria-label="Ouvrir le calendrier"
-								>
-									<CalendarIcon className="h-[1.05rem] w-[1.05rem]" />
-									<span className="text-[0.9rem] font-medium">Calendrier</span>
-								</button>
-							</div>
 						</div>
 					</header>
 
@@ -342,6 +379,8 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 									<SettingsPanel profile={profile} onProfileUpdated={onProfileUpdated} />
 								) : activeTab === 'favorites' ? (
 									<FavoritesPanel />
+								) : activeTab === 'calendar' ? (
+									<CalendarPage embedded />
 								) : (
 									<>
 										<div className="mb-8 flex flex-wrap items-center gap-3 sm:gap-4">
@@ -387,7 +426,7 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 												<div className="grid gap-5 md:grid-cols-2">
 													{reviewCards.map((card, index) => (
 														<Reveal key={card} from="bottom" delay={index * 70}>
-															<ClientReviewCard title={card} />
+															<ClientReviewCard title={card} onLeaveReview={openReviewModal} />
 														</Reveal>
 													))}
 												</div>
@@ -513,6 +552,9 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 										<SidebarLink href="/app/profil" active={activeTab === 'dashboard'} icon={DashboardIcon} onNavigate={handleSidebarNavigation}>
 											Dashboard
 										</SidebarLink>
+										<SidebarLink href="/app/profil?tab=calendar" active={activeTab === 'calendar'} icon={CalendarIcon} onNavigate={handleSidebarNavigation}>
+											Calendrier
+										</SidebarLink>
 										<SidebarLink href="/navigation" icon={CompassIcon} onNavigate={() => setIsMobileSidebarOpen(false)}>
 											Découvrir
 										</SidebarLink>
@@ -550,6 +592,97 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 					</ModalPortal>
 				) : null}
 				<DevelopmentNoticeModal open={isDocumentsNoticeOpen} onClose={() => setIsDocumentsNoticeOpen(false)} />
+				{reviewModalProvider ? (
+					<ModalPortal>
+						<div className="fixed inset-0 z-[92] overflow-y-auto bg-[rgba(10,10,14,0.44)] backdrop-blur-[3px]" onClick={closeReviewModal}>
+							<div className="flex min-h-full items-center justify-center px-4 py-6">
+								<div
+									className="w-full max-w-[520px] rounded-[30px] border border-white/45 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(244,241,235,0.98)_100%)] p-6 shadow-[0_28px_80px_rgba(17,19,30,0.2)]"
+									onClick={(event) => event.stopPropagation()}
+								>
+									{reviewStep === 'success' ? (
+										<div className="flex min-h-[360px] flex-col items-center justify-center text-center animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]">
+											<div className="flex h-20 w-20 items-center justify-center rounded-full bg-[var(--accent-mauve-soft)] text-[var(--accent-mauve)] shadow-[0_16px_32px_rgba(149,99,214,0.16)]">
+												<svg viewBox="0 0 24 24" className="h-10 w-10" fill="none" aria-hidden="true">
+													<path d="M6.5 12.5L10.2 16.2L17.5 8.9" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+												</svg>
+											</div>
+											<h3 className="mt-6 text-[1.7rem] font-semibold tracking-[-0.04em] text-[#171717]">Merci pour votre avis</h3>
+											<p className="mt-3 max-w-[320px] text-[0.98rem] leading-7 text-black/58">
+												Merci d&apos;avoir laissé un avis sur <span className="font-semibold text-[#171717]">{reviewModalProvider}</span>.
+											</p>
+										</div>
+									) : (
+										<form onSubmit={handleReviewSubmit} className="animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]">
+											<div className="flex items-start justify-between gap-4">
+												<div>
+													<p className="text-[0.76rem] font-semibold uppercase tracking-[0.16em] text-black/34">Votre avis</p>
+													<h3 className="mt-2 text-[1.7rem] font-semibold tracking-[-0.04em] text-[#171717]">{reviewModalProvider}</h3>
+													<p className="mt-2 text-[0.96rem] text-black/56">Partagez votre expérience en quelques mots.</p>
+												</div>
+												<button
+													type="button"
+													onClick={closeReviewModal}
+													className="flex h-10 w-10 items-center justify-center rounded-full border border-black/8 bg-white/78 text-[1.5rem] leading-none text-black/38 transition hover:text-black/62"
+													aria-label="Fermer la fenêtre d'avis"
+												>
+													×
+												</button>
+											</div>
+
+											<div className="mt-8 border-t border-black/8 pt-6">
+												<div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+													<div>
+														<p className="text-[0.86rem] font-semibold uppercase tracking-[0.1em] text-black/36">Note</p>
+														<p className="mt-2 text-[0.9rem] text-black/48">
+															{reviewRating ? `${reviewRating}/5 sélectionné${reviewRating > 1 ? 's' : ''}` : 'Sélectionnez une note'}
+														</p>
+													</div>
+													<div className="flex items-center gap-1">
+														{Array.from({ length: 5 }).map((_, index) => (
+															<ReviewStar key={index + 1} index={index + 1} />
+														))}
+													</div>
+												</div>
+											</div>
+
+											<div className="mt-6 border-t border-black/8 pt-6">
+												<label htmlFor="review-comment" className="text-[0.86rem] font-semibold uppercase tracking-[0.1em] text-black/36">
+													Commentaire
+												</label>
+												<textarea
+													id="review-comment"
+													value={reviewComment}
+													onChange={(event) => setReviewComment(event.target.value)}
+													placeholder="Votre rendez-vous s’est-il bien passé ?"
+													rows={5}
+													className="mt-4 w-full resize-none border-0 border-b border-black/12 bg-transparent px-0 py-0 text-[1rem] leading-7 text-[#171717] outline-none transition placeholder:text-black/28 focus:border-[var(--accent-mauve)]"
+												/>
+											</div>
+
+											<div className="mt-8 flex flex-col gap-3 border-t border-black/8 pt-6 sm:flex-row sm:justify-end">
+												<button
+													type="button"
+													onClick={closeReviewModal}
+													className="rounded-full border border-black/8 px-5 py-3 text-[0.92rem] font-medium text-black/58 transition hover:bg-black/[0.03] hover:text-black/76"
+												>
+													Annuler
+												</button>
+												<button
+													type="submit"
+													disabled={!reviewRating}
+													className="rounded-full bg-[#101010] px-6 py-3 text-[0.92rem] font-semibold text-white shadow-[0_14px_28px_rgba(10,10,10,0.16)] transition hover:-translate-y-px hover:opacity-92 disabled:cursor-not-allowed disabled:opacity-40"
+												>
+													Publier mon avis
+												</button>
+											</div>
+										</form>
+									)}
+								</div>
+							</div>
+						</div>
+					</ModalPortal>
+				) : null}
 				{isReservationsModalOpen ? (
 					<ModalPortal>
 						<div

@@ -144,7 +144,7 @@ function EventCard({ eventInfo }) {
 	);
 }
 
-export default function CalendarPage() {
+export default function CalendarPage({ embedded = false }) {
 	const calendarRef = useRef(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
@@ -152,6 +152,7 @@ export default function CalendarPage() {
 	const [currentView, setCurrentView] = useState('dayGridMonth');
 	const [currentTitle, setCurrentTitle] = useState('');
 	const [selectedEvent, setSelectedEvent] = useState(null);
+	const [isInsightsPanelOpen, setIsInsightsPanelOpen] = useState(false);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -276,24 +277,170 @@ export default function CalendarPage() {
 		setCurrentView(dateInfo.view.type);
 	}
 
-	return (
-		<main className="min-h-screen animate-[pageEnter_280ms_cubic-bezier(0.22,1,0.36,1)] bg-[linear-gradient(180deg,#fafaf9_0%,#ffffff_42%,#f3f2ee_100%)] text-[#1b1b1d]">
-			<section className="px-4 pb-14 pt-6 xl:px-8">
-				<div className="mx-auto w-full max-w-[1480px]">
-					<Reveal from="bottom" className="mb-8">
-						<div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-							<div>
-								<h1 className="text-[clamp(2rem,3vw,2.9rem)] font-semibold tracking-[-0.045em] text-[#17181d]">Mon calendrier</h1>
-								<p className="mt-3 max-w-[60ch] text-[1rem] leading-7 text-black/52">
-									Garde une vue claire sur tes rendez-vous à venir, passés ou annulés.
-								</p>
-							</div>
+	function CalendarInsights() {
+		return (
+			<div className="rounded-[28px] border border-black/8 bg-white p-6 shadow-[0_18px_44px_rgba(17,19,30,0.05)]">
+				<p className="text-[0.8rem] font-semibold uppercase tracking-[0.18em] text-black/38">Aujourd’hui</p>
+				<p className="mt-3 text-[2.3rem] font-semibold tracking-[-0.05em] text-[#17181d]">{todayEvents.length}</p>
+				<p className="mt-2 text-[0.96rem] leading-7 text-black/52">
+					{todayEvents.length ? 'Tu as des rendez-vous prévus aujourd’hui.' : 'Aucun rendez-vous prévu aujourd’hui.'}
+				</p>
+				<div className="mt-5 space-y-2 text-[0.82rem] text-black/54">
+					<div className="flex items-center gap-2">
+						<span className="h-2.5 w-2.5 rounded-full bg-[#ef8c3b]" />
+						<span>Du jour</span>
+					</div>
+					<div className="flex items-center gap-2">
+						<span className="h-2.5 w-2.5 rounded-full bg-[#41a36d]" />
+						<span>Passés</span>
+					</div>
+					<div className="flex items-center gap-2">
+						<span className="relative flex h-2.5 w-2.5 items-center justify-center rounded-full bg-[#d94c4c]">
+							<span className="absolute h-[1px] w-[7px] rotate-45 bg-white" />
+							<span className="absolute h-[1px] w-[7px] -rotate-45 bg-white" />
+						</span>
+						<span>Annulés par le prestataire</span>
+					</div>
+					<div className="flex items-center gap-2">
+						<span className="h-2.5 w-2.5 rounded-full bg-[#d94c4c]" />
+						<span>Annulés par vous</span>
+					</div>
+					<div className="flex items-center gap-2">
+						<span className="h-2.5 w-2.5 rounded-full bg-[#17181d]" />
+						<span>À venir</span>
+					</div>
+				</div>
 
-							<div className="flex flex-wrap items-center gap-3">
+				<div className="my-6 h-px w-full bg-black/8" />
+
+				<div className="flex items-center justify-between gap-4">
+					<p className="text-[1.1rem] font-semibold text-[#17181d]">À venir</p>
+					<span className="rounded-full bg-[#f3f4f8] px-3 py-1.5 text-[0.78rem] font-medium text-black/46">
+						{upcomingEvents.length} au total
+					</span>
+				</div>
+				<div className="mt-5 space-y-3">
+					{sidebarEvents.slice(0, 6).map((event) => (
+						<button
+							key={`aside-${event.id}`}
+							type="button"
+							onClick={() => {
+								setSelectedEvent({
+									service_name: event.title,
+									title: event.extendedProps.provider_name,
+									time_label: event.extendedProps.time_label,
+									date_label: event.extendedProps.date_label,
+									uiStatus: event.extendedProps.uiStatus,
+									start: new Date(event.start),
+								});
+								setIsInsightsPanelOpen(false);
+							}}
+							className={`flex w-full items-stretch gap-3 px-0 py-0 text-left transition hover:-translate-y-px ${
+								event.extendedProps.uiStatus === 'today'
+									? 'bg-[linear-gradient(135deg,rgba(239,140,59,0.16)_0%,rgba(247,187,132,0.16)_100%)] text-[#8f4e18]'
+									: event.extendedProps.uiStatus === 'past'
+										? 'bg-[linear-gradient(135deg,rgba(65,163,109,0.13)_0%,rgba(122,198,151,0.13)_100%)] text-[#246847]'
+										: event.extendedProps.uiStatus === 'cancelledByClient' || event.extendedProps.uiStatus === 'cancelledByPro'
+											? 'bg-[linear-gradient(135deg,rgba(217,76,76,0.11)_0%,rgba(239,162,162,0.13)_100%)] text-[#9a3131]'
+											: 'bg-[linear-gradient(135deg,rgba(243,244,248,0.96)_0%,rgba(249,250,252,0.96)_100%)] text-[#1a1b21] hover:bg-[#eceef5]'
+							}`}
+						>
+							<span
+								className={`flex w-[0.28rem] shrink-0 items-center justify-center ${
+									event.extendedProps.uiStatus === 'today'
+										? 'bg-[rgba(239,140,59,0.28)]'
+										: event.extendedProps.uiStatus === 'past'
+											? 'bg-[rgba(65,163,109,0.24)]'
+											: event.extendedProps.uiStatus === 'cancelledByClient' || event.extendedProps.uiStatus === 'cancelledByPro'
+												? 'bg-[rgba(217,76,76,0.22)]'
+												: 'bg-[rgba(23,24,29,0.14)]'
+								}`}
+							>
+								<span
+									className={`relative h-[0.62rem] w-[0.62rem] rounded-full ${
+										event.extendedProps.uiStatus === 'today'
+											? 'bg-[#ef8c3b]'
+											: event.extendedProps.uiStatus === 'past'
+												? 'bg-[#41a36d]'
+												: event.extendedProps.uiStatus === 'cancelledByClient' || event.extendedProps.uiStatus === 'cancelledByPro'
+													? 'bg-[#d94c4c]'
+													: 'bg-[#17181d]'
+									}`}
+								>
+									{event.extendedProps.uiStatus === 'cancelledByPro' ? (
+										<>
+											<span className="absolute left-1/2 top-1/2 h-[1.4px] w-[7px] -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-full bg-white" />
+											<span className="absolute left-1/2 top-1/2 h-[1.4px] w-[7px] -translate-x-1/2 -translate-y-1/2 -rotate-45 rounded-full bg-white" />
+										</>
+									) : null}
+								</span>
+							</span>
+							<span className="flex min-w-0 flex-1 flex-col gap-[0.16rem] px-0 py-3 pr-4">
+								<p className="truncate text-[0.9rem] font-semibold">{event.title}</p>
+								<p
+									className={`truncate text-[0.82rem] ${
+										event.extendedProps.uiStatus === 'today'
+											? 'text-[#8f4e18]/80'
+											: event.extendedProps.uiStatus === 'past'
+												? 'text-[#246847]/80'
+												: event.extendedProps.uiStatus === 'cancelledByClient' || event.extendedProps.uiStatus === 'cancelledByPro'
+													? 'text-[#9a3131]/80'
+													: 'text-black/48'
+									}`}
+								>
+									{event.extendedProps.provider_name}
+								</p>
+								<p
+									className={`text-[0.8rem] font-medium ${
+										event.extendedProps.uiStatus === 'today'
+											? 'text-[#8f4e18]/74'
+											: event.extendedProps.uiStatus === 'past'
+												? 'text-[#246847]/74'
+												: event.extendedProps.uiStatus === 'cancelledByClient' || event.extendedProps.uiStatus === 'cancelledByPro'
+													? 'text-[#9a3131]/72'
+													: 'text-black/56'
+									}`}
+								>
+									{event.extendedProps.date_label} · {event.extendedProps.time_label}
+								</p>
+							</span>
+						</button>
+					))}
+					{upcomingEvents.length === 0 ? <p className="text-[0.94rem] text-black/44">Aucun rendez-vous à venir.</p> : null}
+				</div>
+			</div>
+		);
+	}
+
+	return (
+		<main className={`${embedded ? '' : 'min-h-screen bg-[linear-gradient(180deg,#fafaf9_0%,#ffffff_42%,#f3f2ee_100%)]'} animate-[pageEnter_280ms_cubic-bezier(0.22,1,0.36,1)] text-[#1b1b1d]`}>
+			<section className={embedded ? 'pb-6' : 'px-4 pb-14 pt-6 xl:px-8'}>
+				<div className="mx-auto w-full max-w-[1480px]">
+					<Reveal from="bottom" className={embedded ? 'mb-6' : 'mb-8'}>
+						<div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+							{embedded ? null : (
+								<div>
+									<h1 className="text-[clamp(2rem,3vw,2.9rem)] font-semibold tracking-[-0.045em] text-[#17181d]">Mon calendrier</h1>
+									<p className="mt-3 max-w-[60ch] text-[1rem] leading-7 text-black/52">
+										Garde une vue claire sur tes rendez-vous à venir, passés ou annulés.
+									</p>
+								</div>
+							)}
+
+							<div className={`flex flex-wrap items-center gap-3 ${embedded ? 'lg:ml-auto' : ''}`}>
+								{embedded ? (
+									<button
+										type="button"
+										onClick={() => setIsInsightsPanelOpen(true)}
+										className="rounded-full border border-black/10 bg-white px-4 py-2.5 text-[0.92rem] font-medium text-[#17181d] shadow-[0_10px_24px_rgba(17,19,30,0.035)] transition hover:-translate-y-px"
+									>
+										Voir mes infos
+									</button>
+								) : null}
 								<button
 									type="button"
 									onClick={goToToday}
-									className="rounded-full border border-black/10 bg-white px-4 py-2.5 text-[0.92rem] font-medium text-[var(--accent-mauve)] shadow-[0_10px_24px_rgba(17,19,30,0.035)] transition hover:-translate-y-px"
+									className="rounded-full border border-black/10 bg-white px-4 py-2.5 text-[0.92rem] font-medium text-[#17181d] shadow-[0_10px_24px_rgba(17,19,30,0.035)] transition hover:-translate-y-px"
 								>
 									Aujourd’hui
 								</button>
@@ -304,7 +451,7 @@ export default function CalendarPage() {
 											type="button"
 											onClick={() => changeView(option.id)}
 											className={`rounded-full px-4 py-2 text-[0.9rem] font-medium transition ${
-												currentView === option.id ? 'bg-[var(--accent-mauve-soft)] text-[var(--accent-mauve)] shadow-[0_10px_22px_rgba(139,99,199,0.16)]' : 'text-black/54 hover:text-[var(--accent-mauve)]'
+												currentView === option.id ? 'bg-[#101010] text-white shadow-[0_10px_22px_rgba(10,10,10,0.12)]' : 'text-black/54 hover:text-black'
 											}`}
 										>
 											{option.label}
@@ -315,7 +462,7 @@ export default function CalendarPage() {
 						</div>
 					</Reveal>
 
-					<div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px]">
+					<div className={embedded ? 'grid gap-8' : 'grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px]'}>
 						<div className="min-w-0">
 							<Reveal from="bottom" delay={90}>
 									<div className="mb-5 flex flex-col gap-4 px-1 py-1 sm:flex-row sm:items-center sm:justify-between">
@@ -323,18 +470,18 @@ export default function CalendarPage() {
 										<button
 											type="button"
 											onClick={goToPrevious}
-											className="flex h-11 w-11 items-center justify-center rounded-full border border-black/8 bg-[#fafaf8] text-[var(--accent-mauve)] transition hover:-translate-y-px"
+											className="flex h-11 w-11 items-center justify-center rounded-full border border-black/8 bg-[#fafaf8] text-[#17181d] transition hover:-translate-y-px"
 											aria-label="Période précédente"
 										>
 											<ChevronLeft className="h-5 w-5" />
 										</button>
-										<div className="rounded-full border border-black/8 bg-[#fafaf8] px-4 py-3 text-[0.96rem] font-semibold text-[var(--accent-mauve)] sm:px-5 sm:text-[1.02rem]">
+										<div className="rounded-full border border-black/8 bg-[#fafaf8] px-4 py-3 text-[0.96rem] font-semibold text-[#17181d] sm:px-5 sm:text-[1.02rem]">
 											{currentTitle}
 										</div>
 										<button
 											type="button"
 											onClick={goToNext}
-											className="flex h-11 w-11 items-center justify-center rounded-full border border-black/8 bg-[#fafaf8] text-[var(--accent-mauve)] transition hover:-translate-y-px"
+											className="flex h-11 w-11 items-center justify-center rounded-full border border-black/8 bg-[#fafaf8] text-[#17181d] transition hover:-translate-y-px"
 											aria-label="Période suivante"
 										>
 											<ChevronRight className="h-5 w-5" />
@@ -409,140 +556,39 @@ export default function CalendarPage() {
 							</Reveal>
 						</div>
 
-						<Reveal as="aside" from="right" delay={180} className="space-y-5 xl:sticky xl:top-[7.25rem] xl:self-start">
-							<div className="rounded-[28px] border border-black/8 bg-white p-6 shadow-[0_18px_44px_rgba(17,19,30,0.05)]">
-								<p className="text-[0.8rem] font-semibold uppercase tracking-[0.18em] text-black/38">Aujourd’hui</p>
-								<p className="mt-3 text-[2.3rem] font-semibold tracking-[-0.05em] text-[#17181d]">{todayEvents.length}</p>
-								<p className="mt-2 text-[0.96rem] leading-7 text-black/52">
-									{todayEvents.length ? 'Tu as des rendez-vous prévus aujourd’hui.' : 'Aucun rendez-vous prévu aujourd’hui.'}
-								</p>
-								<div className="mt-5 space-y-2 text-[0.82rem] text-black/54">
-									<div className="flex items-center gap-2">
-										<span className="h-2.5 w-2.5 rounded-full bg-[#ef8c3b]" />
-										<span>Du jour</span>
-									</div>
-									<div className="flex items-center gap-2">
-										<span className="h-2.5 w-2.5 rounded-full bg-[#41a36d]" />
-										<span>Passés</span>
-									</div>
-									<div className="flex items-center gap-2">
-										<span className="relative flex h-2.5 w-2.5 items-center justify-center rounded-full bg-[#d94c4c]">
-											<span className="absolute h-[1px] w-[7px] rotate-45 bg-white" />
-											<span className="absolute h-[1px] w-[7px] -rotate-45 bg-white" />
-										</span>
-										<span>Annulés par le prestataire</span>
-									</div>
-									<div className="flex items-center gap-2">
-										<span className="h-2.5 w-2.5 rounded-full bg-[#d94c4c]" />
-										<span>Annulés par vous</span>
-									</div>
-									<div className="flex items-center gap-2">
-										<span className="h-2.5 w-2.5 rounded-full bg-[#17181d]" />
-										<span>À venir</span>
-									</div>
-								</div>
-							</div>
-
-							<div className="rounded-[28px] border border-black/8 bg-white p-6 shadow-[0_18px_44px_rgba(17,19,30,0.05)]">
-								<div className="flex items-center justify-between gap-4">
-									<p className="text-[1.1rem] font-semibold text-[#17181d]">À venir</p>
-									<span className="rounded-full bg-[#f3f4f8] px-3 py-1.5 text-[0.78rem] font-medium text-black/46">
-										{upcomingEvents.length} au total
-									</span>
-								</div>
-								<div className="mt-5 space-y-3">
-									{sidebarEvents.slice(0, 6).map((event) => (
-										<button
-											key={`aside-${event.id}`}
-											type="button"
-											onClick={() =>
-												setSelectedEvent({
-													service_name: event.title,
-													title: event.extendedProps.provider_name,
-													time_label: event.extendedProps.time_label,
-													date_label: event.extendedProps.date_label,
-													uiStatus: event.extendedProps.uiStatus,
-													start: new Date(event.start),
-												})
-											}
-											className={`flex w-full items-stretch gap-3 px-0 py-0 text-left transition hover:-translate-y-px ${
-												event.extendedProps.uiStatus === 'today'
-													? 'bg-[linear-gradient(135deg,rgba(239,140,59,0.16)_0%,rgba(247,187,132,0.16)_100%)] text-[#8f4e18]'
-													: event.extendedProps.uiStatus === 'past'
-														? 'bg-[linear-gradient(135deg,rgba(65,163,109,0.13)_0%,rgba(122,198,151,0.13)_100%)] text-[#246847]'
-														: event.extendedProps.uiStatus === 'cancelledByClient' || event.extendedProps.uiStatus === 'cancelledByPro'
-															? 'bg-[linear-gradient(135deg,rgba(217,76,76,0.11)_0%,rgba(239,162,162,0.13)_100%)] text-[#9a3131]'
-															: 'bg-[linear-gradient(135deg,rgba(243,244,248,0.96)_0%,rgba(249,250,252,0.96)_100%)] text-[#1a1b21] hover:bg-[#eceef5]'
-											}`}
-										>
-											<span
-												className={`flex w-[0.28rem] shrink-0 items-center justify-center ${
-													event.extendedProps.uiStatus === 'today'
-														? 'bg-[rgba(239,140,59,0.28)]'
-														: event.extendedProps.uiStatus === 'past'
-															? 'bg-[rgba(65,163,109,0.24)]'
-															: event.extendedProps.uiStatus === 'cancelledByClient' || event.extendedProps.uiStatus === 'cancelledByPro'
-																? 'bg-[rgba(217,76,76,0.22)]'
-																: 'bg-[rgba(23,24,29,0.14)]'
-												}`}
-											>
-												<span
-													className={`relative h-[0.62rem] w-[0.62rem] rounded-full ${
-														event.extendedProps.uiStatus === 'today'
-															? 'bg-[#ef8c3b]'
-															: event.extendedProps.uiStatus === 'past'
-																? 'bg-[#41a36d]'
-																: event.extendedProps.uiStatus === 'cancelledByClient' || event.extendedProps.uiStatus === 'cancelledByPro'
-																	? 'bg-[#d94c4c]'
-																	: 'bg-[#17181d]'
-													}`}
-												>
-													{event.extendedProps.uiStatus === 'cancelledByPro' ? (
-														<>
-															<span className="absolute left-1/2 top-1/2 h-[1.4px] w-[7px] -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-full bg-white" />
-															<span className="absolute left-1/2 top-1/2 h-[1.4px] w-[7px] -translate-x-1/2 -translate-y-1/2 -rotate-45 rounded-full bg-white" />
-														</>
-													) : null}
-												</span>
-											</span>
-											<span className="flex min-w-0 flex-1 flex-col gap-[0.16rem] px-0 py-3 pr-4">
-												<p className="truncate text-[0.9rem] font-semibold">{event.title}</p>
-												<p
-													className={`truncate text-[0.82rem] ${
-														event.extendedProps.uiStatus === 'today'
-															? 'text-[#8f4e18]/80'
-															: event.extendedProps.uiStatus === 'past'
-																? 'text-[#246847]/80'
-																: event.extendedProps.uiStatus === 'cancelledByClient' || event.extendedProps.uiStatus === 'cancelledByPro'
-																	? 'text-[#9a3131]/80'
-																	: 'text-black/48'
-													}`}
-												>
-													{event.extendedProps.provider_name}
-												</p>
-												<p
-													className={`text-[0.8rem] font-medium ${
-														event.extendedProps.uiStatus === 'today'
-															? 'text-[#8f4e18]/74'
-															: event.extendedProps.uiStatus === 'past'
-																? 'text-[#246847]/74'
-																: event.extendedProps.uiStatus === 'cancelledByClient' || event.extendedProps.uiStatus === 'cancelledByPro'
-																	? 'text-[#9a3131]/72'
-																	: 'text-black/56'
-													}`}
-												>
-													{event.extendedProps.date_label} · {event.extendedProps.time_label}
-												</p>
-											</span>
-										</button>
-									))}
-									{upcomingEvents.length === 0 ? <p className="text-[0.94rem] text-black/44">Aucun rendez-vous à venir.</p> : null}
-								</div>
-							</div>
-						</Reveal>
+						{embedded ? null : (
+							<Reveal as="aside" from="right" delay={180} className="xl:sticky xl:top-[7.25rem] xl:self-start">
+								<CalendarInsights />
+							</Reveal>
+						)}
 					</div>
 				</div>
 			</section>
+
+			{embedded && isInsightsPanelOpen ? (
+				<ModalPortal>
+					<div className="fixed inset-0 z-[81] bg-[rgba(10,10,14,0.36)] backdrop-blur-[3px]" onClick={() => setIsInsightsPanelOpen(false)}>
+						<div className="flex min-h-full items-center justify-end px-4 py-6">
+							<div
+								className="w-full max-w-[380px] animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]"
+								onClick={(event) => event.stopPropagation()}
+							>
+								<div className="mb-3 flex justify-end">
+									<button
+										type="button"
+										onClick={() => setIsInsightsPanelOpen(false)}
+										className="flex h-11 w-11 items-center justify-center rounded-full border border-black/8 bg-white text-[1.55rem] leading-none text-black/42 shadow-[0_14px_32px_rgba(17,19,30,0.12)] transition hover:text-black/68"
+										aria-label="Fermer le panneau calendrier"
+									>
+										×
+									</button>
+								</div>
+								<CalendarInsights />
+							</div>
+						</div>
+					</div>
+				</ModalPortal>
+			) : null}
 
 			{selectedEvent ? (
 				<ModalPortal>

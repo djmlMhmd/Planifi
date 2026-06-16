@@ -3,6 +3,8 @@ import prestatLogo from '../../assets/prestat-logo.svg';
 import { navigateTo } from '../../lib/navigation';
 import { useNavigationSearch } from '../../hooks/useNavigationSearch';
 
+const NAVBAR_PROFILE_STORAGE_KEY = 'planifi-navbar-profile';
+
 function SearchIcon({ className = '' }) {
 	return (
 		<svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
@@ -28,6 +30,7 @@ function UserAvatar({ profile }) {
 	const initials =
 		`${profile?.firstName?.[0] || ''}${profile?.lastName?.[0] || ''}`.toUpperCase() ||
 		displayName.trim().charAt(0).toUpperCase();
+	const imageSrc = profile?.profile_picture_preview || profile?.profile_picture;
 	const [open, setOpen] = useState(false);
 	const menuRef = useRef(null);
 
@@ -56,9 +59,9 @@ function UserAvatar({ profile }) {
 				onClick={() => setOpen((value) => !value)}
 				className="flex items-center gap-2 rounded-full transition hover:opacity-90 md:gap-3"
 			>
-				{profile?.profile_picture ? (
+				{imageSrc ? (
 					<div className="h-12 w-12 overflow-hidden rounded-full md:h-14 md:w-14">
-						<img src={profile.profile_picture} alt="Profil" className="h-full w-full object-cover" />
+						<img src={imageSrc} alt="Profil" className="h-full w-full object-cover" />
 					</div>
 				) : (
 					<div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-[linear-gradient(135deg,#16161c_0%,#2a2a34_100%)] text-[1rem] font-semibold text-white shadow-[0_8px_24px_rgba(19,20,28,0.16)] md:h-14 md:w-14 md:text-[1.2rem]">
@@ -94,7 +97,18 @@ function UserAvatar({ profile }) {
 }
 
 export default function ConnectedNavbar() {
-	const [profile, setProfile] = useState(null);
+	const [profile, setProfile] = useState(() => {
+		if (typeof window === 'undefined') {
+			return null;
+		}
+
+		try {
+			const cachedProfile = window.sessionStorage.getItem(NAVBAR_PROFILE_STORAGE_KEY);
+			return cachedProfile ? JSON.parse(cachedProfile) : null;
+		} catch {
+			return null;
+		}
+	});
 	const {
 		query,
 		setQuery,
@@ -128,6 +142,11 @@ export default function ConnectedNavbar() {
 				const payload = await response.json();
 				if (!cancelled && payload?.message) {
 					setProfile(payload.message);
+					try {
+						window.sessionStorage.setItem(NAVBAR_PROFILE_STORAGE_KEY, JSON.stringify(payload.message));
+					} catch {
+						// Ignore storage issues and keep in-memory profile only.
+					}
 				}
 			} catch {
 				// Keep fallback values if profile is unavailable.
@@ -247,7 +266,7 @@ export default function ConnectedNavbar() {
 				<div className="flex items-center justify-end gap-3 justify-self-end md:gap-5">
 					<button
 						type="button"
-						onClick={() => navigateTo('/app/calendar')}
+						onClick={() => navigateTo('/app/profil?tab=calendar')}
 						aria-label="Ouvrir mon calendrier"
 						className="flex h-11 w-11 items-center justify-center rounded-[14px] border border-black/6 bg-white/88 text-[var(--accent-mauve)] shadow-[0_10px_24px_rgba(24,24,35,0.035)] transition hover:-translate-y-px md:h-10 md:w-10"
 					>
