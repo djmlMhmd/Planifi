@@ -136,6 +136,17 @@ export function HistoryIcon({ className = '' }) {
 	);
 }
 
+export function CalendarIcon({ className = '' }) {
+	return (
+		<svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+			<rect x="4.2" y="5.7" width="15.6" height="14.1" rx="2.6" stroke="currentColor" strokeWidth="1.8" />
+			<path d="M8 3.8V7.3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+			<path d="M16 3.8V7.3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+			<path d="M4.2 9.2H19.8" stroke="currentColor" strokeWidth="1.8" />
+		</svg>
+	);
+}
+
 export function CaretDownIcon({ className = '' }) {
 	return (
 		<svg viewBox="0 0 20 20" fill="none" className={className} aria-hidden="true">

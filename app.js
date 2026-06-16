@@ -78,11 +78,8 @@ app.use(
 );
 
 app.use(express.static('public'));
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 app.use('/profile-images', express.static('img'));
-app.use('/app-assets', express.static(path.join(__dirname, 'client', 'src', 'assets')));
-app.set('view engine', 'ejs');
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.static(path.join(__dirname, 'views')));
 app.use(express.json());
 app.use(cookieParser());
 app.get('/api/health', (_req, res) => {
@@ -162,10 +159,3 @@ io.on('connection', (socket) => {
 app.listen(port, () => {
 	logLogger(`App listening port ${port}`, 'App');
 });
-
-app.use(
-	'/public/js',
-	express.static(__dirname + '/public/js', {
-		'Content-Type': 'text/javascript',
-	})
-);

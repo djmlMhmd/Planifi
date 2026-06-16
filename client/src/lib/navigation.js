@@ -5,7 +5,33 @@ export function getCurrentLocation() {
 	};
 }
 
+export function isInternalNavigationTarget(href) {
+	if (!href || href.startsWith('#')) {
+		return false;
+	}
+
+	if (/^(mailto:|tel:|javascript:)/i.test(href)) {
+		return false;
+	}
+
+	const targetUrl = new URL(href, window.location.origin);
+	if (targetUrl.origin !== window.location.origin) {
+		return false;
+	}
+
+	if (targetUrl.pathname.startsWith('/api') || targetUrl.pathname.startsWith('/deconnexion')) {
+		return false;
+	}
+
+	return true;
+}
+
 export function navigateTo(href, { replace = false } = {}) {
+	if (!isInternalNavigationTarget(href)) {
+		window.location.assign(href);
+		return;
+	}
+
 	const targetUrl = new URL(href, window.location.origin);
 	const nextPathname = targetUrl.pathname.replace(/\/+$/, '') || '/';
 	const nextUrl = `${nextPathname}${targetUrl.search}`;
@@ -24,14 +50,6 @@ export function navigateTo(href, { replace = false } = {}) {
 
 		window.dispatchEvent(new Event('codex:navigation'));
 	};
-
-	const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-	const supportsViewTransitions = typeof document.startViewTransition === 'function';
-
-	if (supportsViewTransitions && !prefersReducedMotion) {
-		document.startViewTransition(applyNavigation);
-		return;
-	}
 
 	applyNavigation();
 }

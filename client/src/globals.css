@@ -7,6 +7,7 @@
 	:root {
 		--black: #0a0a0a;
 		--white: #ffffff;
+		--app-bg: #faf9f5;
 		--grey-50: #f6f6f4;
 		--grey-100: #ebebeb;
 		--grey-400: rgba(10, 10, 10, 0.38);
@@ -24,13 +25,19 @@
 	html {
 		scroll-behavior: smooth;
 		scrollbar-gutter: stable;
+		background: var(--app-bg);
 	}
 
 	body {
 		margin: 0;
-		background: #ffffff;
+		background: var(--app-bg);
 		color: #0a0a0a;
 		font-family: 'Poppins', 'Helvetica Neue', sans-serif;
+	}
+
+	#root {
+		min-height: 100vh;
+		background: var(--app-bg);
 	}
 
 	button, input, a { font: inherit; }
@@ -73,19 +80,32 @@
 }
 
 @keyframes routeFadeOut {
-	from { opacity: 1; transform: translateY(0); filter: blur(0); }
-	to   { opacity: 0; transform: translateY(8px); filter: blur(1px); }
+	from { opacity: 1; filter: blur(0); }
+	to   { opacity: 1; filter: blur(0); }
 }
 
 @keyframes routeFadeIn {
-	from { opacity: 0; transform: translateY(12px); filter: blur(2px); }
-	to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+	from { opacity: 0.992; filter: blur(0.8px); }
+	to   { opacity: 1; filter: blur(0); }
 }
 
-::view-transition-old(root) {
-	animation: routeFadeOut 180ms cubic-bezier(0.4, 0, 1, 1);
+.app-shell {
+	min-height: 100vh;
+	will-change: opacity, filter;
 }
 
-::view-transition-new(root) {
-	animation: routeFadeIn 320ms cubic-bezier(0.22, 1, 0.36, 1);
+.app-shell--exit {
+	animation: none;
+}
+
+.app-shell--enter {
+	animation: routeFadeIn 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.app-shell,
+	.app-shell--exit,
+	.app-shell--enter {
+		animation: none !important;
+	}
 }

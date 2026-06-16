@@ -9,10 +9,75 @@ const {getClientsCollection} = require("../db/database");
 const {isANumber, convertToNumber, isUndefined} = require("../utils/methods.utils");
 const bcrypt = require("bcrypt");
 const UUID = require("uuid-v4");
-const {auth} = require("../config/firebase");
 const {uploadMultiple, ERROR_MESSAGES} = require("../middleware/multer");
 const format = require("pg-format");
+const fs = require("node:fs/promises");
+const path = require("node:path");
 const saltRounds = 10;
+const uploadsRoot = path.join(__dirname, "..", "public", "uploads");
+
+function getUploadDirectory(folderName) {
+    return path.join(uploadsRoot, folderName);
+}
+
+function sanitizeFileName(fileName) {
+    // Je garde un nom simple et stable pour éviter les espaces et caractères spéciaux.
+    return path
+        .basename(fileName)
+        .replace(/[^a-zA-Z0-9._-]+/g, "-")
+        .replace(/-+/g, "-");
+}
+
+function getSafeExtension(file) {
+    const originalExtension = path.extname(file.originalname || "").toLowerCase();
+
+    if (originalExtension) {
+        return originalExtension;
+    }
+
+    if (file.mimetype === "image/png") return ".png";
+    if (file.mimetype === "image/gif") return ".gif";
+    return ".jpg";
+}
+
+async function saveImageOnDisk(file, folderName) {
+    const targetDirectory = getUploadDirectory(folderName);
+    const baseName = sanitizeFileName(path.basename(file.originalname || "image", path.extname(file.originalname || "")));
+    const extension = getSafeExtension(file);
+    const fileName = `${Date.now()}-${UUID()}-${baseName || "image"}${extension}`;
+    const relativePath = path.posix.join("/uploads", folderName, fileName);
+    const absolutePath = path.join(targetDirectory, fileName);
+
+    await fs.mkdir(targetDirectory, { recursive: true });
+    await fs.writeFile(absolutePath, file.buffer);
+
+    return {
+        imageUrl: relativePath,
+        imagePath: relativePath,
+    };
+}
+
+async function deleteLocalImageIfExists(storedPath) {
+    if (!storedPath) {
+        return;
+    }
+
+    // J'ignore les anciennes URLs Firebase éventuelles pour éviter une erreur inutile.
+    if (!storedPath.startsWith("/uploads/") && !storedPath.startsWith("uploads/")) {
+        return;
+    }
+
+    const normalizedRelativePath = storedPath.replace(/^\/+/, "");
+    const absolutePath = path.join(__dirname, "..", "public", normalizedRelativePath);
+
+    try {
+        await fs.unlink(absolutePath);
+    } catch (error) {
+        if (error.code !== "ENOENT") {
+            throw error;
+        }
+    }
+}
 
 module.exports.profil_pro_get = async (req, res) => {
 
@@ -137,52 +202,14 @@ module.exports.profil_change_password_put = async (req, res) => {
 module.exports.update_profile_picture_put = async (req, res) => {
     let { id } = decodeJWT(req.cookies.jwt)
     const file = req.file
-    const uuid = UUID();
-
-    const dateActuelle = new Date()
 
     if (!file) {
         return sendBadRequest(res, 'Aucun fichier upload')
     }
 
     try {
-        // mise en ligne de la photo de profil de l'utilisateur
-        let bucket = auth.storage().bucket();
-        const metadata = {
-            metadata: {
-                firebaseStorageDownloadTokens: uuid,
-            },
-            contentType: req.file.mimetype,
-            cacheControl: "public, max-age=31536000",
-        }
-        /**
-         * on utilise "dateActuelle.getTime()" dans la construction du nom de l'image
-         * afin que si 2 utilisateurs upload des images ayant le même nom
-         * cela n'écrase pas l'image de l'autre
-         * .getTime() => renvoie le temps actuelle en millisecondes donc est unique
-         */
-        let imageUrl = `${process.env.DOWNLOAD_PATH}/${encodeURIComponent(`images/profile-picture/${dateActuelle.getTime()} - ${file.originalname}`)}?alt=media&token=${uuid}`
-        let imagePath = `images/profile-picture/${dateActuelle.getTime()} - ${file.originalname}`
-        const blob = bucket.file(`images/profile-picture/${dateActuelle.getTime()} - ${file.originalname}`)
-        await new Promise((resolve, reject) => {
-            const blobStream = blob.createWriteStream({
-                metadata: metadata,
-                gzip: true
-            })
-
-            blobStream.on("error", err => {
-                errorLogger(`erreur lors de l'upload de l'image ${imageUrl} de l'utilisateur ${id}`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
-                errorLogger(err, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
-                reject(err)
-            })
-
-            blobStream.on("finish", () => {
-                logLogger(`upload de l'image ${imageUrl} de l'utilisateur ${id} a bien été effectuée`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
-                resolve()
-            })
-
-            blobStream.end(req.file.buffer)
-        })
+        const { imageUrl, imagePath } = await saveImageOnDisk(file, "profile-picture");
+        logLogger(`upload local de l'image ${imageUrl} de l'utilisateur ${id} effectué`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
 
         const client = getClientsCollection();
         let queryUpdateProfilPicture
@@ -192,20 +219,12 @@ module.exports.update_profile_picture_put = async (req, res) => {
         const {profile_picture_path}  = queryUserInfo.rows[0]
         try {
             if(profile_picture_path !== null){
-                bucket
-                    .file(profile_picture_path)
-                    .delete()
-                    .then(() => {
-                        logLogger(`l'image ${profile_picture_path} de l'utilisateur ${id} (client) a bien été supprimé`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
-
-                    })
-                    .catch((error) => {
-                        errorLogger(`Erreur lors de la suppression de l'ancienne photo de profil de l'utilisateur ${id} (client): ${error}`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
-                    });
+                await deleteLocalImageIfExists(profile_picture_path);
+                logLogger(`l'ancienne image ${profile_picture_path} de l'utilisateur ${id} (client) a bien été supprimée`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
             }
         }
         catch (e) {
-            errorLogger("Erreur lors de la suppression de l'ancienne photo de profil de l'utilisateur", '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
+            errorLogger(`Erreur lors de la suppression de l'ancienne photo de profil de l'utilisateur ${id}: ${e}`, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
         }
 
         queryUpdateProfilPicture = {
@@ -234,7 +253,7 @@ module.exports.update_profile_picture_put = async (req, res) => {
 
     } catch (e) {
         errorLogger('Erreur lors de la récupération du profil:' + e.stack, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
-        return sendInternalServerError(res, "Impossible d'enregistrer la photo de profil. Vérifiez la configuration du stockage." )
+        return sendInternalServerError(res, "Impossible d'enregistrer la photo de profil." )
     }
 }
 
@@ -276,45 +295,17 @@ module.exports.upload_images_service_post =  async (req, res) => {
             let tableauEchecs = []
             let tableauURL = []
             for(let file of files){
-                const uuid = UUID();
-                let dateActuelle = new Date()
-
-                // mise en ligne des photos du pro
-                let bucket = auth.storage().bucket();
-                const metadata = {
-                    metadata: {
-                        firebaseStorageDownloadTokens: uuid,
-                    },
-                    contentType: file.mimetype,
-                    cacheControl: "public, max-age=31536000",
-                }
-                /**
-                 * on utilise "dateActuelle.getTime()" dans la construction du nom de l'image
-                 * afin que si 2 utilisateurs upload des images ayant le même nom
-                 * cela n'écrase pas l'image de l'autre
-                 * .getTime() => renvoie le temps actuelle en millisecondes donc est unique
-                 */
-                let imageUrl = `${process.env.DOWNLOAD_PATH}/${encodeURIComponent(`images/service-images/${dateActuelle.getTime()} - ${file.originalname}`)}?alt=media&token=${uuid}`
-                let imagePath = `images/service-images/${dateActuelle.getTime()} - ${file.originalname}`
-                tableauURL.push([imageUrl, imagePath])
-                const blob = bucket.file(`images/service-images/${dateActuelle.getTime()} - ${file.originalname}`)
-                const blobStream = blob.createWriteStream({
-                    metadata: metadata,
-                    gzip: true
-                })
-
-                blobStream.on("error", err => {
-                    errorLogger(`erreur lors de l'upload de l'image ${imageUrl} de l'utilisateur ${id}`, '','profilController.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
+                try {
+                    const { imageUrl, imagePath } = await saveImageOnDisk(file, "service-images");
+                    tableauURL.push([imageUrl, imagePath]);
+                    logLogger(`upload local de l'image ${imageUrl} de l'utilisateur ${id} effectué`, '','profilController.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
+                } catch (error) {
+                    const fallbackName = sanitizeFileName(file.originalname || "image");
+                    const imageUrl = `/uploads/service-images/${fallbackName}`;
                     tableauEchecs.push(imageUrl)
-                    errorLogger(err, '','profilController.js',`/profil/${id}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
-                })
-
-                blobStream.on("finish", () => {
-                    logLogger(`upload de l'image ${imageUrl} de l'utilisateur ${id} a bien été effectuée`, '','profilController.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
-                })
-
-                blobStream.end(file.buffer)
-
+                    errorLogger(`erreur lors de l'upload local de l'image ${imageUrl} de l'utilisateur ${id}`, '','profilController.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
+                    errorLogger(error, '','profilController.js',`/profil/${id}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
+                }
             }
             const client = getClientsCollection();
 
@@ -326,6 +317,11 @@ module.exports.upload_images_service_post =  async (req, res) => {
             }
             else {
                 dataToInsertString = tableauURL.map((tab) => [idPro, serviceId, tab[0], tab[1]])
+            }
+
+            if (dataToInsertString.length === 0) {
+                errorLogger("Aucune image n'a pu être sauvegardée sur le disque", '','profilController.js', `/profil/${idPro}/upload-service-picture/${serviceId}`, constants.POST_HTTP)
+                return sendFailure(res, "Aucune image n'a pu être enregistrée")
             }
 
             try {
@@ -364,27 +360,19 @@ module.exports.image_service_delete =  async (req, res) => {
     //TODO: ajouter une vérification
 
     const client = getClientsCollection();
-    let bucket = auth.storage().bucket();
     /** suppression de l'ancienne image en base */
     let queryImageInfo = await client.query('SELECT * from images_services_professionals where image_id = $1 and pro_id = $2', [imageId, id]);
     if(queryImageInfo.rowCount > 0 ) {
         const {picture_path} = queryImageInfo.rows[0]
         try {
             if (picture_path !== null) {
-                bucket
-                    .file(picture_path)
-                    .delete()
-                    .then(async () => {
-                        /* suppression dans la table */
-                        await client.query('DELETE from images_services_professionals where image_id = $1 and pro_id = $2', [imageId, id]);
-                        logLogger(`l'image ${picture_path} de l'utilisateur ${id} (pro) a bien été supprimé`, '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
-                        return sendSuccess(res, "l'image a bien été supprimé")
-                    })
-                    .catch((error) => {
-                        errorLogger(`Erreur lors de la suppression de la photo ${picture_path} (${imageId}) du service de l'utilisateur ${id} (pro): ${error}`, '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
-                        return sendError(res, `Erreur lors de la suppression de la photo ${picture_path} (${imageId}) du service de l'utilisateur ${id} (pro)`)
-                    });
+                await deleteLocalImageIfExists(picture_path);
             }
+
+            /* suppression dans la table */
+            await client.query('DELETE from images_services_professionals where image_id = $1 and pro_id = $2', [imageId, id]);
+            logLogger(`l'image ${picture_path} de l'utilisateur ${id} (pro) a bien été supprimée`, '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
+            return sendSuccess(res, "l'image a bien été supprimée")
         } catch (e) {
             errorLogger(`Erreur lors de la suppression de la photo ${picture_path} (${imageId}) du service de l'utilisateur ${id} (pro)`,  '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
             return sendError(res, `Erreur lors de la suppression de la photo ${picture_path} (${imageId}) du service de l'utilisateur ${id} (pro)`)

@@ -1,9 +1,10 @@
 import { startTransition, useEffect, useMemo, useState } from 'react';
 import prestatLogo from '../../assets/prestat-logo.svg';
+import { navigateTo } from '../../lib/navigation';
 import Reveal from '../Reveal/Reveal';
 import {
   BookmarkIcon,
-  CaretDownIcon,
+  CalendarIcon,
   ClientReviewCard,
   CompassIcon,
   DevelopmentNoticeModal,
@@ -11,10 +12,8 @@ import {
   FavoritesPanel,
   getProfileTabFromLocation,
   HelpIcon,
-  HistoryIcon,
   InvoiceItem,
   LogoutIcon,
-  MessageIcon,
   ReservationItem,
   SearchIcon,
   SettingsPanel,
@@ -44,7 +43,7 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 
 	async function handleLogout() {
 		await fetch('/deconnexion/client', { method: 'POST', credentials: 'same-origin' });
-		window.location.href = '/connexion/';
+		navigateTo('/connexion/');
 	}
 
 	// L'onglet actif reste synchronisé avec l'URL pour éviter d'ajouter un router plus lourd ici.
@@ -97,7 +96,7 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 		const nextTab = getProfileTabFromLocation(targetUrl.search);
 
 		if (targetUrl.pathname !== window.location.pathname) {
-			window.location.href = targetUrl.toString();
+			navigateTo(targetUrl.toString());
 			return;
 		}
 
@@ -183,14 +182,16 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 								/>
 							</div>
 
-							<div className="flex items-center gap-4 text-[#1b1a20]">
-								<div className="relative">
-									<MessageIcon className="h-6 w-6" />
-									<span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-[#ff3d3d]" />
-								</div>
-								<HistoryIcon className="h-6 w-6" />
-								<CaretDownIcon className="h-5 w-5 text-black/35" />
-							</div>
+							<button
+								type="button"
+								onClick={() => {
+									navigateTo('/app/calendar');
+								}}
+								className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-black/6 bg-white/88 text-[#1b1a20] shadow-[0_10px_24px_rgba(24,24,35,0.035)] transition hover:-translate-y-px"
+								aria-label="Ouvrir le calendrier"
+							>
+								<CalendarIcon className="h-[1.15rem] w-[1.15rem]" />
+							</button>
 
 							<div className="flex items-center gap-3">
 								<div className="text-right">

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import heroImage from '../../assets/hero-architecture.jpg';
+import { navigateTo } from '../../lib/navigation';
 import Reveal from '../Reveal/Reveal';
 
 function AuthSwitch({ checked, ariaLabel, onChange }) {
@@ -105,10 +106,10 @@ export default function AuthPage({ initialMode = 'signup' }) {
 				if (clientProfileResponse.ok) {
 					const clientProfile = await clientProfileResponse.json();
 					if (clientProfile?.message?.est_pro) {
-						window.location.href = '/app/profil/professionnel';
+						navigateTo('/app/profil/professionnel');
 						return;
 					}
-					window.location.href = '/app/profil';
+					navigateTo('/app/profil');
 					return;
 				}
 
@@ -116,7 +117,7 @@ export default function AuthPage({ initialMode = 'signup' }) {
 					credentials: 'same-origin',
 				});
 				if (professionalProfileResponse.ok) {
-					window.location.href = '/app/profil/professionnel';
+					navigateTo('/app/profil/professionnel');
 					return;
 				}
 			}

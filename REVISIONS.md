@@ -378,3 +378,192 @@ JWT_SECRET                                            → Signature des JWT
 SECRET_KEY                                            → Clé session Express
 MAIL_USERNAME, MAIL_PASSWORD                          → Compte SMTP
 ```
+
+---
+
+## 15. Responsive — Comment le site s'adapte aux écrans
+
+Le projet utilise **deux approches** selon la partie du code :
+
+### Partie React (`client/src`) → Tailwind CSS breakpoints
+
+Tailwind gère le responsive avec des préfixes directement dans les classes HTML. Pas de fichier CSS séparé.
+
+| Préfixe | Taille d'écran | Usage typique |
+|---|---|---|
+| *(aucun)* | Mobile d'abord (tout écran) | Style de base |
+| `sm:` | ≥ 640px | Petits ajustements |
+| `md:` | ≥ 768px | Tablette |
+| `lg:` | ≥ 1024px | Desktop standard |
+| `xl:` | ≥ 1280px | Grand écran |
+
+**Principe : mobile-first.** On écrit le style pour mobile, puis on surcharge pour les grands écrans.
+
+```jsx
+// Exemple dans ConnectedNavbar.jsx
+// Sur mobile : caché (hidden)
+// Sur desktop (lg) : visible en flex
+<div className="hidden lg:flex items-center gap-6">
+  {/* icônes nav */}
+</div>
+
+// Grille : 1 colonne sur mobile, 2 colonnes sur xl
+<div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
+
+// Navbar sticky collée en haut avec flou de fond
+<header className="sticky top-0 z-50 bg-white/78 backdrop-blur-md">
+
+// Largeur max centrée
+<div className="mx-auto w-full max-w-[1480px] px-6 xl:px-8">
+```
+
+### Partie EJS (`views/`, `public/css/`) → CSS classique avec `@media`
+
+Les pages rendues côté serveur utilisent des fichiers CSS séparés avec des media queries classiques.
+
+```css
+/* Exemple dans public/css/ */
+@media (max-width: 768px) {
+  /* styles mobile */
+}
+
+@media (min-width: 768px) {
+  /* styles tablette et plus */
+}
+```
+
+### Résumé
+
+```
+React (client/src)    → Tailwind classes   → sm: md: lg: xl:
+EJS  (views/)         → CSS fichiers       → @media queries
+```
+
+Les deux coexistent dans le même projet car certaines pages sont en EJS (ancien rendu serveur) et d'autres sont en React (nouvelle partie SPA sous `/app`).
+
+---
+
+## 16. Concepts JavaScript utiles
+
+### `event.preventDefault()`
+Empêche le **comportement par défaut** du navigateur sur un événement.
+
+Le cas le plus courant : un formulaire recharge la page quand on le soumet. `preventDefault()` stoppe ça pour pouvoir gérer l'envoi manuellement.
+
+```js
+form.addEventListener('submit', (event) => {
+  event.preventDefault(); // stoppe le rechargement de page
+
+  // maintenant on contrôle : fetch(), validation, etc.
+  fetch('/connexion', { method: 'POST', body: formData });
+});
+```
+
+Autres usages :
+- `<a href="#">` → empêche de remonter en haut de page
+- Drag & drop → empêche le navigateur d'ouvrir le fichier déposé
+- Touche Entrée dans un input → empêche la soumission automatique
+
+### `req.cookies`
+Objet Express contenant tous les cookies envoyés par le browser. Nécessite `cookie-parser`.
+```js
+const token = req.cookies.jwt; // lit le cookie JWT
+```
+
+### `trim()`
+Supprime les espaces au début et à la fin d'une chaîne.
+```js
+"  mon service  ".trim() // → "mon service"
+```
+Utilisé dans Joi (`Joi.string().trim()`) pour nettoyer les inputs avant validation.
+
+### Les dépendances du `useEffect`
+Le deuxième argument de `useEffect` contrôle quand il se relance.
+
+```js
+useEffect(() => { ... }, []);
+// [] vide → s'exécute UNE SEULE FOIS au montage du composant
+
+useEffect(() => { ... }, [searchQuery, searchVille]);
+// → se relance à chaque fois que searchQuery OU searchVille change
+
+useEffect(() => { ... });
+// pas de tableau → se relance à CHAQUE re-render (dangereux, éviter)
+```
+
+**Erreur classique** : mettre `[]` quand on dépend d'une valeur qui change → le code tourne avec les valeurs initiales et ne se met jamais à jour.
+
+### `async` / `await`
+Permet d'attendre le résultat d'une opération asynchrone (requête SQL, appel API) sans bloquer le reste du code.
+```js
+// Sans async/await → callback hell
+client.query(sql, (err, result) => { ... });
+
+// Avec async/await → lisible
+const result = await client.query(sql, [params]);
+const rows = result.rows;
+```
+
+### `next()` dans un middleware
+Passe la requête au middleware ou à la route suivante. Sans `next()`, la requête reste bloquée.
+```js
+const requiredAuth = (req, res, next) => {
+  if (!token) return res.status(401).json({ ... }); // bloque
+  next(); // laisse passer vers la route
+};
+```
+
+### Input contrôlé en React
+Un input "contrôlé" c'est un input dont la valeur est gérée par un `useState` React, via `value` + `onChange`.
+```jsx
+const [query, setQuery] = useState('');
+
+<input
+  value={query}                          // React contrôle la valeur affichée
+  onChange={(e) => setQuery(e.target.value)} // met à jour le state à chaque frappe
+/>
+```
+Sans ça, l'input est "non contrôlé" : le navigateur gère la valeur seul et React ne sait pas ce que l'user a tapé.
+
+### `encodeURIComponent()`
+Encode une chaîne pour qu'elle soit sûre dans une URL. Gère les espaces, accents et caractères spéciaux.
+```js
+encodeURIComponent('coiffure à Paris') // → "coiffure%20%C3%A0%20Paris"
+
+// Dans une URL de recherche :
+navigateTo(`/navigation?q=${encodeURIComponent(query)}&ville=${encodeURIComponent(ville)}`);
+```
+Sans ça, un espace ou un `&` dans le texte cassait l'URL.
+
+### `URLSearchParams`
+API JavaScript native pour lire les paramètres dans une URL.
+```js
+// URL courante : /navigation?q=coiffure&ville=paris
+const params = new URLSearchParams(window.location.search);
+const q = params.get('q');      // → "coiffure"
+const ville = params.get('ville'); // → "paris"
+const absent = params.get('xyz');  // → null
+```
+Utilisé dans `NavigationPage.jsx` pour lire les termes de recherche passés depuis `Hero.jsx` ou `ConnectedNavbar.jsx`.
+
+### `ILIKE` en SQL (PostgreSQL)
+Comme `LIKE` mais insensible à la casse. `%` = n'importe quels caractères.
+```sql
+-- Trouve "Coiffure", "coiffure", "COIFFURE", "macoiffure"...
+WHERE LOWER(service_name) ILIKE '%coiffure%'
+
+-- $1 = paramètre (évite les injections SQL)
+WHERE LOWER(service_name) ILIKE $1
+-- avec la valeur : '%coiffure%'
+```
+
+### Injection SQL — pourquoi utiliser `$1`, `$2`...
+Ne jamais coller une variable directement dans une requête SQL.
+```js
+// ❌ DANGEREUX — injection SQL possible
+client.query(`SELECT * FROM users WHERE email = '${email}'`);
+
+// ✅ SÉCURISÉ — pg échappe automatiquement la valeur
+client.query(`SELECT * FROM users WHERE email = $1`, [email]);
+```
+Un attaquant pourrait sinon taper `'; DROP TABLE users; --` dans un champ et détruire la base.

@@ -52,10 +52,31 @@ function buildBackendProvider(professionalId, serviceRows) {
 		return null;
 	}
 
+	// Je fabrique une petite galerie à partir des vraies images des services.
+	// Si un service n'a pas encore d'image, je garde le placeholder pour éviter un trou visuel.
+	const gallery = Array.from(
+		new Map(
+			serviceRows
+				.map((serviceRow, index) => {
+					const image = serviceRow.service_image_url || navigationPlaceholder;
+
+					return [
+						image,
+						{
+							id: `g-${serviceRow.service_id}-${index}`,
+							image,
+							alt: `${firstRow.company_name} - ${serviceRow.service_name}`,
+						},
+					];
+				})
+		).values()
+	);
+
 	return {
 		id: String(professionalId),
 		company: firstRow.company_name,
 		location: firstRow.company_address || '[localisation]',
+		profile_picture: firstRow.profile_picture || '',
 		rating: '5,0',
 		reviews: serviceRows.length * 18 + 24,
 		policy: 'Réservation en ligne disponible. Les informations détaillées de ce prestataire seront enrichies depuis son profil professionnel.',
@@ -67,17 +88,14 @@ function buildBackendProvider(professionalId, serviceRows) {
 			{ id: 'tiktok', label: 'TikTok', href: '#' },
 			{ id: 'link', label: 'Site', href: '#' },
 		],
-		gallery: [
-			{ id: 'g1', image: navigationPlaceholder, alt: firstRow.company_name },
-			{ id: 'g2', image: navigationPlaceholder, alt: `${firstRow.company_name} - vue 2` },
-			{ id: 'g3', image: navigationPlaceholder, alt: `${firstRow.company_name} - vue 3` },
-		],
+		gallery: gallery.length ? gallery : [{ id: 'g1', image: navigationPlaceholder, alt: firstRow.company_name }],
 		services: serviceRows.map((serviceRow) => ({
 			id: String(serviceRow.service_id),
 			name: serviceRow.service_name,
 			duration: formatBackendDuration(serviceRow.duration),
 			price: formatBackendPrice(serviceRow.service_price),
 			description: serviceRow.service_description || 'Description à venir.',
+			image: serviceRow.service_image_url || navigationPlaceholder,
 		})),
 		hours: [
 			['Lundi', '09:00 - 18:00'],
@@ -250,7 +268,9 @@ function ServiceCard({ service, providerId, onOpenDetails }) {
 				<span className="absolute right-4 top-4 text-[0.98rem] font-medium text-[#c7c7c7]">{service.duration}</span>
 				<div className="flex items-start gap-6">
 					<div className="flex w-[108px] shrink-0 flex-col items-center">
-						<div className="h-[108px] w-[108px] rounded-[14px] bg-[linear-gradient(135deg,#aba79c_0%,#7c786f_100%)]" />
+						<div className="h-[108px] w-[108px] overflow-hidden rounded-[14px] bg-[linear-gradient(135deg,#aba79c_0%,#7c786f_100%)]">
+							<img src={service.image} alt={service.name} className="h-full w-full object-cover" />
+						</div>
 						<p
 							className="mt-3 text-center text-[2.05rem] tracking-[-0.045em] text-[#161616]"
 							style={{ fontFamily: '"TAN Meringue", "Iowan Old Style", "Times New Roman", serif' }}
@@ -410,17 +430,21 @@ export default function ProviderDetailPage() {
 				<div className="mx-auto w-full max-w-[1480px]">
 					<div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
 						<div className="flex items-start gap-5">
-							<div className="relative flex h-32 w-32 items-center justify-center rounded-full border border-[#dbc78f] bg-white shadow-[0_16px_34px_rgba(17,19,30,0.04)]">
-								<div className="absolute left-1 top-1 flex h-9 w-9 items-center justify-center rounded-full bg-[#f2ecdd] text-[#6a5a34]">
-									<BookmarkIcon className="h-[18px] w-[18px]" />
-								</div>
-								<svg viewBox="0 0 64 64" className="h-20 w-20 text-[#cfb16d]" fill="none" aria-hidden="true">
-									<path d="M32 13C24 19 21 27 21 34C21 42 26 49 32 53C38 49 43 42 43 34C43 27 40 19 32 13Z" stroke="currentColor" strokeWidth="2.8" />
-									<path d="M32 18V49" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
-									<path d="M24.5 24.5C29 28 30.8 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
-									<path d="M39.5 24.5C35 28 33.2 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
-								</svg>
-							</div>
+					<div className="relative flex h-32 w-32 items-center justify-center rounded-full border border-[#dbc78f] bg-white shadow-[0_16px_34px_rgba(17,19,30,0.04)]">
+						<div className="absolute left-1 top-1 flex h-9 w-9 items-center justify-center rounded-full bg-[#f2ecdd] text-[#6a5a34]">
+							<BookmarkIcon className="h-[18px] w-[18px]" />
+						</div>
+						{provider.profile_picture ? (
+							<img src={provider.profile_picture} alt={provider.company} className="h-full w-full rounded-full object-cover" />
+						) : (
+							<svg viewBox="0 0 64 64" className="h-20 w-20 text-[#cfb16d]" fill="none" aria-hidden="true">
+								<path d="M32 13C24 19 21 27 21 34C21 42 26 49 32 53C38 49 43 42 43 34C43 27 40 19 32 13Z" stroke="currentColor" strokeWidth="2.8" />
+								<path d="M32 18V49" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
+								<path d="M24.5 24.5C29 28 30.8 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+								<path d="M39.5 24.5C35 28 33.2 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+							</svg>
+						)}
+					</div>
 
 							<div className="pt-2">
 								<h1 className="text-[clamp(2rem,3vw,2.8rem)] font-semibold tracking-[-0.04em] text-[#181818]">{provider.company}</h1>
@@ -659,9 +683,11 @@ export default function ProviderDetailPage() {
 							</button>
 						</div>
 
-						<div className="grid gap-5 md:grid-cols-[140px_1fr]">
+							<div className="grid gap-5 md:grid-cols-[140px_1fr]">
 							<div className="flex flex-col">
-								<div className="h-[140px] rounded-[20px] bg-[linear-gradient(135deg,#aba79c_0%,#7c786f_100%)]" />
+								<div className="h-[140px] overflow-hidden rounded-[20px] bg-[linear-gradient(135deg,#aba79c_0%,#7c786f_100%)]">
+									<img src={selectedService.image} alt={selectedService.name} className="h-full w-full object-cover" />
+								</div>
 								<p
 									className="mt-4 text-left text-[2.4rem] tracking-[-0.04em] text-[#161616]"
 									style={{ fontFamily: '"TAN Meringue", "Iowan Old Style", "Times New Roman", serif' }}

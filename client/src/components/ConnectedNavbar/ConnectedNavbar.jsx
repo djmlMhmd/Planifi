@@ -1,26 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import prestatLogo from '../../assets/prestat-logo.svg';
 import { navigateTo } from '../../lib/navigation';
+import { useNavigationSearch } from '../../hooks/useNavigationSearch';
 
 function SearchIcon({ className = '' }) {
 	return (
 		<svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
 			<circle cx="11" cy="11" r="6.8" stroke="currentColor" strokeWidth="1.8" />
 			<path d="M20 20L16.2 16.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-		</svg>
-	);
-}
-
-function BellIcon({ className = '' }) {
-	return (
-		<svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-			<path
-				d="M12 4.8A4.2 4.2 0 0 0 7.8 9V11.1C7.8 12.1 7.45 13.08 6.8 13.84L5.6 15.25C5.22 15.7 5.54 16.4 6.13 16.4H17.87C18.46 16.4 18.78 15.7 18.4 15.25L17.2 13.84A4.2 4.2 0 0 1 16.2 11.1V9A4.2 4.2 0 0 0 12 4.8Z"
-				stroke="currentColor"
-				strokeWidth="1.8"
-				strokeLinejoin="round"
-			/>
-			<path d="M10.2 18C10.55 18.64 11.21 19 12 19C12.79 19 13.45 18.64 13.8 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
 		</svg>
 	);
 }
@@ -57,7 +44,7 @@ function UserAvatar({ profile }) {
 
 	async function handleLogout() {
 		await fetch('/deconnexion/client', { method: 'POST', credentials: 'same-origin' });
-		window.location.href = '/connexion/';
+		navigateTo('/connexion/');
 	}
 
 	const profileHref = profile?.est_pro ? '/app/profil/professionnel' : '/app/profil';
@@ -108,6 +95,25 @@ function UserAvatar({ profile }) {
 
 export default function ConnectedNavbar() {
 	const [profile, setProfile] = useState(null);
+	const {
+		query,
+		setQuery,
+		ville,
+		setVille,
+		serviceSuggestions,
+		villeSuggestions,
+		showServiceSuggestions,
+		setShowServiceSuggestions,
+		showVilleSuggestions,
+		setShowVilleSuggestions,
+		setActiveSuggestionField,
+		searchRef,
+		handleSearch,
+		handleSelectService,
+		handleSelectVille,
+		handleDiscoverProviders,
+		showDiscoverProviders,
+	} = useNavigationSearch();
 
 	useEffect(() => {
 		let cancelled = false;
@@ -146,29 +152,107 @@ export default function ConnectedNavbar() {
 					<img src={prestatLogo} alt="Prestat" className="w-[156px]" />
 				</button>
 
-				<div className="mx-auto flex w-full max-w-[372px] items-center rounded-[18px] border border-black/8 bg-white shadow-[0_12px_28px_rgba(17,19,30,0.04)] justify-self-center">
-					<input
-						type="text"
-						placeholder="prestation"
-						className="min-w-0 flex-1 rounded-l-[18px] border-0 bg-transparent px-5 py-4 text-[1rem] text-[#1f1f1f] outline-none placeholder:text-black/30"
-					/>
+				{/* Formulaire de recherche : onSubmit déclenche handleSearch */}
+				<form
+					onSubmit={handleSearch}
+					ref={searchRef}
+					className="mx-auto flex w-full max-w-[372px] items-center rounded-[18px] border border-black/8 bg-white shadow-[0_12px_28px_rgba(17,19,30,0.04)] justify-self-center"
+				>
+					<div className="relative min-w-0 flex-1">
+						<input
+							type="text"
+							placeholder="prestation"
+							value={query}
+							onFocus={() => {
+								setActiveSuggestionField('service');
+								setShowServiceSuggestions(true);
+								setShowVilleSuggestions(false);
+							}}
+							onChange={(e) => {
+								setQuery(e.target.value);
+								setActiveSuggestionField('service');
+								setShowServiceSuggestions(true);
+								setShowVilleSuggestions(false);
+							}}
+							className="min-w-0 w-full rounded-l-[18px] border-0 bg-transparent px-5 py-4 text-[1rem] text-[#1f1f1f] outline-none placeholder:text-black/30"
+						/>
+						{showDiscoverProviders ? (
+							<div className="absolute left-0 top-[calc(100%+10px)] z-50 w-[calc(100%+26px)] overflow-hidden rounded-[18px] border border-black/8 bg-white p-2 shadow-[0_18px_40px_rgba(17,19,30,0.12)]">
+								<button
+									type="button"
+									onMouseDown={(event) => event.preventDefault()}
+									onClick={handleDiscoverProviders}
+									className="block w-full rounded-[12px] px-3 py-3 text-left text-[0.96rem] text-[#1f1f1f] transition hover:bg-black/5"
+								>
+									Pas d&apos;idée ? Découvrez nos prestataires
+								</button>
+							</div>
+						) : showServiceSuggestions && serviceSuggestions.length > 0 ? (
+							<div className="absolute left-0 top-[calc(100%+10px)] z-50 w-[calc(100%+26px)] overflow-hidden rounded-[18px] border border-black/8 bg-white p-2 shadow-[0_18px_40px_rgba(17,19,30,0.12)]">
+								{serviceSuggestions.map((suggestion) => (
+									<button
+										key={suggestion}
+										type="button"
+										onMouseDown={(event) => event.preventDefault()}
+										onClick={() => handleSelectService(suggestion)}
+										className="block w-full rounded-[12px] px-3 py-2.5 text-left text-[0.96rem] text-[#1f1f1f] transition hover:bg-black/5"
+									>
+										{suggestion}
+									</button>
+								))}
+							</div>
+						) : null}
+					</div>
 					<div className="h-10 w-px bg-black/10" />
-					<input
-						type="text"
-						placeholder="ville"
-						className="min-w-0 flex-1 border-0 bg-transparent px-5 py-4 text-[1rem] text-[#1f1f1f] outline-none placeholder:text-black/30"
-					/>
-					<button type="button" className="mr-2 flex h-12 w-12 items-center justify-center rounded-[14px] text-[#151515]">
+					<div className="relative min-w-0 flex-1">
+						<input
+							type="text"
+							placeholder="ville"
+							value={ville}
+							onFocus={() => {
+								setActiveSuggestionField('ville');
+								setShowVilleSuggestions(true);
+								setShowServiceSuggestions(false);
+							}}
+							onChange={(e) => {
+								setVille(e.target.value);
+								setActiveSuggestionField('ville');
+								setShowVilleSuggestions(true);
+								setShowServiceSuggestions(false);
+							}}
+							className="min-w-0 w-full border-0 bg-transparent px-5 py-4 text-[1rem] text-[#1f1f1f] outline-none placeholder:text-black/30"
+						/>
+						{showVilleSuggestions && villeSuggestions.length > 0 ? (
+							<div className="absolute left-0 top-[calc(100%+10px)] z-50 max-h-[296px] w-[calc(100%+64px)] overflow-y-auto rounded-[18px] border border-black/8 bg-white p-2 shadow-[0_18px_40px_rgba(17,19,30,0.12)]">
+								{villeSuggestions.map((suggestion) => (
+									<button
+										key={suggestion.value}
+										type="button"
+										onMouseDown={(event) => event.preventDefault()}
+										onClick={() => handleSelectVille(suggestion)}
+										className="block w-full rounded-[12px] px-3 py-2.5 text-left text-[0.96rem] text-[#1f1f1f] transition hover:bg-black/5"
+									>
+										{suggestion.label}
+									</button>
+								))}
+							</div>
+						) : null}
+					</div>
+					{/* type="submit" → déclenche le onSubmit du formulaire parent */}
+					<button type="submit" className="mr-2 flex h-12 w-12 items-center justify-center rounded-[14px] text-[#151515]">
 						<SearchIcon className="h-6 w-6" />
 					</button>
-				</div>
+				</form>
 
-				<div className="hidden items-center gap-6 justify-self-end lg:flex">
-					<div className="relative text-[#171717]">
-						<BellIcon className="h-6 w-6" />
-						<span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#e83a3a] text-[0.55rem] font-semibold text-white">1</span>
-					</div>
-					<CalendarIcon className="h-6 w-6 text-[#171717]" />
+				<div className="hidden items-center gap-5 justify-self-end lg:flex">
+					<button
+						type="button"
+						onClick={() => navigateTo('/app/calendar')}
+						aria-label="Ouvrir mon calendrier"
+						className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-black/6 bg-white/88 text-[#1b1a20] shadow-[0_10px_24px_rgba(24,24,35,0.035)] transition hover:-translate-y-px"
+					>
+						<CalendarIcon className="h-[1.15rem] w-[1.15rem]" />
+					</button>
 					<UserAvatar profile={profile} />
 				</div>
 			</div>

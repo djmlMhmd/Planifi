@@ -83,12 +83,29 @@ module.exports.service_all_get =  async (req, res) => {
     try {
         const client = getClientsCollection();
         const services = await client.query(
-            `SELECT services.service_id, services.service_name,services.service_description,services.service_price, services.duration,
-                    pro.users_id AS professional_id, pro.email, pro.phone, pa.company_name, pa.company_address 
+            `SELECT services.service_id,
+                    services.service_name,
+                    services.service_description,
+                    services.service_price,
+                    services.duration,
+                    pro.users_id AS professional_id,
+                    pro.email,
+                    pro.phone,
+                    pro.profile_picture,
+                    pa.company_name,
+                    pa.company_address,
+                    service_image.image_url AS service_image_url
             FROM services 
             INNER JOIN users as pro 
             ON services.professional_id = pro.users_id
-            JOIN public.pro_account pa on pro.users_id = pa.user_id;`
+            JOIN public.pro_account pa on pro.users_id = pa.user_id
+            LEFT JOIN LATERAL (
+                SELECT image_url
+                FROM images_services_professionals
+                WHERE service_id = services.service_id
+                ORDER BY image_id ASC
+                LIMIT 1
+            ) AS service_image ON TRUE;`
         );
         verboseLogger(`Recuperation de l'ensemble des services`, '','servicesController.js', '/service', constants.GET_HTTP);
         return sendSuccess(res, services.rows)
@@ -153,15 +170,25 @@ module.exports.service_liste_pro_get = async (req, res) => {
                     services.duration,
                     pro.email,
                     pro.phone,
+                    pro.profile_picture,
                     pa.company_name,
                     pa.company_address,
+                    service_image.image_url AS service_image_url,
                     COUNT(reservations.reservation_id) AS reservations_a_venir
              FROM services
                       INNER JOIN users as pro
                                  ON services.professional_id = pro.users_id
+                      LEFT JOIN LATERAL (
+                          SELECT image_url
+                          FROM images_services_professionals
+                          WHERE service_id = services.service_id
+                          ORDER BY image_id ASC
+                          LIMIT 1
+                      ) AS service_image ON TRUE
                       LEFT JOIN reservations
                                  ON services.service_id = reservations.service_id
                                  AND TO_TIMESTAMP(reservations.day_of_week || ' ' || reservations.start_time, 'DD-MM-YYYY HH24:MI:SS') >= CURRENT_TIMESTAMP
+                                 AND reservations.status = 'confirmed'
                      join public.pro_account pa on pro.users_id = pa.user_id
              WHERE pro.users_id = $1
              group by services.service_id,
@@ -171,8 +198,10 @@ module.exports.service_liste_pro_get = async (req, res) => {
                       services.duration,
                       pro.email,
                       pro.phone,
+                      pro.profile_picture,
                       pa.company_name,
-                      pa.company_address
+                      pa.company_address,
+                      service_image.image_url
             `,
             [professionalId]
         );
@@ -184,25 +213,196 @@ module.exports.service_liste_pro_get = async (req, res) => {
     }
 }
 
-module.exports.search_service_get =  async (req, res) => {
+module.exports.search_service_get = async (req, res) => {
     try {
-        const searchTerm = req.query.q; // q est le paramètre de recherche dans l'URL
+        // On garde une logique simple :
+        // - q = ce que l'utilisateur cherche
+        // - ville = ville ciblée si elle est remplie
+        // - si l'utilisateur tape "coiffure - Paris" dans un seul champ, on le découpe ici
+        const rawSearchTerm = (req.query.q || '').trim();
+        const rawVille = (req.query.ville || '').trim();
+
+        let searchTerm = rawSearchTerm;
+        let ville = rawVille;
+
+        if (!ville && rawSearchTerm.includes('-')) {
+            const searchParts = rawSearchTerm
+                .split('-')
+                .map((part) => part.trim())
+                .filter(Boolean);
+
+            if (searchParts.length >= 2) {
+                searchTerm = searchParts[0];
+                ville = searchParts.slice(1).join(' ');
+            }
+        }
+
+        // Ici j'élargis un peu la recherche parce qu'en base on n'a pas de champ "métier".
+        // Du coup si quelqu'un cherche "coiffure", je fais aussi matcher des services typiques
+        // comme brushing, coupe, balayage, lissage, etc.
+        const normalizedSearchTerm = searchTerm.toLowerCase();
+        const normalizedVille = ville
+            .replace(/\s*-\s*/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .toLowerCase();
+
+        const searchPatterns = new Set(
+            normalizedSearchTerm
+                .split(/\s+/)
+                .map((word) => word.trim())
+                .filter(Boolean)
+                .map((word) => `%${word}%`)
+        );
+
+        if (normalizedSearchTerm.includes('coiff')) {
+            [
+                'coiff',
+                'coupe',
+                'brushing',
+                'balayage',
+                'lissage',
+                'coloration',
+                'patine',
+                'gloss',
+                'soin',
+                'ombre',
+                'blond',
+                'chignon',
+                'barbe',
+                'keratine',
+            ].forEach((keyword) => searchPatterns.add(`%${keyword}%`));
+        }
+
         const client = getClientsCollection();
 
+        // La recherche ne doit pas seulement regarder le nom exact du service.
+        // Je regarde aussi la description et le nom de l'entreprise pour remonter des résultats plus utiles.
         const services = await client.query(
-            `SELECT services.service_id, services.service_name, services.service_description, services.service_price, services.duration,
-                    pro.email, pro.phone, pa.company_name, pa.company_address 
-            FROM services 
-            INNER JOIN users pro
-            ON services.professional_id = pro.users_id
-            join public.pro_account pa on pro.users_id = pa.user_id
-            WHERE LOWER(services.service_name) ILIKE $1`,
-            [`%${searchTerm.toLowerCase()}%`]
+            `SELECT
+                services.service_id,
+                services.service_name,
+                services.service_description,
+                services.service_price,
+                services.duration,
+                services.professional_id,
+                pro.email,
+                pro.phone,
+                pro.profile_picture,
+                pa.company_name,
+                pa.company_address,
+                service_image.image_url AS service_image_url
+            FROM services
+            INNER JOIN users pro ON services.professional_id = pro.users_id
+            JOIN public.pro_account pa ON pro.users_id = pa.user_id
+            LEFT JOIN LATERAL (
+                SELECT image_url
+                FROM images_services_professionals
+                WHERE service_id = services.service_id
+                ORDER BY image_id ASC
+                LIMIT 1
+            ) AS service_image ON TRUE
+            WHERE (
+                cardinality($1::text[]) = 0
+                OR EXISTS (
+                    SELECT 1
+                    FROM unnest($1::text[]) AS pattern
+                    WHERE LOWER(services.service_name) ILIKE pattern
+                       OR LOWER(COALESCE(services.service_description, '')) ILIKE pattern
+                       OR LOWER(pa.company_name) ILIKE pattern
+                )
+            )
+            AND ($2 = '' OR LOWER(pa.company_address) ILIKE $3)`,
+            [
+                [...searchPatterns],
+                normalizedVille,
+                `%${normalizedVille}%`
+            ]
         );
-        verboseLogger(`Récuperation des services ayant un nom ressemblant à : ${searchTerm.toLowerCase()}`, '','servicesController.js', `/search-services`, constants.GET_HTTP)
+
+        verboseLogger(`Recherche: "${searchTerm}" à "${ville}" → ${services.rows.length} résultats`, '', 'servicesController.js', '/search-services', constants.GET_HTTP);
+        return sendSuccess(res, services.rows);
+
     } catch (e) {
-        verboseLogger(`Erreur lors de la recherche de services :: ${e.stack}`, '','servicesController.js', `/search-services`, constants.GET_HTTP)
-        return sendInternalServerError(res, 'Erreur lors de la recherche de services : ' + e.message)
+        errorLogger(`Erreur lors de la recherche : ${e.stack}`, '', 'servicesController.js', '/search-services', constants.GET_HTTP);
+        return sendInternalServerError(res, 'Erreur lors de la recherche : ' + e.message);
+    }
+}
+
+module.exports.search_suggestions_get = async (req, res) => {
+    try {
+        const rawQuery = (req.query.q || '').trim().toLowerCase();
+        const rawVille = (req.query.ville || '').trim().toLowerCase();
+        const client = getClientsCollection();
+
+        // Je limite volontairement à quelques résultats pour garder une liste légère.
+        const servicesQuery = await client.query(
+            `SELECT DISTINCT services.service_name
+             FROM services
+             WHERE $1 = '' OR LOWER(services.service_name) LIKE $1
+             ORDER BY services.service_name ASC
+             LIMIT 8`,
+            [`${rawQuery}%`]
+        );
+
+        // Ici je reconstruis la ville depuis l'adresse pro.
+        // Les adresses ressemblent souvent à "12 rue ..., 75004 Paris",
+        // donc je retire le code postal pour ne garder que le nom de ville.
+        const villesQuery = await client.query(
+            `SELECT DISTINCT
+                TRIM(
+                    REGEXP_REPLACE(pa.company_address, '^.*?,\\s*', '')
+                ) AS city_segment
+             FROM public.pro_account pa
+             WHERE pa.company_address IS NOT NULL
+               AND pa.company_address <> ''
+             ORDER BY city_segment ASC`
+        );
+
+        const villes = villesQuery.rows
+            .map((row) => row.city_segment?.trim())
+            .filter(Boolean)
+            .map((citySegment) => {
+                const match = citySegment.match(/^([0-9]{4,5})\s+(.+)$/);
+
+                if (!match) {
+                    return {
+                        label: citySegment,
+                        value: citySegment,
+                    };
+                }
+
+                const [, postalCode, cityName] = match;
+
+                return {
+                    label: `${postalCode} - ${cityName}`,
+                    value: `${postalCode} ${cityName}`,
+                };
+            })
+            .filter(
+                (city, index, array) =>
+                    array.findIndex((item) => item.value.toLowerCase() === city.value.toLowerCase()) === index
+            )
+            .filter((city) => {
+                if (rawVille === '') {
+                    return true;
+                }
+
+                const normalizedRawVille = rawVille.toLowerCase();
+                return (
+                    city.label.toLowerCase().startsWith(normalizedRawVille) ||
+                    city.value.toLowerCase().startsWith(normalizedRawVille)
+                );
+            })
+            .slice(0, 8);
+
+        return sendSuccess(res, {
+            services: servicesQuery.rows.map((row) => row.service_name),
+            villes,
+        });
+    } catch (e) {
+        errorLogger(`Erreur lors de la récupération des suggestions : ${e.stack}`, '', 'servicesController.js', '/service/search-suggestions', constants.GET_HTTP);
+        return sendInternalServerError(res, 'Erreur lors de la récupération des suggestions : ' + e.message);
     }
 }
 

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { startTransition, useEffect, useRef, useState } from 'react';
 import AppHeader from './components/AppHeader/AppHeader';
 import About from './components/About/About';
 import AuthPage from './components/AuthPage/AuthPage';
+import CalendarPage from './components/CalendarPage/CalendarPage';
 import CitiesCarousel from './components/CitiesCarousel/CitiesCarousel';
 import ConnectedNavbar from './components/ConnectedNavbar/ConnectedNavbar';
 import Faq from './components/Faq/Faq';
@@ -13,15 +14,23 @@ import ProfilePage from './components/ProfilePage/ProfilePage';
 import ReservationPage from './components/ReservationPage/ReservationPage';
 import ProviderDetailPage from './components/ProviderDetailPage/ProviderDetailPage';
 import ProviderSignupPage from './components/ProviderSignupPage/ProviderSignupPage';
-import { getCurrentLocation } from './lib/navigation';
+import { getCurrentLocation, isInternalNavigationTarget, navigateTo } from './lib/navigation';
 
 export default function App() {
 	const [location, setLocation] = useState(() => getCurrentLocation());
-	const pathname = location.pathname;
+	const [renderLocation, setRenderLocation] = useState(() => getCurrentLocation());
+	const [transitionStage, setTransitionStage] = useState('idle');
+	const exitTimerRef = useRef(null);
+	const enterTimerRef = useRef(null);
+	const pathname = renderLocation.pathname;
 
 	useEffect(() => {
 		function handleLocationChange() {
-			setLocation(getCurrentLocation());
+			// Je passe le changement de vue en transition pour éviter
+			// un rendu trop brutal quand une page lourde monte.
+			startTransition(() => {
+				setLocation(getCurrentLocation());
+			});
 		}
 
 		window.addEventListener('popstate', handleLocationChange);
@@ -32,8 +41,78 @@ export default function App() {
 		};
 	}, []);
 
+	useEffect(() => {
+		if (
+			location.pathname === renderLocation.pathname &&
+			location.search === renderLocation.search
+		) {
+			return;
+		}
+
+		window.clearTimeout(exitTimerRef.current);
+		window.clearTimeout(enterTimerRef.current);
+		setRenderLocation(location);
+		setTransitionStage('enter');
+
+		enterTimerRef.current = window.setTimeout(() => {
+			setTransitionStage('idle');
+		}, 180);
+
+		return () => {
+			window.clearTimeout(exitTimerRef.current);
+			window.clearTimeout(enterTimerRef.current);
+		};
+	}, [location, renderLocation.pathname, renderLocation.search]);
+
+	useEffect(() => () => {
+		window.clearTimeout(exitTimerRef.current);
+		window.clearTimeout(enterTimerRef.current);
+	}, []);
+
+	useEffect(() => {
+		function handleDocumentClick(event) {
+			if (
+				event.defaultPrevented ||
+				event.button !== 0 ||
+				event.metaKey ||
+				event.ctrlKey ||
+				event.shiftKey ||
+				event.altKey
+			) {
+				return;
+			}
+
+			const anchor = event.target.closest('a[href]');
+			if (!anchor) {
+				return;
+			}
+
+			if (
+				anchor.target === '_blank' ||
+				anchor.hasAttribute('download') ||
+				anchor.getAttribute('rel') === 'external'
+			) {
+				return;
+			}
+
+			const href = anchor.getAttribute('href');
+			if (!isInternalNavigationTarget(href)) {
+				return;
+			}
+
+			event.preventDefault();
+			navigateTo(href);
+		}
+
+		document.addEventListener('click', handleDocumentClick);
+		return () => {
+			document.removeEventListener('click', handleDocumentClick);
+		};
+	}, []);
+
 	const isProviderSignupPage = pathname === '/app/proposer-service';
 	const isReservationPage = pathname === '/app/reservation';
+	const isCalendarPage = pathname === '/app/calendar';
 	const isClientProfilePage = pathname === '/app/profil';
 	const isProfessionalProfilePage = pathname === '/app/profil/professionnel';
 	const isNavigationPage = pathname === '/navigation';
@@ -41,27 +120,32 @@ export default function App() {
 	const isSignupPage = pathname === '/inscription';
 	const isLoginPage = pathname === '/connexion';
 
+	let page;
+
 	if (isProviderSignupPage) {
-		return (
+		page = (
 			<>
 				<Header variant="provider-signup" />
 				<ProviderSignupPage />
 				<Footer />
 			</>
 		);
-	}
-
-	if (isReservationPage) {
-		return (
+	} else if (isReservationPage) {
+		page = (
 			<>
 				<ConnectedNavbar />
 				<ReservationPage />
 			</>
 		);
-	}
-
-	if (isSignupPage || isLoginPage) {
-		return (
+	} else if (isCalendarPage) {
+		page = (
+			<>
+				<ConnectedNavbar />
+				<CalendarPage />
+			</>
+		);
+	} else if (isSignupPage || isLoginPage) {
+		page = (
 			<>
 				<AppHeader
 					ctaHref={isLoginPage ? '/inscription/' : '/connexion/'}
@@ -71,42 +155,42 @@ export default function App() {
 				<AuthPage initialMode={isLoginPage ? 'login' : 'signup'} />
 			</>
 		);
-	}
-
-	if (isClientProfilePage || isProfessionalProfilePage) {
-		return (
+	} else if (isClientProfilePage || isProfessionalProfilePage) {
+		page = (
 			<>
 				<ProfilePage variant={isProfessionalProfilePage ? 'professional' : 'client'} />
 			</>
 		);
-	}
-
-	if (isNavigationPage) {
-		return (
+	} else if (isNavigationPage) {
+		page = (
 			<>
 				<ConnectedNavbar />
 				<NavigationPage />
 			</>
 		);
-	}
-
-	if (isProviderDetailPage) {
-		return (
+	} else if (isProviderDetailPage) {
+		page = (
 			<>
 				<ConnectedNavbar />
 				<ProviderDetailPage />
 			</>
 		);
+	} else {
+		page = (
+			<>
+				<Header variant="home" />
+				<Hero />
+				<CitiesCarousel />
+				<About />
+				<Faq />
+				<Footer />
+			</>
+		);
 	}
 
 	return (
-		<>
-			<Header variant="home" />
-			<Hero />
-			<CitiesCarousel />
-			<About />
-			<Faq />
-			<Footer />
-		</>
+		<div className={`app-shell app-shell--${transitionStage}`}>
+			{page}
+		</div>
 	);
 }

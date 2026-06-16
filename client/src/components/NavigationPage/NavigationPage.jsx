@@ -142,7 +142,7 @@ function UserAvatar({ profile, name = 'Bob Alves' }) {
 
 	async function handleLogout() {
 		await fetch('/deconnexion/client', { method: 'POST', credentials: 'same-origin' });
-		window.location.href = '/connexion/';
+		navigateTo('/connexion/');
 	}
 
 	const profileHref = profile?.est_pro ? '/app/profil/professionnel' : '/app/profil';
@@ -207,7 +207,7 @@ function NavigationCard({ item, selected, onSelect, isFavorite, onToggleFavorite
 			}`}
 		>
 			<div className="relative min-h-[148px] overflow-hidden rounded-[18px]">
-				<img src={navigationPlaceholder} alt={item.company} className="absolute inset-0 h-full w-full object-cover" />
+				<img src={item.previewImage || navigationPlaceholder} alt={item.company} className="absolute inset-0 h-full w-full object-cover" />
 				<button
 					type="button"
 					aria-label={isFavorite ? 'Supprimer des favoris' : 'Ajouter aux favoris'}
@@ -282,6 +282,7 @@ function buildNavigationProviders(serviceRows) {
 	serviceRows.forEach((serviceRow) => {
 		const providerId = String(serviceRow.professional_id);
 		const existingProvider = providersMap.get(providerId);
+		const previewImage = serviceRow.service_image_url || serviceRow.profile_picture || navigationPlaceholder;
 		const serviceItem = {
 			id: String(serviceRow.service_id),
 			name: serviceRow.service_name,
@@ -291,6 +292,9 @@ function buildNavigationProviders(serviceRows) {
 
 		if (existingProvider) {
 			existingProvider.servicesPreview.push(serviceItem);
+			if (!existingProvider.previewImage && previewImage) {
+				existingProvider.previewImage = previewImage;
+			}
 			return;
 		}
 
@@ -298,6 +302,8 @@ function buildNavigationProviders(serviceRows) {
 			id: providerId,
 			company: serviceRow.company_name,
 			location: serviceRow.company_address || '[localisation]',
+			profile_picture: serviceRow.profile_picture || '',
+			previewImage,
 			rating: '5,0',
 			reviews: 0,
 			policy: 'Réservation en ligne disponible. Les détails du prestataire seront enrichis directement depuis son profil.',
@@ -326,6 +332,31 @@ export default function NavigationPage() {
 	const [favorites, setFavorites] = useState(() => new Set());
 	const [toast, setToast] = useState(null);
 	const [providers, setProviders] = useState([]);
+
+	// On lit les paramètres de l'URL dans un state React
+	// → permet de détecter les changements même si le pathname (/navigation) ne change pas
+	const [searchQuery, setSearchQuery] = useState(
+		() => new URLSearchParams(window.location.search).get('q') || ''
+	);
+	const [searchVille, setSearchVille] = useState(
+		() => new URLSearchParams(window.location.search).get('ville') || ''
+	);
+
+	// On écoute TOUS les changements d'URL (bouton retour du navigateur OU navigateTo)
+	// Quand l'URL change, on relit les params et on met à jour le state
+	useEffect(() => {
+		function handleNavChange() {
+			const params = new URLSearchParams(window.location.search);
+			setSearchQuery(params.get('q') || '');
+			setSearchVille(params.get('ville') || '');
+		}
+		window.addEventListener('popstate', handleNavChange);
+		window.addEventListener('codex:navigation', handleNavChange);
+		return () => {
+			window.removeEventListener('popstate', handleNavChange);
+			window.removeEventListener('codex:navigation', handleNavChange);
+		};
+	}, []);
 
 	function toggleFavorite(id) {
 		setFavorites((prev) => {
@@ -360,9 +391,20 @@ export default function NavigationPage() {
 
 		async function loadPageData() {
 			try {
+				// On relit les params au moment du fetch (au cas où l'URL a changé)
+				const params = new URLSearchParams(window.location.search);
+				const q = params.get('q') || '';
+				const ville = params.get('ville') || '';
+
+				// Si l'user a tapé un terme → on appelle la route de recherche
+				// Sinon → on récupère tous les services
+				const servicesUrl = q
+					? `/service/search-services?q=${encodeURIComponent(q)}&ville=${encodeURIComponent(ville)}`
+					: '/service';
+
 				const [profileResponse, servicesResponse] = await Promise.all([
 					fetch('/profil', { credentials: 'same-origin' }),
-					fetch('/service', { credentials: 'same-origin' }),
+					fetch(servicesUrl, { credentials: 'same-origin' }),
 				]);
 
 				if (!profileResponse.ok || !servicesResponse.ok) {
@@ -381,7 +423,8 @@ export default function NavigationPage() {
 
 					const nextProviders = buildNavigationProviders(servicesPayload?.message || []);
 					setProviders(nextProviders);
-					setSelectedId((currentSelectedId) => currentSelectedId || nextProviders[0]?.id || null);
+					// On remet la sélection sur le premier résultat à chaque nouvelle recherche
+					setSelectedId(nextProviders[0]?.id || null);
 				}
 			} catch {
 				// On garde un écran vide si le backend n'est pas joignable.
@@ -393,7 +436,9 @@ export default function NavigationPage() {
 		return () => {
 			cancelled = true;
 		};
-	}, []);
+	// En ajoutant searchQuery et searchVille ici, React relance le useEffect
+	// à chaque fois que l'URL change (nouvelle recherche)
+	}, [searchQuery, searchVille]);
 
 	return (
 		<main className="min-h-screen animate-[pageEnter_280ms_cubic-bezier(0.22,1,0.36,1)] bg-[linear-gradient(180deg,#fafafa_0%,#ffffff_46%,#f4f4f2_100%)] text-[#1b1b1d]">
@@ -412,24 +457,58 @@ export default function NavigationPage() {
 				<div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
 					<div className="min-w-0">
 						<Reveal from="bottom" delay={80} className="mb-8">
+							{/* On affiche les termes de recherche venant de l'URL */}
 							<h1 className="text-[clamp(1.8rem,3vw,2.55rem)] font-semibold tracking-[-0.04em] text-[#161616]">
-								[Prestation recherché] : [Localisation]
+								{searchQuery
+									? `${searchQuery}${searchVille ? ` à ${searchVille}` : ''}`
+									: 'Tous les prestataires'}
 							</h1>
-							<p className="mt-4 text-[1.1rem] font-medium text-[#202020]">{providers.length} prestataires</p>
+							<div className="mt-4 flex items-center gap-4 flex-wrap">
+								<p className="text-[1.1rem] font-medium text-[#202020]">{providers.length} prestataires</p>
+								{/* Bouton reset : visible seulement quand une recherche est active */}
+								{searchQuery || searchVille ? (
+									<button
+										type="button"
+										onClick={() => navigateTo('/navigation')}
+										className="text-[0.9rem] text-[#666] underline underline-offset-2 hover:text-[#111] transition-colors"
+									>
+										Voir tous les prestataires
+									</button>
+								) : null}
+							</div>
 						</Reveal>
 
 						<div className="flex flex-col gap-5">
-							{providers.map((provider, index) => (
-								<Reveal key={provider.id} from="bottom" delay={160 + index * 90}>
-									<NavigationCard
-										item={provider}
-										selected={provider.id === selectedProvider?.id}
-										onSelect={setSelectedId}
-										isFavorite={favorites.has(provider.id)}
-										onToggleFavorite={toggleFavorite}
-									/>
-								</Reveal>
-							))}
+							{/* Si la recherche ne donne aucun résultat, on affiche un message */}
+							{providers.length === 0 && (searchQuery || searchVille) ? (
+								<div className="rounded-2xl border border-black/8 bg-white p-8 text-center shadow-sm">
+									<p className="text-[1.1rem] font-medium text-[#333]">
+										Aucun résultat pour &ldquo;{searchQuery}{searchVille ? ` à ${searchVille}` : ''}&rdquo;
+									</p>
+									<p className="mt-2 text-[0.95rem] text-[#888]">
+										Essaie d&apos;autres mots-clés ou consulte tous les prestataires.
+									</p>
+									<button
+										type="button"
+										onClick={() => navigateTo('/navigation')}
+										className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#0a0a0a] px-5 py-2.5 text-[0.9rem] font-medium text-white shadow transition hover:opacity-85"
+									>
+										Voir tous les prestataires
+									</button>
+								</div>
+							) : (
+								providers.map((provider, index) => (
+									<Reveal key={provider.id} from="bottom" delay={160 + index * 90}>
+										<NavigationCard
+											item={provider}
+											selected={provider.id === selectedProvider?.id}
+											onSelect={setSelectedId}
+											isFavorite={favorites.has(provider.id)}
+											onToggleFavorite={toggleFavorite}
+										/>
+									</Reveal>
+								))
+							)}
 						</div>
 					</div>
 
@@ -439,22 +518,23 @@ export default function NavigationPage() {
 							delay={140}
 							className="xl:sticky xl:top-[7.25rem] xl:self-start xl:max-h-[calc(100vh-8.5rem)] xl:overflow-y-auto xl:pr-1"
 						>
-						<div
-							key={selectedProvider?.id ?? 'empty-selection'}
-							className="animate-[panelSwapIn_280ms_cubic-bezier(0.22,1,0.36,1)]"
-						>
+						<div className="transition-[opacity,filter] duration-180 ease-out">
 						{selectedProvider ? (
 							<>
 						<div className="rounded-[28px] border border-black/6 bg-white/96 p-6 shadow-[0_16px_38px_rgba(17,19,30,0.05)]">
 							<div className="flex items-start justify-between gap-4">
 								<div className="flex items-start gap-4">
-									<div className="flex h-16 w-16 items-center justify-center rounded-full border border-black/12 text-[#1a1a1a]">
-										<svg viewBox="0 0 64 64" className="h-10 w-10" fill="none" aria-hidden="true">
-											<path d="M32 13C24 19 21 27 21 34C21 42 26 49 32 53C38 49 43 42 43 34C43 27 40 19 32 13Z" stroke="currentColor" strokeWidth="2.8" />
-											<path d="M32 18V49" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
-											<path d="M24.5 24.5C29 28 30.8 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
-											<path d="M39.5 24.5C35 28 33.2 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
-										</svg>
+									<div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-black/12 text-[#1a1a1a]">
+										{selectedProvider.profile_picture ? (
+											<img src={selectedProvider.profile_picture} alt={selectedProvider.company} className="h-full w-full object-cover" />
+										) : (
+											<svg viewBox="0 0 64 64" className="h-10 w-10" fill="none" aria-hidden="true">
+												<path d="M32 13C24 19 21 27 21 34C21 42 26 49 32 53C38 49 43 42 43 34C43 27 40 19 32 13Z" stroke="currentColor" strokeWidth="2.8" />
+												<path d="M32 18V49" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
+												<path d="M24.5 24.5C29 28 30.8 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+												<path d="M39.5 24.5C35 28 33.2 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+											</svg>
+										)}
 									</div>
 									<div>
 										<h2 className="text-[1.7rem] font-semibold tracking-[-0.03em] text-[#242424]">{selectedProvider.company}</h2>

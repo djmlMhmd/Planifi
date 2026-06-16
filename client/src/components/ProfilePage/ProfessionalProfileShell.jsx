@@ -11,6 +11,7 @@ import tipsImg3 from '../../assets/tips-3.png';
 import tipsImg4 from '../../assets/tips-4.png';
 import tipsImg5 from '../../assets/tips-5.png';
 import { getProviderById, saveProfessionalProvider, saveProviderOverride } from '../../data/providers';
+import { navigateTo } from '../../lib/navigation';
 import Reveal from '../Reveal/Reveal';
 import {
   BellOutlineIcon,
@@ -170,12 +171,16 @@ function ProfessionalProfile({ profile, serviceTiles, onAddService, onEditServic
 									<div className="absolute bottom-2 right-2 flex h-11 w-11 items-center justify-center rounded-full bg-[#1a1b20] text-white shadow-[0_10px_24px_rgba(17,19,30,0.18)]">
 										<PlusCircleIcon className="h-5 w-5" />
 									</div>
-									<svg viewBox="0 0 64 64" className="h-20 w-20 text-[#cfb16d]" fill="none" aria-hidden="true">
-										<path d="M32 13C24 19 21 27 21 34C21 42 26 49 32 53C38 49 43 42 43 34C43 27 40 19 32 13Z" stroke="currentColor" strokeWidth="2.8" />
-										<path d="M32 18V49" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
-										<path d="M24.5 24.5C29 28 30.8 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
-										<path d="M39.5 24.5C35 28 33.2 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
-									</svg>
+									{profile?.profile_picture ? (
+										<img src={profile.profile_picture} alt={draft.company} className="h-full w-full rounded-full object-cover" />
+									) : (
+										<svg viewBox="0 0 64 64" className="h-20 w-20 text-[#cfb16d]" fill="none" aria-hidden="true">
+											<path d="M32 13C24 19 21 27 21 34C21 42 26 49 32 53C38 49 43 42 43 34C43 27 40 19 32 13Z" stroke="currentColor" strokeWidth="2.8" />
+											<path d="M32 18V49" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
+											<path d="M24.5 24.5C29 28 30.8 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+											<path d="M39.5 24.5C35 28 33.2 33.5 32 40" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+										</svg>
+									)}
 								</div>
 
 								<div className="pt-2">
@@ -612,6 +617,7 @@ export default function ProfessionalDashboardShell({ profile }) {
 			price: formatServicePrice(service.service_price),
 			description: service.service_description || '',
 			duration: normalizeDurationInput(service.duration),
+			image: service.service_image_url || navigationPlaceholder,
 			large: index === 0,
 		}));
 	}
@@ -766,6 +772,7 @@ export default function ProfessionalDashboardShell({ profile }) {
 				duration: service.duration || '1h',
 				price: service.price,
 				description: service.description || '',
+				image: service.image || navigationPlaceholder,
 			})),
 		});
 	}, [baseProvider, professionalProviderId, currentProfile.company_address, currentProfile.company_name, serviceTiles]);
@@ -794,7 +801,7 @@ export default function ProfessionalDashboardShell({ profile }) {
 		const nextTab = getProfessionalTabFromLocation(targetUrl.search);
 
 		if (targetUrl.pathname !== window.location.pathname) {
-			window.location.href = targetUrl.toString();
+			navigateTo(targetUrl.toString());
 			return;
 		}
 
@@ -1186,7 +1193,7 @@ export default function ProfessionalDashboardShell({ profile }) {
 										<div className="grid flex-1 gap-4 grid-cols-[1fr_160px]">
 											<div className="relative min-h-[290px] overflow-hidden rounded-[22px] border border-black/6 bg-[#ebeef4]">
 												<img
-													src={favoritesPlaceholder}
+													src={selectedService?.image || favoritesPlaceholder}
 													alt="Illustration du service principal"
 													className="absolute inset-0 h-full w-full object-cover"
 												/>
@@ -1235,7 +1242,7 @@ export default function ProfessionalDashboardShell({ profile }) {
 														onClick={() => setSelectedServiceIndex(serviceTiles.findIndex((service) => service.id === tile.id))}
 														className="relative min-h-[136px] overflow-hidden rounded-[18px] border border-black/6 bg-[#ebeef4] text-left transition hover:-translate-y-px hover:shadow-[0_10px_24px_rgba(17,19,30,0.12)]"
 													>
-														<img src={favoritesPlaceholder} alt={tile.title} className="absolute inset-0 h-full w-full object-cover" />
+														<img src={tile.image || favoritesPlaceholder} alt={tile.title} className="absolute inset-0 h-full w-full object-cover" />
 														<div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.03)_0%,rgba(18,18,18,0.02)_48%,rgba(10,10,10,0.16)_100%)]" />
 														<div className="pointer-events-none absolute inset-x-0 bottom-0 h-[44%] bg-[linear-gradient(180deg,rgba(20,20,22,0.08)_0%,rgba(15,15,17,0.32)_38%,rgba(10,10,12,0.58)_100%)] backdrop-blur-[2px]" />
 														<p className="absolute bottom-3 left-4 right-4 z-[1] text-[1rem] font-medium text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.14)]">{tile.title}</p>
@@ -1533,4 +1540,3 @@ export default function ProfessionalDashboardShell({ profile }) {
 		</main>
 	);
 }
-

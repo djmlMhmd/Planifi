@@ -216,6 +216,7 @@ const createTableReservation = async () => {
                     day_of_week VARCHAR(10) NOT NULL,
                     start_time TIME NOT NULL,
                     end_time TIME NOT NULL,
+                    status VARCHAR(40) NOT NULL DEFAULT 'confirmed',
                     service_id INT,
                     CONSTRAINT FK_service_id FOREIGN KEY (service_id)
                         REFERENCES services(service_id)
@@ -228,6 +229,18 @@ const createTableReservation = async () => {
 				'createTableReservation'
 			);
 		} else {
+			// J'ajoute la colonne si elle manque pour garder la migration simple à relire.
+			await client.query(`
+				ALTER TABLE reservations
+				ADD COLUMN IF NOT EXISTS status VARCHAR(40) NOT NULL DEFAULT 'confirmed';
+			`);
+
+			await client.query(`
+				UPDATE reservations
+				SET status = 'confirmed'
+				WHERE status IS NULL OR status = '';
+			`);
+
 			verboseLogger(
 				'La table [reservation] existe déjà.',
 				'createTableReservation'

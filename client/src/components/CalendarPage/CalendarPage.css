@@ -1,0 +1,686 @@
+.prestat-calendar-shell .fc {
+	--fc-border-color: rgba(17, 19, 30, 0.08);
+	--fc-page-bg-color: transparent;
+	--fc-neutral-bg-color: #fafaf8;
+	--fc-list-event-hover-bg-color: rgba(0, 0, 0, 0.02);
+	--fc-today-bg-color: rgba(22, 23, 29, 0.04);
+	--fc-event-bg-color: transparent;
+	--fc-event-border-color: transparent;
+	--fc-event-text-color: inherit;
+	font-family: inherit;
+}
+
+.prestat-calendar-shell .fc-theme-standard td,
+.prestat-calendar-shell .fc-theme-standard th,
+.prestat-calendar-shell .fc-theme-standard .fc-scrollgrid {
+	border-color: rgba(17, 19, 30, 0.08);
+}
+
+.prestat-calendar-shell .fc-col-header-cell {
+	background: #fafaf8;
+	padding: 0.35rem 0;
+}
+
+.prestat-calendar-shell .fc-col-header-cell-cushion {
+	padding: 0.8rem 0.4rem;
+	font-size: 0.84rem;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: rgba(17, 19, 30, 0.42);
+}
+
+.prestat-calendar-shell .fc-daygrid-day-number,
+.prestat-calendar-shell .fc-timegrid-axis-cushion,
+.prestat-calendar-shell .fc-timegrid-slot-label-cushion {
+	padding: 0.65rem 0.8rem;
+	font-weight: 600;
+	color: #17181d;
+}
+
+.prestat-calendar-shell .fc-day-today .fc-daygrid-day-number {
+	color: #bb6320;
+	background: transparent;
+	border: 0;
+	box-shadow: none;
+}
+
+.prestat-calendar-shell .fc-daygrid-day-frame {
+	min-height: 8.8rem;
+}
+
+.prestat-calendar-shell .fc-daygrid-event,
+.prestat-calendar-shell .fc-timegrid-event,
+.prestat-calendar-shell .fc-list-event {
+	border: 0;
+	background: transparent;
+	box-shadow: none;
+	width: 100%;
+}
+
+.prestat-calendar-shell .fc-daygrid-event-harness,
+.prestat-calendar-shell .fc-timegrid-event-harness {
+	margin-left: 0;
+	margin-right: 0;
+}
+
+.prestat-calendar-shell .fc-daygrid-event-harness {
+	margin-left: 0;
+	margin-right: 0;
+}
+
+.prestat-calendar-shell .fc-direction-ltr .fc-timegrid-col-events,
+.prestat-calendar-shell .fc-direction-rtl .fc-timegrid-col-events {
+	margin: 0;
+}
+
+.prestat-calendar-shell .fc-timegrid-event-harness-inset .fc-timegrid-event,
+.prestat-calendar-shell .fc-timegrid-event {
+	border-radius: 0;
+}
+
+.prestat-calendar-shell .fc-timegrid-slot {
+	height: 3.8rem;
+}
+
+.prestat-calendar-shell .fc-timegrid-slot-label-cushion,
+.prestat-calendar-shell .fc-timegrid-axis-cushion {
+	font-size: 0.78rem;
+	color: rgba(17, 19, 30, 0.4);
+}
+
+.prestat-calendar-shell .fc-list {
+	border: 0;
+}
+
+.prestat-calendar-shell .fc-list-day-cushion {
+	background: #fafaf8;
+	padding: 1rem 1.2rem;
+	font-size: 0.92rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: rgba(17, 19, 30, 0.42);
+}
+
+.prestat-calendar-shell .fc-list-event td {
+	padding: 0.8rem 1rem;
+}
+
+.prestat-calendar-shell .fc-list-event-time {
+	width: 7.5rem;
+	font-size: 0.86rem;
+	font-weight: 600;
+	color: rgba(17, 19, 30, 0.54);
+}
+
+.prestat-calendar-shell .fc-list-event-title a,
+.prestat-calendar-shell .fc-daygrid-event-dot,
+.prestat-calendar-shell .fc-list-event-graphic {
+	display: none;
+}
+
+.prestat-calendar-shell .fc .fc-more-link {
+	display: block;
+	margin-top: 0.18rem;
+	padding: 0.28rem 0.42rem;
+	border-top: 1px solid rgba(17, 19, 30, 0.06);
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: rgba(17, 19, 30, 0.5);
+	text-align: left;
+	background: rgba(250, 250, 248, 0.92);
+	transition: color 160ms ease, background 160ms ease;
+}
+
+.prestat-calendar-shell .fc .fc-more-link:hover {
+	color: #17181d;
+	background: rgba(243, 244, 248, 0.96);
+}
+
+.prestat-calendar-shell .fc .fc-popover {
+	border: 1px solid rgba(17, 19, 30, 0.08);
+	border-radius: 0;
+	background: #ffffff;
+	box-shadow: 0 24px 60px rgba(17, 19, 30, 0.16);
+	overflow: hidden;
+	z-index: 40;
+}
+
+.prestat-calendar-shell .fc .fc-popover-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.95rem 1rem;
+	background: #ffffff;
+	border-bottom: 1px solid rgba(17, 19, 30, 0.06);
+}
+
+.prestat-calendar-shell .fc .fc-popover-title {
+	font-size: 0.98rem;
+	font-weight: 700;
+	color: #17181d;
+}
+
+.prestat-calendar-shell .fc .fc-popover-close {
+	display: flex;
+	height: 2rem;
+	width: 2rem;
+	align-items: center;
+	justify-content: center;
+	border-radius: 999px;
+	color: rgba(17, 19, 30, 0.54);
+	transition: background 160ms ease, color 160ms ease;
+}
+
+.prestat-calendar-shell .fc .fc-popover-close:hover {
+	background: rgba(243, 244, 248, 0.96);
+	color: #17181d;
+}
+
+.prestat-calendar-shell .fc .fc-popover-body {
+	padding: 0.55rem 0;
+	background: #ffffff;
+}
+
+.prestat-calendar-shell .fc .fc-popover-body .fc-daygrid-event-harness {
+	margin: 0;
+}
+
+.prestat-calendar-shell .fc .fc-popover-body .fc-daygrid-event {
+	margin: 0;
+}
+
+.prestat-calendar-shell .fc .fc-popover-body .prestat-calendar-month-pill {
+	border-radius: 0;
+}
+
+.prestat-calendar-month-pill {
+	display: flex;
+	align-items: stretch;
+	gap: 0.6rem;
+	overflow: hidden;
+	width: 100%;
+	border-radius: 0;
+	background: linear-gradient(135deg, rgba(243, 244, 248, 0.96) 0%, rgba(249, 250, 252, 0.96) 100%);
+	padding: 0.48rem 0.62rem 0.5rem 0.34rem;
+	font-size: 0.8rem;
+	color: #1a1b21;
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.74);
+}
+
+.prestat-calendar-month-pill.is-today {
+	background: linear-gradient(135deg, rgba(239, 140, 59, 0.16) 0%, rgba(247, 187, 132, 0.16) 100%);
+	color: #8f4e18;
+}
+
+.prestat-calendar-month-pill.is-past {
+	background: linear-gradient(135deg, rgba(65, 163, 109, 0.13) 0%, rgba(122, 198, 151, 0.13) 100%);
+	color: #246847;
+}
+
+.prestat-calendar-month-pill.is-cancelledByClient,
+.prestat-calendar-month-pill.is-cancelledByPro {
+	background: linear-gradient(135deg, rgba(217, 76, 76, 0.11) 0%, rgba(239, 162, 162, 0.13) 100%);
+	color: #9a3131;
+}
+
+.prestat-calendar-month-pill.is-upcoming {
+	background: linear-gradient(135deg, rgba(243, 244, 248, 0.96) 0%, rgba(249, 250, 252, 0.96) 100%);
+	color: #1a1b21;
+}
+
+.prestat-calendar-month-accent {
+	display: flex;
+	width: 0.28rem;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	background: rgba(23, 24, 29, 0.12);
+}
+
+.prestat-calendar-month-copy {
+	min-width: 0;
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 0.08rem;
+	padding-right: 0.05rem;
+}
+
+.prestat-calendar-month-dot {
+	height: 0.62rem;
+	width: 0.62rem;
+	flex-shrink: 0;
+	border-radius: 999px;
+	background: #17181d;
+}
+
+.prestat-calendar-month-pill.is-upcoming .prestat-calendar-month-accent {
+	background: rgba(23, 24, 29, 0.14);
+}
+
+.prestat-calendar-month-pill.is-today .prestat-calendar-month-dot {
+	background: #ef8c3b;
+}
+
+.prestat-calendar-month-pill.is-today .prestat-calendar-month-accent {
+	background: rgba(239, 140, 59, 0.28);
+}
+
+.prestat-calendar-month-pill.is-past .prestat-calendar-month-dot {
+	background: #41a36d;
+}
+
+.prestat-calendar-month-pill.is-past .prestat-calendar-month-accent {
+	background: rgba(65, 163, 109, 0.24);
+}
+
+.prestat-calendar-month-pill.is-cancelledByClient .prestat-calendar-month-dot,
+.prestat-calendar-month-pill.is-cancelledByPro .prestat-calendar-month-dot {
+	background: #d94c4c;
+}
+
+.prestat-calendar-month-pill.is-cancelledByClient .prestat-calendar-month-accent,
+.prestat-calendar-month-pill.is-cancelledByPro .prestat-calendar-month-accent {
+	background: rgba(217, 76, 76, 0.22);
+}
+
+.prestat-calendar-month-pill.is-cancelledByPro .prestat-calendar-month-dot {
+	position: relative;
+}
+
+.prestat-calendar-month-pill.is-cancelledByPro .prestat-calendar-month-dot::before,
+.prestat-calendar-month-pill.is-cancelledByPro .prestat-calendar-month-dot::after {
+	content: '';
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 7px;
+	height: 1.4px;
+	border-radius: 999px;
+	background: white;
+	transform-origin: center;
+}
+
+.prestat-calendar-month-pill.is-cancelledByPro .prestat-calendar-month-dot::before {
+	transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.prestat-calendar-month-pill.is-cancelledByPro .prestat-calendar-month-dot::after {
+	transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.prestat-calendar-month-text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.78rem;
+	font-weight: 700;
+	line-height: 1.15;
+}
+
+.prestat-calendar-month-time {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.72rem;
+	font-weight: 600;
+	line-height: 1.1;
+	color: rgba(17, 19, 30, 0.58);
+}
+
+.prestat-calendar-month-pill.is-today .prestat-calendar-month-time {
+	color: rgba(143, 78, 24, 0.74);
+}
+
+.prestat-calendar-month-pill.is-past .prestat-calendar-month-time {
+	color: rgba(36, 104, 71, 0.74);
+}
+
+.prestat-calendar-month-pill.is-cancelledByClient .prestat-calendar-month-time,
+.prestat-calendar-month-pill.is-cancelledByPro .prestat-calendar-month-time {
+	color: rgba(154, 49, 49, 0.72);
+}
+
+.prestat-calendar-time-pill {
+	display: flex;
+	height: 100%;
+	min-height: 0;
+	width: 100%;
+	gap: 0.6rem;
+	overflow: hidden;
+	background: linear-gradient(135deg, rgba(243, 244, 248, 0.96) 0%, rgba(249, 250, 252, 0.96) 100%);
+	padding: 0.46rem 0.58rem 0.46rem 0.34rem;
+	color: #1a1b21;
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.74);
+}
+
+.prestat-calendar-time-pill.is-today {
+	background: linear-gradient(135deg, rgba(239, 140, 59, 0.16) 0%, rgba(247, 187, 132, 0.16) 100%);
+	color: #8f4e18;
+}
+
+.prestat-calendar-time-pill.is-past {
+	background: linear-gradient(135deg, rgba(65, 163, 109, 0.13) 0%, rgba(122, 198, 151, 0.13) 100%);
+	color: #246847;
+}
+
+.prestat-calendar-time-pill.is-cancelledByClient,
+.prestat-calendar-time-pill.is-cancelledByPro {
+	background: linear-gradient(135deg, rgba(217, 76, 76, 0.11) 0%, rgba(239, 162, 162, 0.13) 100%);
+	color: #9a3131;
+}
+
+.prestat-calendar-time-pill.is-upcoming {
+	background: linear-gradient(135deg, rgba(243, 244, 248, 0.96) 0%, rgba(249, 250, 252, 0.96) 100%);
+	color: #1a1b21;
+}
+
+.prestat-calendar-time-accent {
+	display: flex;
+	width: 0.28rem;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	background: rgba(23, 24, 29, 0.12);
+}
+
+.prestat-calendar-time-dot {
+	height: 0.62rem;
+	width: 0.62rem;
+	flex-shrink: 0;
+	border-radius: 999px;
+	background: #17181d;
+}
+
+.prestat-calendar-time-pill.is-upcoming .prestat-calendar-time-accent {
+	background: rgba(23, 24, 29, 0.14);
+}
+
+.prestat-calendar-time-pill.is-today .prestat-calendar-time-dot {
+	background: #ef8c3b;
+}
+
+.prestat-calendar-time-pill.is-today .prestat-calendar-time-accent {
+	background: rgba(239, 140, 59, 0.28);
+}
+
+.prestat-calendar-time-pill.is-past .prestat-calendar-time-dot {
+	background: #41a36d;
+}
+
+.prestat-calendar-time-pill.is-past .prestat-calendar-time-accent {
+	background: rgba(65, 163, 109, 0.24);
+}
+
+.prestat-calendar-time-pill.is-cancelledByClient .prestat-calendar-time-dot,
+.prestat-calendar-time-pill.is-cancelledByPro .prestat-calendar-time-dot {
+	background: #d94c4c;
+}
+
+.prestat-calendar-time-pill.is-cancelledByClient .prestat-calendar-time-accent,
+.prestat-calendar-time-pill.is-cancelledByPro .prestat-calendar-time-accent {
+	background: rgba(217, 76, 76, 0.22);
+}
+
+.prestat-calendar-time-pill.is-cancelledByPro .prestat-calendar-time-dot {
+	position: relative;
+}
+
+.prestat-calendar-time-pill.is-cancelledByPro .prestat-calendar-time-dot::before,
+.prestat-calendar-time-pill.is-cancelledByPro .prestat-calendar-time-dot::after {
+	content: '';
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 7px;
+	height: 1.4px;
+	border-radius: 999px;
+	background: white;
+	transform-origin: center;
+}
+
+.prestat-calendar-time-pill.is-cancelledByPro .prestat-calendar-time-dot::before {
+	transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.prestat-calendar-time-pill.is-cancelledByPro .prestat-calendar-time-dot::after {
+	transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.prestat-calendar-time-copy {
+	min-width: 0;
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 0.06rem;
+}
+
+.prestat-calendar-time-title,
+.prestat-calendar-time-provider,
+.prestat-calendar-time-time {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	line-height: 1.1;
+}
+
+.prestat-calendar-time-title {
+	font-size: 0.82rem;
+	font-weight: 700;
+}
+
+.prestat-calendar-time-provider {
+	font-size: 0.72rem;
+	font-weight: 600;
+	color: rgba(17, 19, 30, 0.74);
+}
+
+.prestat-calendar-time-time {
+	font-size: 0.71rem;
+	font-weight: 600;
+	color: rgba(17, 19, 30, 0.58);
+}
+
+.prestat-calendar-time-pill.is-today .prestat-calendar-time-provider {
+	color: rgba(143, 78, 24, 0.78);
+}
+
+.prestat-calendar-time-pill.is-today .prestat-calendar-time-time {
+	color: rgba(143, 78, 24, 0.74);
+}
+
+.prestat-calendar-time-pill.is-past .prestat-calendar-time-provider {
+	color: rgba(36, 104, 71, 0.78);
+}
+
+.prestat-calendar-time-pill.is-past .prestat-calendar-time-time {
+	color: rgba(36, 104, 71, 0.74);
+}
+
+.prestat-calendar-time-pill.is-cancelledByClient .prestat-calendar-time-provider,
+.prestat-calendar-time-pill.is-cancelledByPro .prestat-calendar-time-provider {
+	color: rgba(154, 49, 49, 0.8);
+}
+
+.prestat-calendar-time-pill.is-cancelledByClient .prestat-calendar-time-time,
+.prestat-calendar-time-pill.is-cancelledByPro .prestat-calendar-time-time {
+	color: rgba(154, 49, 49, 0.72);
+}
+
+/* Sur les créneaux courts, je garde un bandeau propre
+   et je retire le prestataire pour éviter tout débordement. */
+.prestat-calendar-shell .fc-timegrid-event-short .prestat-calendar-time-pill {
+	padding: 0.34rem 0.42rem 0.34rem 0.28rem;
+}
+
+.prestat-calendar-shell .fc-timegrid-event-short .prestat-calendar-time-title {
+	font-size: 0.76rem;
+}
+
+.prestat-calendar-shell .fc-timegrid-event-short .prestat-calendar-time-provider {
+	display: none;
+}
+
+.prestat-calendar-shell .fc-timegrid-event-short .prestat-calendar-time-time {
+	font-size: 0.68rem;
+}
+
+.prestat-calendar-list-card {
+	display: flex;
+	align-items: stretch;
+	gap: 0.7rem;
+	background: linear-gradient(135deg, rgba(243, 244, 248, 0.96) 0%, rgba(249, 250, 252, 0.96) 100%);
+	padding: 0.82rem 0.92rem 0.82rem 0.34rem;
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.74);
+}
+
+.prestat-calendar-list-card.is-today {
+	background: linear-gradient(135deg, rgba(239, 140, 59, 0.16) 0%, rgba(247, 187, 132, 0.16) 100%);
+}
+
+.prestat-calendar-list-card.is-past {
+	background: linear-gradient(135deg, rgba(65, 163, 109, 0.13) 0%, rgba(122, 198, 151, 0.13) 100%);
+}
+
+.prestat-calendar-list-card.is-cancelledByClient {
+	background: linear-gradient(135deg, rgba(217, 76, 76, 0.11) 0%, rgba(239, 162, 162, 0.13) 100%);
+}
+
+.prestat-calendar-list-card.is-cancelledByPro {
+	background: linear-gradient(135deg, rgba(217, 76, 76, 0.11) 0%, rgba(239, 162, 162, 0.13) 100%);
+}
+
+.prestat-calendar-list-accent {
+	display: flex;
+	width: 0.28rem;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	background: rgba(23, 24, 29, 0.12);
+}
+
+.prestat-calendar-list-dot {
+	height: 0.62rem;
+	width: 0.62rem;
+	flex-shrink: 0;
+	border-radius: 999px;
+	background: #17181d;
+}
+
+.prestat-calendar-list-card.is-upcoming .prestat-calendar-list-accent {
+	background: rgba(23, 24, 29, 0.14);
+}
+
+.prestat-calendar-list-card.is-today .prestat-calendar-list-dot {
+	background: #ef8c3b;
+}
+
+.prestat-calendar-list-card.is-today .prestat-calendar-list-accent {
+	background: rgba(239, 140, 59, 0.28);
+}
+
+.prestat-calendar-list-card.is-past .prestat-calendar-list-dot {
+	background: #41a36d;
+}
+
+.prestat-calendar-list-card.is-past .prestat-calendar-list-accent {
+	background: rgba(65, 163, 109, 0.24);
+}
+
+.prestat-calendar-list-card.is-cancelledByClient .prestat-calendar-list-dot,
+.prestat-calendar-list-card.is-cancelledByPro .prestat-calendar-list-dot {
+	background: #d94c4c;
+}
+
+.prestat-calendar-list-card.is-cancelledByClient .prestat-calendar-list-accent,
+.prestat-calendar-list-card.is-cancelledByPro .prestat-calendar-list-accent {
+	background: rgba(217, 76, 76, 0.22);
+}
+
+.prestat-calendar-list-card.is-cancelledByPro .prestat-calendar-list-dot {
+	position: relative;
+}
+
+.prestat-calendar-list-card.is-cancelledByPro .prestat-calendar-list-dot::before,
+.prestat-calendar-list-card.is-cancelledByPro .prestat-calendar-list-dot::after {
+	content: '';
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 7px;
+	height: 1.4px;
+	border-radius: 999px;
+	background: white;
+	transform-origin: center;
+}
+
+.prestat-calendar-list-card.is-cancelledByPro .prestat-calendar-list-dot::before {
+	transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.prestat-calendar-list-card.is-cancelledByPro .prestat-calendar-list-dot::after {
+	transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.prestat-calendar-list-copy {
+	display: flex;
+	min-width: 0;
+	flex: 1;
+	flex-direction: column;
+	gap: 0.14rem;
+}
+
+.prestat-calendar-list-title {
+	font-size: 0.92rem;
+	font-weight: 700;
+	color: #17181d;
+}
+
+.prestat-calendar-list-provider {
+	font-size: 0.82rem;
+	color: rgba(17, 19, 30, 0.54);
+}
+
+.prestat-calendar-list-time {
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: rgba(17, 19, 30, 0.62);
+}
+
+.prestat-calendar-list-card.is-today .prestat-calendar-list-provider {
+	color: rgba(143, 78, 24, 0.78);
+}
+
+.prestat-calendar-list-card.is-today .prestat-calendar-list-time {
+	color: rgba(143, 78, 24, 0.74);
+}
+
+.prestat-calendar-list-card.is-past .prestat-calendar-list-provider {
+	color: rgba(36, 104, 71, 0.78);
+}
+
+.prestat-calendar-list-card.is-past .prestat-calendar-list-time {
+	color: rgba(36, 104, 71, 0.74);
+}
+
+.prestat-calendar-list-card.is-cancelledByClient .prestat-calendar-list-provider,
+.prestat-calendar-list-card.is-cancelledByPro .prestat-calendar-list-provider {
+	color: rgba(154, 49, 49, 0.8);
+}
+
+.prestat-calendar-list-card.is-cancelledByClient .prestat-calendar-list-time,
+.prestat-calendar-list-card.is-cancelledByPro .prestat-calendar-list-time {
+	color: rgba(154, 49, 49, 0.72);
+}
+
+@media (max-width: 900px) {
+	.prestat-calendar-shell .fc-daygrid-day-frame {
+		min-height: 7rem;
+	}
+
+	.prestat-calendar-shell .fc-timegrid-slot {
+		height: 3.2rem;
+	}
+}

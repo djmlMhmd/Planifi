@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import prestatLogo from '../../assets/prestat-logo.svg';
 import { useSession } from '../../hooks/useSession';
+import { navigateTo } from '../../lib/navigation';
 
 function ThinArrow() {
 	return (
@@ -28,7 +29,7 @@ function UserMenu() {
 
 	async function handleLogout() {
 		await fetch('/deconnexion/client', { method: 'POST', credentials: 'same-origin' });
-		window.location.href = '/connexion/';
+		navigateTo('/connexion/');
 	}
 
 	if (loading) {

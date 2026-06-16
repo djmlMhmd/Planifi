@@ -61,7 +61,12 @@ module.exports.reservation_post = async (req, res) => {
     // Récupère la durée du service depuis la table des services
     // Vérifie si le créneau horaire est déjà réservé
     const existingReservation = await client.query(
-        'SELECT * FROM reservations WHERE professional_id = $1 AND start_time = $2 AND service_id = $3 AND day_of_week = $4',
+        `SELECT * FROM reservations
+         WHERE professional_id = $1
+           AND start_time = $2
+           AND service_id = $3
+           AND day_of_week = $4
+           AND status = 'confirmed'`,
         [professional_id, start_time, service_id, day_of_week]
     );
 
@@ -107,6 +112,7 @@ module.exports.reservation_post = async (req, res) => {
     const overlapCheckQuery = `
         SELECT * FROM reservations
         WHERE professional_id = $1 AND day_of_week = $2
+        AND status = 'confirmed'
         AND NOT (start_time >= $4 OR end_time <= $3);
     `;
 
@@ -124,7 +130,9 @@ module.exports.reservation_post = async (req, res) => {
 
     // Faire la réservation
     await client.query(
-        'INSERT INTO reservations (professional_id, start_time, end_time, users_id, service_id, day_of_week) VALUES ($1, $2, $3, $4, $5, $6)',
+        `INSERT INTO reservations
+            (professional_id, start_time, end_time, users_id, service_id, day_of_week, status)
+         VALUES ($1, $2, $3, $4, $5, $6, 'confirmed')`,
         [
             professional_id,
             start_time,
@@ -193,7 +201,7 @@ module.exports.reservation_pro_get = async (req, res) => {
                 JOIN
                     users ON reservations.users_id = users.users_id
                 JOIN
-                    users as pro ON reservations.professional_id = users.users_id
+                    users as pro ON reservations.professional_id = pro.users_id
                 WHERE
                     reservations.professional_id = $1
             `,
@@ -228,6 +236,7 @@ module.exports.reservation_pro_get = async (req, res) => {
                         service_id: reservation.service_name,
                         professional_name: reservation.professional_name,
                         service_duration: durationString,
+                        status: reservation.status || 'confirmed',
                     },
                 },
             };
@@ -252,6 +261,7 @@ module.exports.reservation_client_get =  async (req, res) => {
                     reservations.day_of_week,
                     reservations.start_time,
                     reservations.end_time,
+                    reservations.status,
                     services.service_name,
                     CONCAT(pro."firstName", ' ', pro."lastName") AS professional_name,
                     pro_account.company_name
@@ -275,14 +285,30 @@ module.exports.reservation_client_get =  async (req, res) => {
         const result = await client.query(query);
 
         if (result.rows.length > 0) {
-            const reservations = result.rows.map((reservation) => ({
+            const reservations = result.rows.map((reservation) => {
+                const normalizedDate = moment(reservation.day_of_week, 'DD-MM-YYYY').format('YYYY-MM-DD');
+                const startTime = String(reservation.start_time).slice(0, 5);
+                const endTime = String(reservation.end_time).slice(0, 5);
+
+                return {
                 reservation_id: reservation.reservation_id,
                 title: reservation.company_name || reservation.professional_name,
+                company_name: reservation.company_name || reservation.professional_name,
+                professional_name: reservation.professional_name,
                 service_name: reservation.service_name,
-                start: `${moment(reservation.day_of_week, 'DD-MM-YYYY').format('DD/MM/YY')} ${String(reservation.start_time).slice(0, 5)} - ${String(reservation.end_time).slice(0, 5)}`,
-                date_label: moment(reservation.day_of_week, 'DD-MM-YYYY').format('DD/MM/YY'),
-                time_label: `${String(reservation.start_time).slice(0, 5)} - ${String(reservation.end_time).slice(0, 5)}`,
-            }));
+                status: reservation.status || 'confirmed',
+                day_of_week: reservation.day_of_week,
+                start_time: startTime,
+                end_time: endTime,
+                    // Je garde les champs historiques pour les composants déjà branchés.
+                    start: `${moment(reservation.day_of_week, 'DD-MM-YYYY').format('DD/MM/YY')} ${startTime} - ${endTime}`,
+                    date_label: moment(reservation.day_of_week, 'DD-MM-YYYY').format('DD/MM/YY'),
+                    time_label: `${startTime} - ${endTime}`,
+                    // Ces deux champs servent au vrai calendrier frontend.
+                    start_at: `${normalizedDate}T${startTime}:00`,
+                    end_at: `${normalizedDate}T${endTime}:00`,
+                };
+            });
             verboseLogger(`Reservations client ${id} trouvées`,'' ,'reservationController.js' ,'/reservations/client', constants.GET_HTTP)
             return sendSuccess(res, reservations)
         } else {
@@ -302,6 +328,7 @@ module.exports.reservation_byHour_get = async (req, res) => {
             SELECT start_time, end_time
             FROM reservations
             WHERE day_of_week = $1
+              AND status = 'confirmed'
         `;
         const queryValues = [selectedDate];
 
@@ -336,13 +363,13 @@ module.exports.reservation_delete = async (req, res) => {
         if (!isANumber(reservationId) ) {
             return sendBadRequest(res, "le reservationId doit etre un entier")
         }
-        const { id } = decodeJWT(req.cookies.jwt)
+        const { id, statut } = decodeJWT(req.cookies.jwt)
 
         logLogger(`Reservation ID: ${reservationId}`, '','reservationController.js',  `/supprimer-reservation/${reservationId}`, constants.DELETE_HTTP)
         // Récupérez le serviceId en interrogeant la base de données à partir de l'ID de réservation.
         const client = getClientsCollection();
         const queryForServiceId = `
-			SELECT service_id, users_id, professional_id, day_of_week, start_time FROM reservations 
+			SELECT service_id, users_id, professional_id, day_of_week, start_time, status FROM reservations 
 			WHERE reservation_id = $1;
 		`;
 
@@ -352,26 +379,32 @@ module.exports.reservation_delete = async (req, res) => {
             return sendSuccessWithNoContent(res, 'Réservation introuvable.')
         }
 
-        const { service_id: serviceId, users_id: userId, professional_id: proId, day_of_week, start_time } = service.rows[0];
-        if (userId !== id) {
+        const { service_id: serviceId, users_id: userId, professional_id: proId, day_of_week, start_time, status } = service.rows[0];
+
+        if (status && status !== 'confirmed') {
+            return sendSuccessWithNoContent(res, 'Réservation déjà annulée.')
+        }
+
+        const isClientOwner = userId === id;
+        const isProfessionalOwner = proId === id && statut === 'professionnel';
+
+        if (!isClientOwner && !isProfessionalOwner) {
             errorLogger(`Vous n'êtes pas autorisé à supprimer cette réservation:${reservationId}, service id: ${serviceId}, client id:${id}`, '','reservationController.js',  `/supprimer-reservation/${reservationId}`, constants.DELETE_HTTP)
             return sendUnauthorized(res, "Vous n'êtes pas autorisé à supprimer cette réservation.")
         }
 
+        const nextStatus = isProfessionalOwner ? 'cancelled_by_pro' : 'cancelled_by_client';
         const clientResultQuery = await client.query('select * from users where users_id = $1', [userId])
-        const proResultQuery = await client.query('select * from professionals where professional_id = $1', [proId])
+        const proResultQuery = await client.query('select * from users where users_id = $1', [proId])
         const serviceResultQuery = await client.query('select * from services where service_id = $1', [serviceId])
 
-        // Continuer avec la suppression si le serviceId correspond
-        const queryForDelete = `DELETE FROM reservations 
-			WHERE reservation_id = $1 AND service_id = $2 AND users_id = $3;
-		`;
-
-        const result = await client.query(queryForDelete, [
-            reservationId,
-            serviceId,
-            id,
-        ]);
+        // Ici je garde la réservation en base pour conserver l'historique d'annulation.
+        const result = await client.query(
+            `UPDATE reservations
+             SET status = $1
+             WHERE reservation_id = $2`,
+            [nextStatus, reservationId]
+        );
 
         if (result.rowCount === 1) {
             logLogger(`La réservation a été supprimée avec succès:${reservationId}, service id: ${serviceId}, client id:${id}`, '','reservationController.js',  `/supprimer-reservation/${reservationId}`, constants.DELETE_HTTP)
@@ -409,8 +442,7 @@ module.exports.reservation_delete = async (req, res) => {
             return
         }
 
-        errorLogger(`Vous n'êtes pas autorisé à supprimer cette réservation:${reservationId}, service id: ${serviceId}, client id:${id}`, '','reservationController.js',  `/supprimer-reservation/${reservationId}`, constants.DELETE_HTTP)
-        return sendUnauthorized(res, "Vous n'êtes pas autorisé à supprimer cette réservation.")
+        return sendFailure(res, "Impossible d'annuler cette réservation.")
     } catch (error) {
         errorLogger(`Erreur lors de la suppression de la réservation:` + JSON.stringify(error), '','reservationController.js',  `/supprimer-reservation/${reservationId}`, constants.DELETE_HTTP)
         return sendInternalServerError(res, 'Erreur lors de la suppression de la réservation : ' + error.message)
