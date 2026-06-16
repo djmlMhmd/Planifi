@@ -394,23 +394,157 @@ export function ClientReviewCard({ title }) {
 	);
 }
 
+function getReservationUiStatus(reservation) {
+	const reservationStatus = reservation.status || 'confirmed';
+
+	if (reservationStatus === 'cancelled_by_pro') {
+		return 'cancelledByPro';
+	}
+
+	if (reservationStatus === 'cancelled_by_client') {
+		return 'cancelledByClient';
+	}
+
+	if (!reservation.start_at || !reservation.end_at) {
+		return 'upcoming';
+	}
+
+	const now = new Date();
+	const eventStart = new Date(reservation.start_at);
+	const eventEnd = new Date(reservation.end_at);
+	const todayKey = now.toISOString().slice(0, 10);
+	const eventDayKey = reservation.start_at.slice(0, 10);
+
+	if (eventDayKey === todayKey) {
+		return 'today';
+	}
+
+	if (eventEnd < now) {
+		return 'past';
+	}
+
+	if (eventStart < now && eventEnd >= now) {
+		return 'today';
+	}
+
+	return 'upcoming';
+}
+
+function getReservationUiMeta(uiStatus) {
+	switch (uiStatus) {
+		case 'today':
+			return {
+				label: "Aujourd'hui",
+				dotClassName: 'bg-[var(--accent-mauve)]',
+				pillClassName: 'bg-[linear-gradient(135deg,rgba(149,99,214,0.16)_0%,rgba(201,179,235,0.22)_100%)] text-[var(--accent-mauve)]',
+				accentClassName: 'bg-[var(--accent-mauve)]',
+				textClassName: 'text-[var(--accent-mauve)]',
+			};
+		case 'past':
+			return {
+				label: 'Terminé',
+				dotClassName: 'bg-[#3f9a73]',
+				pillClassName: 'bg-[linear-gradient(135deg,rgba(65,163,109,0.13)_0%,rgba(122,198,151,0.13)_100%)] text-[#2f7e5d]',
+				accentClassName: 'bg-[#3f9a73]',
+				textClassName: 'text-[#2f7e5d]',
+			};
+		case 'cancelledByPro':
+			return {
+				label: 'Annulé par le prestataire',
+				dotClassName: 'bg-[#d85b68]',
+				pillClassName: 'bg-[linear-gradient(135deg,rgba(216,91,104,0.12)_0%,rgba(244,188,196,0.18)_100%)] text-[#b84a57]',
+				accentClassName: 'bg-[#d85b68]',
+				textClassName: 'text-[#b84a57]',
+			};
+		case 'cancelledByClient':
+			return {
+				label: 'Annulé',
+				dotClassName: 'bg-[#ef9b59]',
+				pillClassName: 'bg-[linear-gradient(135deg,rgba(239,155,89,0.14)_0%,rgba(249,208,170,0.18)_100%)] text-[#c97731]',
+				accentClassName: 'bg-[#ef9b59]',
+				textClassName: 'text-[#c97731]',
+			};
+		default:
+			return {
+				label: 'À venir',
+				dotClassName: 'bg-[#66a493]',
+				pillClassName: 'bg-[linear-gradient(135deg,rgba(102,164,147,0.13)_0%,rgba(193,225,215,0.18)_100%)] text-[#417b6b]',
+				accentClassName: 'bg-[#66a493]',
+				textClassName: 'text-[#417b6b]',
+			};
+	}
+}
+
 export function ReservationItem({ reservation }) {
-	// Le back prépare déjà les libellés, donc ici je me contente de les afficher proprement.
+	const [isOpen, setIsOpen] = useState(false);
 	const dateLabel = reservation.date_label || reservation.start || '--';
 	const timeLabel = reservation.time_label || '';
+	const statusLabel = reservation.status_label || reservation.state_label;
+	const reservationStatus = getReservationUiStatus(reservation);
+	const statusMeta = getReservationUiMeta(reservationStatus);
+	const providerName = reservation.title || reservation.provider_name || 'Prestataire';
+	const serviceMode = reservation.mode_label || reservation.service_mode || 'En présentiel';
+	const locationLabel = reservation.location || reservation.address || reservation.company_address || 'Adresse communiquée après confirmation';
+	const reservationReference = reservation.reference || `RDV-${String(reservation.reservation_id || '').slice(-6) || '000001'}`;
+	const detailSummary =
+		reservation.detail_summary ||
+		reservation.description ||
+		`${providerName} vous reçoit pour ${reservation.service_name?.toLowerCase() || 'ce rendez-vous'}. ${
+			reservationStatus === 'past'
+				? 'Ce créneau est maintenant terminé.'
+				: reservationStatus === 'today'
+					? "Votre rendez-vous est prévu aujourd'hui."
+					: 'Retrouvez ici les informations utiles avant le rendez-vous.'
+		}`;
 
 	return (
-		<div className="flex items-center gap-4 border-b border-black/6 py-3 last:border-b-0">
-			<ProviderAvatar size="h-11 w-11" />
-			<div className="min-w-0 flex-1">
-				<p className="truncate text-[1rem] font-semibold text-[#171717]">{reservation.service_name}</p>
-				<p className="truncate text-[0.9rem] text-black/50">{reservation.title}</p>
-				<p className="mt-1 text-[0.78rem] text-black/35">
-					<span className="font-semibold text-black/65">{dateLabel}</span>
-					{timeLabel ? ` ${timeLabel}` : ''}
-				</p>
+		<div className="border-b border-black/6 py-2.5 last:border-b-0">
+			<button
+				type="button"
+				onClick={() => setIsOpen((current) => !current)}
+				className="flex w-full items-center gap-3 rounded-[18px] px-2 py-2 text-left transition hover:bg-black/[0.018]"
+				aria-expanded={isOpen}
+			>
+				<div className={`h-[70px] w-1 shrink-0 rounded-none ${statusMeta.accentClassName}`} aria-hidden="true" />
+				<div className="shrink-0 pt-1">
+					<ProviderAvatar size="h-11 w-11" />
+				</div>
+				<div className="min-w-0 flex-1">
+					<p className="truncate text-[1.02rem] font-semibold leading-5 text-[#171717]">{reservation.service_name}</p>
+					<p className="mt-1 truncate text-[0.92rem] text-black/48">{providerName}</p>
+					<div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.82rem] text-black/38">
+						<span className="font-semibold text-black/68">{dateLabel}</span>
+						{timeLabel ? <span>{timeLabel}</span> : null}
+					</div>
+				</div>
+				<ArrowRightCircle className={`h-6 w-6 shrink-0 text-[#0f0f12] transition duration-200 ${isOpen ? 'rotate-90 opacity-70' : ''}`} />
+			</button>
+
+			<div className={`grid transition-all duration-200 ease-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+				<div className="overflow-hidden">
+					<div className="mr-2 mt-2 rounded-[18px] border border-black/7 bg-[linear-gradient(180deg,rgba(243,240,234,0.96)_0%,rgba(238,234,227,0.98)_100%)] px-4 py-4 text-[#181818] shadow-[0_10px_24px_rgba(17,19,30,0.045)] sm:ml-5">
+						<div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-black/8 pb-3 text-[0.82rem]">
+							<span className={`font-semibold ${statusMeta.textClassName}`}>{statusLabel || statusMeta.label}</span>
+							<span className="text-black/24">•</span>
+							<span className="text-black/62">{serviceMode}</span>
+							<span className="text-black/24">•</span>
+							<span className="font-medium text-black/72">{reservationReference}</span>
+						</div>
+
+						<div className="grid gap-3 pt-3 text-[0.84rem]">
+							<div className="grid gap-1 sm:grid-cols-[52px_minmax(0,1fr)] sm:gap-3">
+								<span className="font-semibold uppercase tracking-[0.08em] text-black/34">Lieu</span>
+								<span className="text-black/66">{locationLabel}</span>
+							</div>
+
+							<div className="grid gap-1 sm:grid-cols-[52px_minmax(0,1fr)] sm:gap-3">
+								<span className="font-semibold uppercase tracking-[0.08em] text-black/34">Note</span>
+								<p className="leading-6 text-black/68">{detailSummary}</p>
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
-			<ArrowRightCircle className="h-6 w-6 shrink-0 text-[#0f0f12]" />
 		</div>
 	);
 }

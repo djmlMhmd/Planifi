@@ -1,4 +1,5 @@
 import { startTransition, useEffect, useMemo, useState } from 'react';
+import favoritesPlaceholder from '../../assets/favorites-placeholder.jpg';
 import prestatLogo from '../../assets/prestat-logo.svg';
 import { navigateTo } from '../../lib/navigation';
 import Reveal from '../Reveal/Reveal';
@@ -41,6 +42,25 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 		() => ['Prestige Services', 'Élite Solutions', 'Pro Connect', 'Services Faciles'],
 		[]
 	);
+	const favoriteNewsItems = useMemo(
+		() => [
+			{
+				id: 'news-1',
+				company: 'Prestige Services',
+				title: 'Fermeture exceptionnelle',
+				body: 'Votre institut sera fermé exceptionnellement ce samedi pour travaux et réouverture lundi matin.',
+				image: favoritesPlaceholder,
+			},
+			{
+				id: 'news-2',
+				company: 'Pro Connect',
+				title: 'Offre : -10% sur nos prestations',
+				body: 'Nouvelle offre de rentrée réservée aux clients fidèles, valable sur une sélection de prestations.',
+				image: favoritesPlaceholder,
+			},
+		],
+		[]
+	);
 
 	const invoiceItems = useMemo(
 		// Je génère des libellés cohérents à partir du profil client.
@@ -73,6 +93,7 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 	const [billingView, setBillingView] = useState('invoices');
 	const [billingQuery, setBillingQuery] = useState('');
 	const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+	const [dashboardHighlight, setDashboardHighlight] = useState('reviews');
 
 	// Si le backend a déjà des réservations je les prends, sinon je garde un fallback visuel.
 	const reservationList = reservations.length
@@ -92,6 +113,11 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 	const filteredBillingItems = billingItems.filter((item) =>
 		item.toLowerCase().includes(billingQuery.trim().toLowerCase())
 	);
+	const profileAvatarFallback = {
+		...profile,
+		profile_picture: '',
+		profile_picture_preview: '',
+	};
 
 	useEffect(() => {
 		// Je resynchronise l'onglet si l'utilisateur navigue avec précédent / suivant.
@@ -135,6 +161,29 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 		startTransition(() => {
 			setActiveTab(nextTab);
 		});
+	}
+
+	function FavoriteNewsCard({ item }) {
+		return (
+			<div className="rounded-[24px] border border-black/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(247,246,242,0.96)_100%)] p-4 shadow-[0_16px_38px_rgba(17,19,30,0.05)]">
+				<div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+					<div className="relative h-[108px] w-full overflow-hidden rounded-[18px] bg-[#eef1f5] sm:h-[118px] sm:w-[120px] sm:shrink-0">
+						<img src={item.image} alt={item.company} className="h-full w-full object-cover" />
+					</div>
+					<div className="min-w-0 flex-1">
+						<div className="flex items-start justify-between gap-3">
+							<h3 className="text-[1.02rem] font-semibold text-[#171717]">{item.company}</h3>
+							<span className="mt-1 h-3.5 w-3.5 shrink-0 rounded-full bg-[#ff2d2d]" />
+						</div>
+						<p className="mt-2 text-[1rem] font-semibold text-[#b44d5c]">{item.title}</p>
+						<p className="mt-2 text-[0.94rem] leading-7 text-black/62">{item.body}</p>
+						<button type="button" className="mt-3 text-[0.9rem] font-medium text-[var(--accent-mauve)] transition hover:opacity-72">
+							&gt; En savoir plus
+						</button>
+					</div>
+				</div>
+			</div>
+		);
 	}
 
 	return (
@@ -230,7 +279,7 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 											{profile.est_verifie ? 'Utilisateur vérifié' : 'En attente'}
 										</p>
 									</div>
-									<UserAvatar profile={profile} />
+									<UserAvatar profile={profileAvatarFallback} />
 								</div>
 							</div>
 						</div>
@@ -282,7 +331,7 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 						</div>
 					</header>
 
-					<div className={`grid gap-8 px-5 pb-10 pt-8 sm:px-7 lg:px-9 lg:pt-11 ${activeTab === 'dashboard' ? 'xl:grid-cols-[1fr_305px]' : 'grid-cols-1'}`}>
+					<div className={`grid gap-8 px-5 pb-10 pt-8 sm:px-7 lg:px-9 lg:pt-11 ${activeTab === 'dashboard' ? 'xl:grid-cols-[1fr_360px]' : 'grid-cols-1'}`}>
 						<div
 							key={activeTab}
 							className={`min-w-0 transition-[opacity,transform] duration-220 ease-out ${
@@ -298,38 +347,52 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 										<div className="mb-8 flex flex-wrap items-center gap-3 sm:gap-4">
 											<button
 												type="button"
-												className="rounded-xl bg-[#101010] px-5 py-3 text-[0.95rem] font-semibold text-white shadow-[0_12px_28px_rgba(10,10,10,0.18)]"
+												onClick={() => setDashboardHighlight('reviews')}
+												className={`rounded-xl px-5 py-3 text-[0.95rem] font-semibold ${
+													dashboardHighlight === 'reviews'
+														? 'bg-[#101010] text-white shadow-[0_12px_28px_rgba(10,10,10,0.18)]'
+														: 'border border-black/6 bg-white/92 text-[#5a5a5a] shadow-[0_10px_24px_rgba(24,24,35,0.035)] hover:bg-black/[0.02]'
+												}`}
 											>
-												Laissez un avis
+												Laisser un avis
 											</button>
 											<button
 												type="button"
-												className="rounded-xl border border-black/6 bg-white/92 px-5 py-3 text-[0.95rem] font-medium text-[var(--accent-mauve)] shadow-[0_10px_24px_rgba(24,24,35,0.035)]"
+												onClick={() => setDashboardHighlight('news')}
+												className={`rounded-xl border px-5 py-3 text-[0.95rem] font-medium ${
+													dashboardHighlight === 'news'
+														? 'border-transparent bg-[#101010] text-white shadow-[0_12px_28px_rgba(10,10,10,0.18)]'
+														: 'border-black/6 bg-white/92 text-[#5a5a5a] shadow-[0_10px_24px_rgba(24,24,35,0.035)] hover:bg-black/[0.02]'
+												}`}
 											>
 												Actualités
 											</button>
 											<span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#ff2d2d] text-[0.6rem] font-semibold text-white sm:-ml-5 sm:-mt-5">
 												1
 											</span>
-											{Array.from({ length: 3 }).map((_, index) => (
-												<div
-													key={index}
-													className="flex h-12 w-[92px] items-center justify-center rounded-xl border border-black/5 bg-white/88 text-black/35 shadow-[0_10px_24px_rgba(24,24,35,0.03)]"
-												>
-													?
-												</div>
-											))}
 										</div>
 
-										<Reveal from="bottom">
-											<div className="grid gap-5 md:grid-cols-2">
-												{reviewCards.map((card, index) => (
-													<Reveal key={card} from="bottom" delay={index * 70}>
-														<ClientReviewCard title={card} />
-													</Reveal>
-												))}
-											</div>
-										</Reveal>
+										{dashboardHighlight === 'news' ? (
+											<Reveal key="news-panel" from="bottom">
+												<div className="mb-7 grid gap-5">
+													{favoriteNewsItems.map((item, index) => (
+														<Reveal key={item.id} from="bottom" delay={index * 70}>
+															<FavoriteNewsCard item={item} />
+														</Reveal>
+													))}
+												</div>
+											</Reveal>
+										) : (
+											<Reveal key="reviews-panel" from="bottom" delay={40}>
+												<div className="grid gap-5 md:grid-cols-2">
+													{reviewCards.map((card, index) => (
+														<Reveal key={card} from="bottom" delay={index * 70}>
+															<ClientReviewCard title={card} />
+														</Reveal>
+													))}
+												</div>
+											</Reveal>
+										)}
 
 										<Reveal from="bottom" delay={120}>
 											<section className="mt-7 rounded-[24px] border border-black/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(249,248,244,0.96)_100%)] p-7 shadow-[0_16px_38px_rgba(17,19,30,0.05)]">
@@ -383,7 +446,7 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 
 						{activeTab === 'dashboard' ? (
 							<Reveal from="bottom" delay={90}>
-									<aside className="rounded-[24px] border border-black/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(248,246,241,0.96)_100%)] px-6 py-5 shadow-[0_16px_38px_rgba(17,19,30,0.05)]">
+									<aside className="rounded-[24px] border border-black/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(248,246,241,0.96)_100%)] px-7 py-5 shadow-[0_16px_38px_rgba(17,19,30,0.05)]">
 										<div className="mb-6 flex items-center justify-between">
 											<p className="text-[0.94rem] font-medium text-black/58">Mes rendez-vous</p>
 											<DotsIcon className="h-5 w-5 text-black/35" />
@@ -434,7 +497,7 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 								</div>
 
 								<div className="mt-5 flex items-center gap-3">
-									<UserAvatar profile={profile} />
+									<UserAvatar profile={profileAvatarFallback} />
 									<div className="min-w-0">
 										<p className="truncate text-[1rem] font-semibold text-white">
 											{profile.firstName} {profile.lastName}
@@ -495,7 +558,7 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 						>
 							<div className="flex min-h-full items-center justify-center px-4 py-6">
 								<div
-									className="w-full max-w-[720px] rounded-[28px] bg-white p-6 shadow-[0_30px_80px_rgba(0,0,0,0.22)]"
+									className="w-full max-w-[780px] rounded-[28px] bg-white p-6 shadow-[0_30px_80px_rgba(0,0,0,0.22)]"
 									onClick={(event) => event.stopPropagation()}
 								>
 									<div className="mb-5 flex items-center justify-between gap-4">
