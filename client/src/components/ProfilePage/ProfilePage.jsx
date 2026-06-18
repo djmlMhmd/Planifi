@@ -21,6 +21,8 @@ export default function ProfilePage({ variant = 'client' }) {
 			const endpoint = variant === 'professional' ? '/profil/professionnel/' : '/profil';
 
 			try {
+				// Promise.all lance les deux requêtes en même temps,
+				// donc j'évite d'attendre l'une puis l'autre pour rien.
 				const [profileResponse, reservationsResponse] = await Promise.all([
 					fetchWithTimeout(endpoint, { credentials: 'same-origin' }),
 					variant === 'client'
@@ -74,6 +76,8 @@ export default function ProfilePage({ variant = 'client' }) {
 		loadProfile();
 
 		return () => {
+			// Si le composant disparaît pendant le chargement,
+			// j'évite une mise à jour d'état sur une vue déjà démontée.
 			cancelled = true;
 		};
 	}, [variant]);

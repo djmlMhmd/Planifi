@@ -21,9 +21,6 @@ router.put('/profil/update-profil-picture', requiredAuth, uploadSingle, profilCo
 
 
 router.post('/profil/:idPro/upload-service-picture/:serviceId',requiredAuth, profilController.upload_images_service_post)
-
-router.put('/profil/:id/update-preferences', requiredAuth, uploadSingle, profilController.update_preferences_put)
-
 router.delete('/profil/service-picture/:imageId', requiredAuth, profilController.image_service_delete)
 
 

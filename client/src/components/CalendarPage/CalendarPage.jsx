@@ -44,6 +44,7 @@ function ChevronRight({ className = '' }) {
 }
 
 function buildCalendarEvents(reservations) {
+	// Je transforme ici les réservations du back en évènements compris par FullCalendar.
 	const now = new Date();
 	const todayKey = now.toISOString().slice(0, 10);
 
@@ -85,6 +86,7 @@ function buildCalendarEvents(reservations) {
 }
 
 function formatLongDate(dateValue) {
+	// Je centralise le format long ici pour réutiliser exactement le même libellé partout.
 	return new Intl.DateTimeFormat('fr-FR', {
 		weekday: 'long',
 		day: 'numeric',
@@ -94,6 +96,8 @@ function formatLongDate(dateValue) {
 }
 
 function EventCard({ eventInfo }) {
+	// FullCalendar me donne des vues différentes selon le mode choisi,
+	// donc j'adapte juste le rendu sans dupliquer la logique métier.
 	const isListView = eventInfo.view.type.startsWith('list');
 	const isGridMonth = eventInfo.view.type === 'dayGridMonth';
 	const providerName = eventInfo.event.extendedProps.provider_name;
@@ -158,11 +162,17 @@ export default function CalendarPage({ embedded = false }) {
 		let cancelled = false;
 
 		async function loadReservations() {
+			// Je remets l'état de chargement avant chaque fetch pour éviter d'afficher
+			// de vieilles données si la page se recharge.
 			setLoading(true);
 			setError('');
 
 			try {
+				// await attend que la route réponde avant de passer à la suite.
+				// Ici ça me permet de récupérer la réponse brute avant d'essayer de lire son JSON.
 				const response = await fetchWithTimeout('/reservation/client', { credentials: 'same-origin' });
+				// J'attends ensuite la lecture du body pour pouvoir afficher
+				// soit les réservations, soit le message d'erreur renvoyé par le back.
 				const payload = await readJsonSafely(response);
 
 				if (!response.ok) {
@@ -237,6 +247,8 @@ export default function CalendarPage({ embedded = false }) {
 	}, [calendarEvents]);
 
 	function updateCalendarTitle() {
+		// Je relis le titre directement depuis FullCalendar
+		// pour rester aligné avec la période réellement affichée.
 		const calendarApi = calendarRef.current?.getApi();
 		if (!calendarApi) return;
 		setCurrentView(calendarApi.view.type);

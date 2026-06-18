@@ -444,7 +444,7 @@ module.exports.confirm_registration_get = async (req, res) => {
 				constants.GET_HTTP
 			);
 			return sendSuccess(res, 'Votre inscription a bien été confirmée');
-		} catch (e) {
+		} catch {
 			return sendInternalServerError(
 				res,
 				`Erreur lors de la mise à jour du statut 'est_verifie' de l'utilisateur ${id}`
@@ -526,10 +526,10 @@ module.exports.resend_mail_register_post = async (req, res) => {
 				"Échec de l'authentification : e-mail non trouvé"
 			);
 		}
-	} catch (e) {
+	} catch {
 		return sendInternalServerError(
 			res,
-			`Erreur lors du renvoie de mail à l'utilisateur ${id}`
+			`Erreur lors du renvoie de mail à l'utilisateur ${email}`
 		);
 	}
 };
@@ -596,7 +596,7 @@ module.exports.forgot_password_post = async (req, res) => {
 				"Échec de l'authentification : e-mail non trouvé"
 			);
 		}
-	} catch (e) {
+	} catch {
 		return sendInternalServerError(
 			res,
 			`Erreur lors de l'envoie du mail pour obtenir la réinitialisation du mot de passe ${email}`

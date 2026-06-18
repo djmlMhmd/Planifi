@@ -36,6 +36,8 @@ function UserAvatar({ profile }) {
 
 	useEffect(() => {
 		function handleClickOutside(event) {
+			// contains permet de savoir si le clic est parti du menu
+			// ou d'un élément dedans. Si ce n'est pas le cas, je le ferme.
 			if (menuRef.current && !menuRef.current.contains(event.target)) {
 				setOpen(false);
 			}
@@ -46,6 +48,8 @@ function UserAvatar({ profile }) {
 	}, []);
 
 	async function handleLogout() {
+		// J'attends la fin de la requête avant de rediriger,
+		// sinon le front pourrait partir avant que la session soit bien fermée.
 		await fetch('/deconnexion/client', { method: 'POST', credentials: 'same-origin' });
 		navigateTo('/connexion/');
 	}
@@ -59,6 +63,8 @@ function UserAvatar({ profile }) {
 				onClick={() => setOpen((value) => !value)}
 				className="flex items-center gap-2 rounded-full transition hover:opacity-90 md:gap-3"
 			>
+				{/* J'utilise la forme setState(prev => ...) pour être sûr
+				    de toujours repartir de la valeur la plus récente. */}
 				{imageSrc ? (
 					<div className="h-12 w-12 overflow-hidden rounded-full md:h-14 md:w-14">
 						<img src={imageSrc} alt="Profil" className="h-full w-full object-cover" />
@@ -98,6 +104,8 @@ function UserAvatar({ profile }) {
 
 export default function ConnectedNavbar() {
 	const [profile, setProfile] = useState(() => {
+		// L'initialiseur de useState n'est exécuté qu'au premier rendu,
+		// donc c'est le bon endroit pour relire le cache sans le refaire à chaque render.
 		if (typeof window === 'undefined') {
 			return null;
 		}
@@ -134,11 +142,14 @@ export default function ConnectedNavbar() {
 
 		async function loadProfile() {
 			try {
+				// await attend la réponse HTTP avant d'essayer de lire le body.
 				const response = await fetch('/profil', { credentials: 'same-origin' });
 				if (!response.ok) {
 					return;
 				}
 
+				// Ici j'attends la conversion en JSON,
+				// sinon payload contiendrait encore une promesse et pas les données.
 				const payload = await response.json();
 				if (!cancelled && payload?.message) {
 					setProfile(payload.message);
@@ -199,6 +210,8 @@ export default function ConnectedNavbar() {
 							<div className="absolute left-0 top-[calc(100%+10px)] z-50 w-[calc(100%+26px)] overflow-hidden rounded-[18px] border border-black/8 bg-white p-2 shadow-[0_18px_40px_rgba(17,19,30,0.12)]">
 								<button
 									type="button"
+									// preventDefault sur mousedown évite que l'input perde le focus
+									// avant que le clic sur la suggestion soit traité.
 									onMouseDown={(event) => event.preventDefault()}
 									onClick={handleDiscoverProviders}
 									className="block w-full rounded-[12px] px-3 py-3 text-left text-[0.96rem] text-[var(--accent-mauve)] transition hover:bg-black/5"
@@ -212,6 +225,8 @@ export default function ConnectedNavbar() {
 									<button
 										key={suggestion}
 										type="button"
+										// Même idée ici : je garde l'input "vivant"
+										// pendant le clic sur une suggestion.
 										onMouseDown={(event) => event.preventDefault()}
 										onClick={() => handleSelectService(suggestion)}
 										className="block w-full rounded-[12px] px-3 py-2.5 text-left text-[0.96rem] text-[#1f1f1f] transition hover:bg-black/5"
@@ -247,6 +262,8 @@ export default function ConnectedNavbar() {
 									<button
 										key={suggestion.value}
 										type="button"
+										// Sans preventDefault ici, l'input blur trop tôt
+										// et la liste peut se fermer avant la sélection.
 										onMouseDown={(event) => event.preventDefault()}
 										onClick={() => handleSelectVille(suggestion)}
 										className="block w-full rounded-[12px] px-3 py-2.5 text-left text-[0.96rem] text-[#1f1f1f] transition hover:bg-black/5"

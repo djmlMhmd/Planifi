@@ -1,4 +1,4 @@
-import { startTransition, useEffect, useRef, useState } from 'react';
+import { startTransition, useEffect, useState } from 'react';
 import AppHeader from './components/AppHeader/AppHeader';
 import About from './components/About/About';
 import AuthPage from './components/AuthPage/AuthPage';
@@ -19,7 +19,6 @@ export default function App() {
 	const [location, setLocation] = useState(() => getCurrentLocation());
 	const [renderLocation, setRenderLocation] = useState(() => getCurrentLocation());
 	const [transitionStage, setTransitionStage] = useState('idle');
-	const exitTimerRef = useRef(null);
 	const enterTimerRef = useRef(null);
 	const pathname = renderLocation.pathname;
 
@@ -42,6 +41,8 @@ export default function App() {
 
 	useEffect(() => {
 		if (location.pathname === '/app/calendar') {
+			// Je redirige l'ancienne route calendrier vers l'onglet du profil
+			// pour garder une seule entrée front côté React.
 			navigateTo('/app/profil?tab=calendar', { replace: true });
 		}
 	}, [location.pathname]);
@@ -54,7 +55,6 @@ export default function App() {
 			return;
 		}
 
-		window.clearTimeout(exitTimerRef.current);
 		window.clearTimeout(enterTimerRef.current);
 		setRenderLocation(location);
 		setTransitionStage('enter');
@@ -64,13 +64,11 @@ export default function App() {
 		}, 180);
 
 		return () => {
-			window.clearTimeout(exitTimerRef.current);
 			window.clearTimeout(enterTimerRef.current);
 		};
 	}, [location, renderLocation.pathname, renderLocation.search]);
 
 	useEffect(() => () => {
-		window.clearTimeout(exitTimerRef.current);
 		window.clearTimeout(enterTimerRef.current);
 	}, []);
 
@@ -105,6 +103,8 @@ export default function App() {
 				return;
 			}
 
+			// Je coupe le comportement natif du lien pour laisser
+			// le routeur front changer la page sans recharger le document.
 			event.preventDefault();
 			navigateTo(href);
 		}

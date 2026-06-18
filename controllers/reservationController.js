@@ -173,7 +173,7 @@ module.exports.reservation_post = async (req, res) => {
             await sendRendezVousPrisPro(emailPro, prenom_pro, rdvInfosPro)
         }
     }
-    catch (e) {
+    catch {
         errorLogger(`Erreur lors de la reservation avec les infos: pro: ${professional_id}, heure début: ${start_time}, service id: ${service_id}, jour de la semaine: ${day_of_week}, user: ${users_id}`, '','reservationController.js' ,'/reservation', constants.POST_HTTP)
         return sendFailure(res, 'Erreur lors de la reservation' )
     }
@@ -435,7 +435,7 @@ module.exports.reservation_delete = async (req, res) => {
                     await sendRendezVousAnnulePro(emailPro, prenom_pro, rdvInfosPro)
                 }
             }
-            catch (e) {
+            catch {
                 errorLogger(`Erreur lors de la reservation avec les infos: pro: ${proId}, heure début: ${start_time}, service id: ${serviceId}, jour de la semaine: ${day_of_week}, user: ${userId}`, '','reservationController.js',  `/supprimer-reservation/${reservationId}`, constants.DELETE_HTTP)
                 return sendFailure(res, 'Erreur lors de la suppresion de la reservation' )
             }

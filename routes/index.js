@@ -35,8 +35,4 @@ router.get('/reservations.html', requiredAuth, redirectToReactPath('/app/reserva
 router.get('/profil-client.html', requiredAuth, redirectToReactPath('/app/profil'));
 router.get('/profil-pro.html', requiredAuth, redirectToReactPath('/app/profil/professionnel'));
 
-router.get('/test', (req, res) => {
-	res.sendFile(path.join(__dirname, '..', 'test', 'test.html'));
-});
-
 module.exports = router;

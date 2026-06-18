@@ -16,6 +16,16 @@ const path = require("node:path");
 const saltRounds = 10;
 const uploadsRoot = path.join(__dirname, "..", "public", "uploads");
 
+function omitUserMeta(row = {}) {
+    // Je retire juste les champs internes qu'on ne veut pas renvoyer au front.
+    const safeRow = { ...row };
+    delete safeRow.password;
+    delete safeRow.creation_date;
+    delete safeRow.user_id;
+    delete safeRow.professional_id;
+    return safeRow;
+}
+
 function getUploadDirectory(folderName) {
     return path.join(uploadsRoot, folderName);
 }
@@ -100,9 +110,7 @@ module.exports.profil_pro_get = async (req, res) => {
             return sendError(res, 'Profil professionnel non trouvé')
         }
 
-        const { password, creation_date, user_id, professional_id, ...professionalProfile } =
-            result.rows[0];
-        return sendSuccess(res, professionalProfile)
+        return sendSuccess(res, omitUserMeta(result.rows[0]))
     } catch (e) {
         errorLogger(`Erreur lors de la récupération du profil professionnel: ${JSON.stringify(e.stack)}`, '','profilController.js',`/profil/professionnel/${id}`, constants.GET_HTTP)
         return sendInternalServerError(res, 'Erreur serveur' )
@@ -135,8 +143,7 @@ module.exports.profil_client_get =  async (req, res) => {
             return sendError(res, 'Profil non trouvé' )
         }
 
-        const { password, creation_date, ...clientProfile } = result.rows[0];
-        return sendSuccess(res, clientProfile)
+        return sendSuccess(res, omitUserMeta(result.rows[0]))
     } catch (e) {
         errorLogger(`Erreur lors de la récupération du profil client: ${JSON.stringify(e.stack)}`, '','profilController.js', `/profil`, constants.GET_HTTP)
         return sendInternalServerError(res, 'Erreur serveur' )
@@ -248,8 +255,7 @@ module.exports.update_profile_picture_put = async (req, res) => {
 
         const resultGetUser = await client.query(queryGetUser);
 
-        const { password, creation_date, ...clientProfile} = resultGetUser.rows[0];
-        return sendSuccessfullyCreated(res, clientProfile )
+        return sendSuccessfullyCreated(res, omitUserMeta(resultGetUser.rows[0]))
 
     } catch (e) {
         errorLogger('Erreur lors de la récupération du profil:' + e.stack, '','profilController.js', `/profil/${id}/update-profil-picture`, constants.PUT_HTTP)
@@ -373,7 +379,7 @@ module.exports.image_service_delete =  async (req, res) => {
             await client.query('DELETE from images_services_professionals where image_id = $1 and pro_id = $2', [imageId, id]);
             logLogger(`l'image ${picture_path} de l'utilisateur ${id} (pro) a bien été supprimée`, '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
             return sendSuccess(res, "l'image a bien été supprimée")
-        } catch (e) {
+        } catch {
             errorLogger(`Erreur lors de la suppression de la photo ${picture_path} (${imageId}) du service de l'utilisateur ${id} (pro)`,  '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
             return sendError(res, `Erreur lors de la suppression de la photo ${picture_path} (${imageId}) du service de l'utilisateur ${id} (pro)`)
         }
@@ -382,18 +388,4 @@ module.exports.image_service_delete =  async (req, res) => {
         errorLogger(`l'image (${imageId}) n'appartient pas à l'utilisateur ${id} (pro)`, '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
         return sendBadRequest(res, `l'image (${imageId}) n'appartient pas à l'utilisateur ${id} (pro)`)
     }
-
-
-    // else {
-    //     warnLogger(`L'utilisateur ${id} a tenté de supprimer l'image ${imageId}`, '','profilController.js', `/profil/service-picture/${imageId}`, constants.DELETE_HTTP)
-    //     return sendUnauthorized(res, 'Permission non autorisé')
-    // }
-    
-}
-
-module.exports.update_preferences_put = async (req, res) => {
-    const { id, statut } = decodeJWT(req.cookies.jwt)
-
-    //TODO: demander à Djamal plus de précisions
-    return res.status(201).end()
 }

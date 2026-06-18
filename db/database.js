@@ -255,52 +255,6 @@ const createTableReservation = async () => {
 	}
 };
 
-const createTableMessages = async () => {
-	try {
-		const checkTableQuery = `
-      SELECT to_regclass('public.messages') as table_exists;
-    `;
-
-		const result = await client.query(checkTableQuery);
-		if (result.rows[0].table_exists === null) {
-			const createTableQuery = `
-        CREATE TABLE messages (
-          message_id SERIAL PRIMARY KEY,
-          sender_id INT,
-          receiver_id INT,
-          subject VARCHAR(255),
-          message_body TEXT,
-          service_id INT,
-          sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          CONSTRAINT FK_sender_id FOREIGN KEY (sender_id)
-            REFERENCES users(users_id),
-          CONSTRAINT FK_receiver_id FOREIGN KEY (receiver_id)
-            REFERENCES users(users_id),
-          CONSTRAINT FK_service_id FOREIGN KEY (service_id)
-            REFERENCES services(service_id)
-        );
-      `;
-
-			await client.query(createTableQuery);
-			logLogger(
-				'Table [MESSAGES] créée avec succès',
-				'createTableMessages'
-			);
-		} else {
-			verboseLogger(
-				'La table [MESSAGES] existe déjà.',
-				'createTableMessages'
-			);
-		}
-	} catch (e) {
-		errorLogger(
-			'Erreur lors de la création/verification de la table [MESSAGES]:' +
-				e.stack,
-			'createTableMessages'
-		);
-	}
-};
-
 const createTableNotation = async () => {
 	try {
 		const checkTableQuery = `
@@ -392,7 +346,6 @@ module.exports = {
 	createTableReservation,
 	createTableAvailability,
 	createTableNotation,
-	createTableMessages,
 	getClientsCollection,
 	createTableImagesServicesProfessionals,
 };

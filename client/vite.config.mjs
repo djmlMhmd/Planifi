@@ -27,7 +27,6 @@ export default defineConfig({
 			'/service': backendTarget,
 			'/services': backendTarget,
 			'/disponibilite': backendTarget,
-			'/profile-images': backendTarget,
 		},
 	},
 	build: {

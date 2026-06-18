@@ -1,40 +1,44 @@
 # Planifi
 
-Planifi est une application web moderne conçue pour faciliter la gestion des rendez-vous et des disponibilités pour les professionnels et leurs clients. Elle offre une interface utilisateur intuitive permettant une navigation aisée à travers les différentes fonctionnalités proposées.
+Planifi est une application de prise de rendez-vous qui repose aujourd'hui sur un backend Express + PostgreSQL et un front React compilé avec Vite.
 
-## Fonctionnalités
+## Stack actuelle
 
--   **Gestion des utilisateurs** : Inscription et connexion sécurisée pour les clients et les professionnels.
--   **Prise de rendez-vous** : Les clients peuvent consulter les disponibilités des professionnels et prendre rendez-vous en quelques clics.
--   **Gestion des services** : Les professionnels peuvent créer, modifier et supprimer les services proposés.
--   **Calendrier des rendez-vous** : Affichage dynamique des rendez-vous sur un calendrier, facilitant ainsi la gestion du temps pour les professionnels.
--   **Notifications** : Envoi automatique de notifications pour rappeler les prochains rendez-vous.
+- Backend : Node.js + Express
+- Frontend : React + Vite
+- Base de données : PostgreSQL
+- Authentification : JWT en cookie + `express-session`
+- Uploads : `multer` avec stockage local dans `public/uploads`
+- UI calendrier : FullCalendar côté React
 
-## Technologies Utilisées
+## Scripts utiles
 
--   **Backend** : Node.js, Express
--   **Frontend** : EJS pour le rendu côté serveur
--   **Base de données** : MongoDB avec Mongoose pour la modélisation des données, PostgreSQL
--   **Authentification** : Gestion des sessions avec express-session, sécurisation des mots de passe avec bcrypt
--   **Communication en temps réel** : Socket.io
--   **Déploiement** : Docker compose pour faciliter le déploiement et la mise à l'échelle
+```bash
+npm run dev:server
+npm run dev:client
+npm run dev:full
+npm run build:client
+```
 
-## Fonctionnalités à venir
+## Routes front principales
 
-Le projet Planifi est en constante évolution. Voici une liste de fonctionnalités que nous envisageons d'ajouter pour enrichir encore plus notre application :
+- `/`
+- `/connexion/`
+- `/inscription/`
+- `/navigation`
+- `/services`
+- `/app/reservation`
+- `/app/calendar`
+- `/app/profil`
+- `/app/profil/professionnel`
 
--   **Gestion de photos** : Permettre aux professionnels d'ajouter des photos à leur profil pour mieux présenter leurs services et aux clients de télécharger des images lors de la prise de rendez-vous si nécessaire.
+## Notes de structure
 
--   **Carte de localisation** : Intégrer une carte sur le profil des professionnels pour afficher leur localisation exacte, facilitant ainsi la tâche aux clients de les trouver.
+- `app.js` démarre Express et expose le build React.
+- `client/` contient tout le front actuel.
+- `routes/` et `controllers/` portent l'API métier.
+- `public/uploads/` stocke les images uploadées.
 
--   **Barre de recherche** : Ajouter une barre de recherche globale pour permettre une navigation plus rapide et efficace à travers les différents services, professionnels et articles disponibles sur le site.
+## État du projet
 
--   **Système de notation et d'avis** : Introduire un système permettant aux clients de laisser des avis et des notes sur les services reçus, offrant ainsi aux nouveaux utilisateurs des références fiables.
-
--   **Rappels automatiques par SMS/Email** : Envoyer des rappels automatiques aux clients concernant leurs prochains rendez-vous via SMS ou email, pour réduire le nombre d'absences.
-
--   **Intégration de paiement en ligne** : Proposer une option de paiement en ligne pour les services, simplifiant le processus de transaction et offrant plus de commodités aux utilisateurs.
-
--   **Personnalisation du calendrier** : Offrir plus d'options de personnalisation pour le calendrier des professionnels, permettant une meilleure gestion de leurs disponibilités et horaires.
-
--   **Support multilingue** : Rendre l'application accessible à une audience plus large en proposant plusieurs langues.
+L'ancien front HTML a été retiré du flux principal. Les anciennes URLs encore utiles sont redirigées vers les routes React pour garder une transition propre.
