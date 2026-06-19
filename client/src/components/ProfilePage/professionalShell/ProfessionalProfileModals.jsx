@@ -34,7 +34,16 @@ export default function ProfessionalProfileModals(props) {
 							<nav className="mt-8 flex flex-1 flex-col justify-between">
 								<div className="space-y-6">
 									<SidebarLink href="/app/profil/professionnel" active={activeProfessionalTab === 'dashboard'} icon={DashboardIcon} onNavigate={handleProfessionalSidebarNavigation}>Dashboard</SidebarLink>
-									<SidebarLink href="/navigation" icon={CompassIcon} onNavigate={() => setIsMobileSidebarOpen(false)}>Découvrir</SidebarLink>
+									<SidebarLink
+										href="/navigation"
+										icon={CompassIcon}
+										onNavigate={(href) => {
+											setIsMobileSidebarOpen(false);
+											handleProfessionalSidebarNavigation(href);
+										}}
+									>
+										Découvrir
+									</SidebarLink>
 									<SidebarLink href="/app/profil/professionnel?tab=favorites" active={activeProfessionalTab === 'favorites'} icon={BookmarkOutlineIcon} onNavigate={handleProfessionalSidebarNavigation}>Favoris</SidebarLink>
 									<SidebarLink href="/documents" icon={DocumentIcon} onNavigate={() => { setIsMobileSidebarOpen(false); setIsDocumentsNoticeOpen(true); }}>Documents</SidebarLink>
 									<SidebarLink href="/app/profil/professionnel?tab=profile" active={activeProfessionalTab === 'profile'} icon={UserIcon} onNavigate={handleProfessionalSidebarNavigation}>Profil</SidebarLink>

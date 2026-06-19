@@ -83,7 +83,16 @@ export function ClientProfileModals({
 								<div className="space-y-6">
 									<SidebarLink href="/app/profil" active={activeTab === 'dashboard'} icon={DashboardIcon} onNavigate={handleSidebarNavigation}>Dashboard</SidebarLink>
 									<SidebarLink href="/app/profil?tab=calendar" active={activeTab === 'calendar'} icon={CalendarIcon} onNavigate={handleSidebarNavigation}>Calendrier</SidebarLink>
-									<SidebarLink href="/navigation" icon={CompassIcon} onNavigate={() => setIsMobileSidebarOpen(false)}>Découvrir</SidebarLink>
+									<SidebarLink
+										href="/navigation"
+										icon={CompassIcon}
+										onNavigate={(href) => {
+											setIsMobileSidebarOpen(false);
+											handleSidebarNavigation(href);
+										}}
+									>
+										Découvrir
+									</SidebarLink>
 									<SidebarLink href="/app/profil?tab=favorites" active={activeTab === 'favorites'} icon={BookmarkIcon} onNavigate={handleSidebarNavigation}>Favoris</SidebarLink>
 									<SidebarLink href="/app/profil?tab=settings" active={activeTab === 'settings'} icon={SettingsIcon} onNavigate={handleSidebarNavigation}>Paramètres</SidebarLink>
 									<SidebarLink href="/documents" icon={DocumentIcon} onNavigate={() => { setIsMobileSidebarOpen(false); setIsDocumentsNoticeOpen(true); }}>Documents</SidebarLink>

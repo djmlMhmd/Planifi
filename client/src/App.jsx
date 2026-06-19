@@ -1,4 +1,4 @@
-import { startTransition, useEffect, useState } from 'react';
+import { startTransition, useEffect, useRef, useState } from 'react';
 import AppHeader from './components/AppHeader/AppHeader';
 import About from './components/About/About';
 import AuthPage from './components/AuthPage/AuthPage';
