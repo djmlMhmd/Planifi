@@ -87,9 +87,9 @@ function UserMenu() {
 export default function AppHeader({ ctaHref, ctaLabel, navHref = '/app/proposer-service', homeHref = '/' }) {
 	const { loading, isAuthenticated, profile } = useSession();
 
-	const isClient = isAuthenticated && profile && !profile.est_pro;
-	const navLinkLabel = isClient ? 'Voir les services' : 'Proposer un service';
-	const navLinkHref = isClient ? '/navigation' : navHref;
+	const hasConnectedSession = isAuthenticated && profile;
+	const navLinkLabel = hasConnectedSession ? 'Voir les services' : 'Proposer un service';
+	const navLinkHref = hasConnectedSession ? '/navigation' : navHref;
 
 	return (
 		<header className="pointer-events-none fixed inset-x-0 top-0 z-30 py-6 max-[640px]:py-[18px]">

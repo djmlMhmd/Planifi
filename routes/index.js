@@ -21,6 +21,7 @@ router.get('/connexion/', sendReactShell);
 
 router.get('/services', requiredAuth, sendReactShell);
 router.get('/navigation', requiredAuth, sendReactShell);
+router.get('/documents', requiredAuth, sendReactShell);
 router.get('/app/reservation', requiredAuth, sendReactShell);
 router.get('/app/calendar', requiredAuth, sendReactShell);
 router.get('/app/profil', requiredAuth, sendReactShell);
@@ -30,6 +31,7 @@ router.get('/disponibilite/', requiredAuth, redirectToReactPath('/app/calendar')
 
 router.get('/availability.html', requiredAuth, redirectToReactPath('/app/calendar'));
 router.get('/navigation.html', requiredAuth, redirectToReactPath('/navigation'));
+router.get('/documents.html', requiredAuth, redirectToReactPath('/documents'));
 router.get('/services.html', requiredAuth, redirectToReactPath('/services'));
 router.get('/reservations.html', requiredAuth, redirectToReactPath('/app/reservation'));
 router.get('/profil-client.html', requiredAuth, redirectToReactPath('/app/profil'));

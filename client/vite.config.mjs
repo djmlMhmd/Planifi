@@ -27,6 +27,7 @@ export default defineConfig({
 			'/service': backendTarget,
 			'/services': backendTarget,
 			'/disponibilite': backendTarget,
+			'/uploads': backendTarget,
 		},
 	},
 	build: {

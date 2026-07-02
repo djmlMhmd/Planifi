@@ -9,14 +9,12 @@ export function useBodyScrollLock(locked) {
 			return undefined;
 		}
 
-		const { body, documentElement } = document;
+		const { body } = document;
 		const previousBodyOverflow = body.style.overflow;
-		const previousHtmlOverflow = documentElement.style.overflow;
 		const previousBodyPaddingRight = body.style.paddingRight;
-		const scrollbarWidth = window.innerWidth - documentElement.clientWidth;
+		const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
 
 		body.style.overflow = 'hidden';
-		documentElement.style.overflow = 'hidden';
 
 		if (scrollbarWidth > 0) {
 			// J'ajoute un padding équivalent à la scrollbar pour éviter
@@ -28,7 +26,6 @@ export function useBodyScrollLock(locked) {
 			// Le cleanup du useEffect remet le document dans son état initial
 			// dès que la modale se ferme ou que le composant se démonte.
 			body.style.overflow = previousBodyOverflow;
-			documentElement.style.overflow = previousHtmlOverflow;
 			body.style.paddingRight = previousBodyPaddingRight;
 		};
 	}, [locked]);

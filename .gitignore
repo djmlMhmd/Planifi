@@ -15,3 +15,7 @@ yarn-error.log*
 pnpm-debug.log*
 client/dist/
 client/.vite/
+tmp/pdfs/
+Planifi_*.png
+Planifi_*.svg
+Dossier_de_projet_Planifi.docx

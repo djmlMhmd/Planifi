@@ -1,5 +1,5 @@
 import prestatLogo from '../../../assets/prestat-logo.svg';
-import { BookmarkOutlineIcon, CompassIcon, DashboardIcon, DevelopmentNoticeModal, DocumentIcon, HelpIcon, LogoutIcon, ModalPortal, SettingsIcon, SidebarLink, UserIcon } from '../ProfilePage.shared';
+import { BookmarkOutlineIcon, CalendarIcon, CompassIcon, DashboardIcon, DocumentIcon, HelpIcon, LogoutIcon, ModalPortal, SettingsIcon, SidebarLink, UserIcon } from '../ProfilePage.shared';
 
 function NewsCard({ item }) {
 	return (
@@ -15,7 +15,7 @@ function NewsCard({ item }) {
 }
 
 export default function ProfessionalProfileModals(props) {
-	const { isMobileSidebarOpen, setIsMobileSidebarOpen, displayName, companyName, activeProfessionalTab, handleProfessionalSidebarNavigation, setIsDocumentsNoticeOpen, isDocumentsNoticeOpen, isDayPlannerOpen, setIsDayPlannerOpen, selectedPlannerDay, dailyAppointments, isNewsOpen, setIsNewsOpen, newsItems, isServicesPanelOpen, setIsServicesPanelOpen, serviceTiles, selectedServiceIndex, setSelectedServiceIndex, openEditServiceModal, isCreateServiceOpen, setIsCreateServiceOpen, editingServiceId, resetServiceForm, handleCreateServiceSubmit, serviceForm, handleServiceFieldChange, serviceFormState } = props;
+	const { isMobileSidebarOpen, setIsMobileSidebarOpen, displayName, companyName, activeProfessionalTab, handleProfessionalSidebarNavigation, setIsDocumentsNoticeOpen, isDocumentsNoticeOpen, isDayPlannerOpen, setIsDayPlannerOpen, selectedPlannerDay, dailyAppointments, isNewsOpen, setIsNewsOpen, newsItems, isServicesPanelOpen, setIsServicesPanelOpen, serviceTiles, selectedServiceIndex, setSelectedServiceIndex, openEditServiceModal, isCreateServiceOpen, setIsCreateServiceOpen, editingServiceId, resetServiceForm, handleCreateServiceSubmit, serviceForm, handleServiceFieldChange, serviceFormState, handleLogout } = props;
 
 	return (
 		<>
@@ -34,6 +34,7 @@ export default function ProfessionalProfileModals(props) {
 							<nav className="mt-8 flex flex-1 flex-col justify-between">
 								<div className="space-y-6">
 									<SidebarLink href="/app/profil/professionnel" active={activeProfessionalTab === 'dashboard'} icon={DashboardIcon} onNavigate={handleProfessionalSidebarNavigation}>Dashboard</SidebarLink>
+									<SidebarLink href="/app/profil/professionnel?tab=calendar" active={activeProfessionalTab === 'calendar'} icon={CalendarIcon} onNavigate={handleProfessionalSidebarNavigation}>Calendrier</SidebarLink>
 									<SidebarLink
 										href="/navigation"
 										icon={CompassIcon}
@@ -45,12 +46,15 @@ export default function ProfessionalProfileModals(props) {
 										Découvrir
 									</SidebarLink>
 									<SidebarLink href="/app/profil/professionnel?tab=favorites" active={activeProfessionalTab === 'favorites'} icon={BookmarkOutlineIcon} onNavigate={handleProfessionalSidebarNavigation}>Favoris</SidebarLink>
-									<SidebarLink href="/documents" icon={DocumentIcon} onNavigate={() => { setIsMobileSidebarOpen(false); setIsDocumentsNoticeOpen(true); }}>Documents</SidebarLink>
+									<SidebarLink href="/app/profil/professionnel?tab=documents" active={activeProfessionalTab === 'documents'} icon={DocumentIcon} onNavigate={(href) => { setIsMobileSidebarOpen(false); handleProfessionalSidebarNavigation(href); }}>Documents</SidebarLink>
 									<SidebarLink href="/app/profil/professionnel?tab=profile" active={activeProfessionalTab === 'profile'} icon={UserIcon} onNavigate={handleProfessionalSidebarNavigation}>Profil</SidebarLink>
 									<SidebarLink href="/app/profil/professionnel?tab=settings" active={activeProfessionalTab === 'settings'} icon={SettingsIcon} onNavigate={handleProfessionalSidebarNavigation}>Paramètres</SidebarLink>
 								</div>
 								<div className="space-y-6 pb-1">
-									<SidebarLink href="/deconnexion/client" icon={LogoutIcon} onNavigate={() => setIsMobileSidebarOpen(false)}>Déconnexion</SidebarLink>
+									<button type="button" onClick={() => { setIsMobileSidebarOpen(false); handleLogout(); }} className="flex items-center gap-3 text-[0.98rem] font-medium text-white/62 transition hover:text-white">
+										<LogoutIcon className="h-5 w-5" />
+										<span>Déconnexion</span>
+									</button>
 									<SidebarLink href="#" icon={HelpIcon} onNavigate={() => setIsMobileSidebarOpen(false)}>Contact</SidebarLink>
 								</div>
 							</nav>
@@ -186,7 +190,6 @@ export default function ProfessionalProfileModals(props) {
 				</ModalPortal>
 			) : null}
 
-			<DevelopmentNoticeModal open={isDocumentsNoticeOpen} onClose={() => setIsDocumentsNoticeOpen(false)} />
 		</>
 	);
 }

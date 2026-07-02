@@ -37,6 +37,24 @@ function getDurationInMinutes(duration) {
     return 0;
 }
 
+function normalizeTimeLabel(value) {
+    return String(value || '').slice(0, 5);
+}
+
+function timeLabelToMinutes(value) {
+    const normalizedTime = normalizeTimeLabel(value);
+    const [hours, minutes] = normalizedTime.split(':');
+    return (Number(hours) || 0) * 60 + (Number(minutes) || 0);
+}
+
+function isSlotInsideAvailability(slotStartMinutes, slotEndMinutes, availabilityRanges) {
+    return availabilityRanges.some((range) => {
+        const rangeStartMinutes = timeLabelToMinutes(range.start_time);
+        const rangeEndMinutes = timeLabelToMinutes(range.end_time);
+        return slotStartMinutes >= rangeStartMinutes && slotEndMinutes <= rangeEndMinutes;
+    });
+}
+
 
 module.exports.reservation_post = async (req, res) => {
     const { professional_id, service_id } = req.body;
@@ -188,12 +206,20 @@ module.exports.reservation_pro_get = async (req, res) => {
         const query = {
             text: `
                 SELECT
-                    reservations.*,
+                    reservations.reservation_id,
+                    reservations.users_id,
+                    reservations.professional_id,
+                    reservations.service_id,
+                    reservations.day_of_week,
+                    reservations.start_time,
+                    reservations.end_time,
+                    reservations.status,
                     services.service_name,
-                    services.duration AS service_duration, -- Ajoutez cette ligne pour récupérer la durée du service
+                    services.duration AS service_duration,
                     CONCAT(users."firstName", ' ', users."lastName") AS user_name,
+                    users.email AS user_email,
                     CONCAT(pro."firstName", ' ', pro."lastName") AS professional_name,
-                    reservations.day_of_week
+                    pro_account.company_name
                 FROM
                     reservations
                 JOIN
@@ -202,8 +228,13 @@ module.exports.reservation_pro_get = async (req, res) => {
                     users ON reservations.users_id = users.users_id
                 JOIN
                     users as pro ON reservations.professional_id = pro.users_id
+                LEFT JOIN
+                    pro_account ON pro_account.user_id = pro.users_id
                 WHERE
                     reservations.professional_id = $1
+                ORDER BY
+                    TO_DATE(reservations.day_of_week, 'DD-MM-YYYY') DESC,
+                    reservations.start_time DESC
             `,
             values: [id],
         };
@@ -215,30 +246,34 @@ module.exports.reservation_pro_get = async (req, res) => {
             return sendSuccessWithNoContent(res, 'Aucune réservation trouvée')
         }
         const reservations = result.rows.map((reservation) => {
-            const serviceDuration = moment.duration(
-                reservation.service_duration
-            );
+            const normalizedDate = moment(reservation.day_of_week, 'DD-MM-YYYY').format('YYYY-MM-DD');
+            const startTime = normalizeTimeLabel(reservation.start_time);
+            const endTime = normalizeTimeLabel(reservation.end_time);
+            const serviceDuration = moment.duration(reservation.service_duration);
             const durationString = `${serviceDuration.hours()}h${serviceDuration.minutes()}m`;
-            const start = moment(
-                reservation.day_of_week + 'T' + reservation.start_time,
-                'DD-MM-YYYYTHH:mm:ss'
-            ).format('YYYY-MM-DDTHH:mm:ss');
-            const end = moment(start)
-                .add(reservation.service_duration, 'minutes')
-                .format('YYYY-MM-DDTHH:mm:ss');
 
             return {
+                reservation_id: reservation.reservation_id,
+                professional_id: reservation.professional_id,
+                users_id: reservation.users_id,
+                client_id: reservation.users_id,
+                service_id: reservation.service_id,
                 title: reservation.user_name,
-                start: start,
-                end: end,
-                extendedProps: {
-                    reservation: {
-                        service_id: reservation.service_name,
-                        professional_name: reservation.professional_name,
-                        service_duration: durationString,
-                        status: reservation.status || 'confirmed',
-                    },
-                },
+                client_name: reservation.user_name,
+                client_email: reservation.user_email,
+                company_name: reservation.company_name || reservation.professional_name,
+                professional_name: reservation.professional_name,
+                service_name: reservation.service_name,
+                service_duration: durationString,
+                status: reservation.status || 'confirmed',
+                day_of_week: reservation.day_of_week,
+                start_time: startTime,
+                end_time: endTime,
+                start: `${moment(reservation.day_of_week, 'DD-MM-YYYY').format('DD/MM/YY')} ${startTime} - ${endTime}`,
+                date_label: moment(reservation.day_of_week, 'DD-MM-YYYY').format('DD/MM/YY'),
+                time_label: `${startTime} - ${endTime}`,
+                start_at: `${normalizedDate}T${startTime}:00`,
+                end_at: `${normalizedDate}T${endTime}:00`,
             };
         });
         verboseLogger(`Reservations  trouvées: ${JSON.stringify(reservations)}`, '','reservationController.js', '/reservations', constants.GET_HTTP)
@@ -262,6 +297,8 @@ module.exports.reservation_client_get =  async (req, res) => {
                     reservations.start_time,
                     reservations.end_time,
                     reservations.status,
+                    reservations.service_id,
+                    reservations.professional_id,
                     services.service_name,
                     CONCAT(pro."firstName", ' ', pro."lastName") AS professional_name,
                     pro_account.company_name
@@ -292,6 +329,8 @@ module.exports.reservation_client_get =  async (req, res) => {
 
                 return {
                 reservation_id: reservation.reservation_id,
+                professional_id: reservation.professional_id,
+                service_id: reservation.service_id,
                 title: reservation.company_name || reservation.professional_name,
                 company_name: reservation.company_name || reservation.professional_name,
                 professional_name: reservation.professional_name,
@@ -323,7 +362,7 @@ module.exports.reservation_client_get =  async (req, res) => {
 
 module.exports.reservation_byHour_get = async (req, res) => {
     try {
-        const { selectedDate, professionalId } = req.query;
+        const { selectedDate, professionalId, excludeReservationId } = req.query;
         let query = `
             SELECT start_time, end_time
             FROM reservations
@@ -341,6 +380,15 @@ module.exports.reservation_byHour_get = async (req, res) => {
             queryValues.push(professionalId);
         }
 
+        if (excludeReservationId) {
+            if (!isANumber(excludeReservationId)) {
+                return sendBadRequest(res, "le excludeReservationId doit etre un entier");
+            }
+
+            query += ` AND reservation_id != $${queryValues.length + 1}`;
+            queryValues.push(excludeReservationId);
+        }
+
         const client = getClientsCollection();
         const result = await client.query(query, queryValues);
         // Je renvoie les plages complètes pour que le front puisse bloquer tous les créneaux qui se chevauchent.
@@ -353,6 +401,143 @@ module.exports.reservation_byHour_get = async (req, res) => {
     } catch (error) {
         errorLogger(`Erreur lors de la récupération des heures réservées: ${JSON.stringify(error)}`, '','reservationController.js', '/reservedHours', constants.GET_HTTP)
         return sendInternalServerError(res, 'Erreur lors de la récupération des heures réservées')
+    }
+}
+
+module.exports.reservation_update = async (req, res) => {
+    const { reservationId } = req.params;
+    const { start_time, day_of_week } = req.body;
+
+    if (!isANumber(reservationId)) {
+        return sendBadRequest(res, "le reservationId doit etre un entier");
+    }
+
+    if (isUndefinedOrEmpty(start_time) || isUndefinedOrEmpty(day_of_week)) {
+        return sendBadRequest(res, 'Les champs "start_time" et "day_of_week" sont obligatoires.');
+    }
+
+    try {
+        const { id, statut } = decodeJWT(req.cookies.jwt);
+        const client = getClientsCollection();
+        const reservationQuery = await client.query(
+            `
+                SELECT
+                    reservations.reservation_id,
+                    reservations.users_id,
+                    reservations.professional_id,
+                    reservations.service_id,
+                    reservations.status,
+                    services.duration
+                FROM reservations
+                JOIN services ON services.service_id = reservations.service_id
+                WHERE reservations.reservation_id = $1
+            `,
+            [reservationId]
+        );
+
+        if (reservationQuery.rowCount === 0) {
+            return sendSuccessWithNoContent(res, 'Réservation introuvable.');
+        }
+
+        const reservation = reservationQuery.rows[0];
+        const isClientOwner = reservation.users_id === id;
+        const isProfessionalOwner = reservation.professional_id === id && statut === 'professionnel';
+
+        if (!isClientOwner && !isProfessionalOwner) {
+            return sendUnauthorized(res, "Vous n'êtes pas autorisé à déplacer cette réservation.");
+        }
+
+        if (reservation.status && reservation.status !== 'confirmed') {
+            return sendBadRequest(res, 'Seules les réservations confirmées peuvent être déplacées.');
+        }
+
+        const durationInMinutes = getDurationInMinutes(reservation.duration);
+        if (durationInMinutes <= 0) {
+            return sendBadRequest(res, 'Durée de service non valide');
+        }
+
+        const startTime = moment(start_time, 'HH:mm', true);
+        if (!startTime.isValid()) {
+            return sendBadRequest(res, "Le champ 'start_time' doit etre au format HH:mm.");
+        }
+
+        const normalizedDate = moment(day_of_week, 'DD-MM-YYYY', true);
+        if (!normalizedDate.isValid()) {
+            return sendBadRequest(res, "Le champ 'day_of_week' doit etre au format DD-MM-YYYY.");
+        }
+
+        const endTime = startTime.clone().add(durationInMinutes, 'minutes').format('HH:mm:ss');
+        const normalizedStartTime = startTime.format('HH:mm:ss');
+        const weekdayIndex = String(normalizedDate.day());
+
+        if (
+            startTime.isBefore(moment('08:00', 'HH:mm')) ||
+            startTime.isAfter(moment('21:00', 'HH:mm'))
+        ) {
+            return sendBadRequest(res, 'Heure de début non valide');
+        }
+
+        const availabilityQuery = await client.query(
+            `
+                SELECT start_time, end_time
+                FROM availability
+                WHERE professional_id = $1
+                  AND day_of_week = $2
+                ORDER BY start_time ASC
+            `,
+            [reservation.professional_id, weekdayIndex]
+        );
+
+        const availabilityRanges = availabilityQuery.rows.map((row) => ({
+            start_time: normalizeTimeLabel(row.start_time),
+            end_time: normalizeTimeLabel(row.end_time),
+        }));
+
+        const slotStartMinutes = timeLabelToMinutes(normalizedStartTime);
+        const slotEndMinutes = timeLabelToMinutes(endTime);
+
+        if (!isSlotInsideAvailability(slotStartMinutes, slotEndMinutes, availabilityRanges)) {
+            return sendBadRequest(res, "Ce créneau n'entre pas dans les disponibilités du professionnel.");
+        }
+
+        const overlapCheckResult = await client.query(
+            `
+                SELECT reservation_id
+                FROM reservations
+                WHERE professional_id = $1
+                  AND day_of_week = $2
+                  AND status = 'confirmed'
+                  AND reservation_id != $5
+                  AND NOT (start_time >= $4 OR end_time <= $3)
+            `,
+            [
+                reservation.professional_id,
+                normalizedDate.format('DD-MM-YYYY'),
+                normalizedStartTime,
+                endTime,
+                reservationId,
+            ]
+        );
+
+        if (overlapCheckResult.rowCount > 0) {
+            return sendBadRequest(res, 'Plage horaire déjà réservée');
+        }
+
+        await client.query(
+            `
+                UPDATE reservations
+                SET start_time = $1,
+                    end_time = $2,
+                    day_of_week = $3
+                WHERE reservation_id = $4
+            `,
+            [normalizedStartTime, endTime, normalizedDate.format('DD-MM-YYYY'), reservationId]
+        );
+
+        return sendSuccess(res, 'Réservation déplacée avec succès.');
+    } catch (error) {
+        errorLogger(`Erreur lors du déplacement de la réservation: ${JSON.stringify(error)}`, '', 'reservationController.js', `/reservation/${reservationId}`, constants.PATCH_HTTP || 'PATCH');
+        return sendInternalServerError(res, 'Erreur lors du déplacement de la réservation : ' + error.message);
     }
 }
 

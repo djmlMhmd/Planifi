@@ -1,7 +1,7 @@
 export function getProfileTabFromLocation(search = window.location.search) {
 	// Je centralise la lecture du tab ici pour garder la même logique partout.
 	const tabParam = new URLSearchParams(search).get('tab');
-	if (tabParam === 'settings' || tabParam === 'favorites' || tabParam === 'calendar') {
+	if (tabParam === 'settings' || tabParam === 'favorites' || tabParam === 'calendar' || tabParam === 'documents') {
 		return tabParam;
 	}
 	return 'dashboard';
@@ -9,7 +9,7 @@ export function getProfileTabFromLocation(search = window.location.search) {
 
 export function getProfessionalTabFromLocation(search = window.location.search) {
 	const tabParam = new URLSearchParams(search).get('tab');
-	if (tabParam === 'profile' || tabParam === 'settings' || tabParam === 'favorites') {
+	if (tabParam === 'profile' || tabParam === 'settings' || tabParam === 'favorites' || tabParam === 'calendar' || tabParam === 'documents') {
 		return tabParam;
 	}
 	return 'dashboard';

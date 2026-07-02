@@ -4,7 +4,6 @@ import {
 	CalendarIcon,
 	CompassIcon,
 	DashboardIcon,
-	DevelopmentNoticeModal,
 	DocumentIcon,
 	HelpIcon,
 	LogoutIcon,
@@ -95,7 +94,7 @@ export function ClientProfileModals({
 									</SidebarLink>
 									<SidebarLink href="/app/profil?tab=favorites" active={activeTab === 'favorites'} icon={BookmarkIcon} onNavigate={handleSidebarNavigation}>Favoris</SidebarLink>
 									<SidebarLink href="/app/profil?tab=settings" active={activeTab === 'settings'} icon={SettingsIcon} onNavigate={handleSidebarNavigation}>Paramètres</SidebarLink>
-									<SidebarLink href="/documents" icon={DocumentIcon} onNavigate={() => { setIsMobileSidebarOpen(false); setIsDocumentsNoticeOpen(true); }}>Documents</SidebarLink>
+									<SidebarLink href="/app/profil?tab=documents" active={activeTab === 'documents'} icon={DocumentIcon} onNavigate={(href) => { setIsMobileSidebarOpen(false); handleSidebarNavigation(href); }}>Documents</SidebarLink>
 								</div>
 
 								<div className="space-y-6 pb-1">
@@ -113,8 +112,6 @@ export function ClientProfileModals({
 					</div>
 				</ModalPortal>
 			) : null}
-
-			<DevelopmentNoticeModal open={isDocumentsNoticeOpen} onClose={() => setIsDocumentsNoticeOpen(false)} />
 
 			{reviewModalProvider ? (
 				<ModalPortal>

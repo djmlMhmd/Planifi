@@ -156,9 +156,16 @@ export default function ProfessionalDashboardView(props) {
 						</div>
 						<div className="flex flex-1 flex-col gap-3">
 							{documentItems.map((item) => (
-								<div key={item} className="flex items-center gap-3 rounded-[16px] bg-[#f6f7f9] px-4 py-3">
+								<div key={item.id || item.number || item.title} className="flex items-center gap-3 rounded-[16px] bg-[#f6f7f9] px-4 py-3">
 									<img src={pdfFileIcon} alt="PDF" className="h-5 w-5 shrink-0 object-contain" />
-									<p className="min-w-0 flex-1 truncate text-[0.88rem] text-[#232323]">{item}</p>
+									<div className="min-w-0 flex-1">
+										<p className="truncate text-[0.88rem] text-[#232323]">
+											{item.number ? `${item.number} · ${item.title}` : item.title}
+										</p>
+										<p className="mt-1 truncate text-[0.74rem] text-black/42">
+											{item.statusLabel || item.subtitle || 'Document PDF disponible'}
+										</p>
+									</div>
 								</div>
 							))}
 						</div>

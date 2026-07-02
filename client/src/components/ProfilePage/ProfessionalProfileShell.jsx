@@ -1,9 +1,12 @@
 import { startTransition, useEffect, useState } from 'react';
+import CalendarPage from '../CalendarPage/CalendarPage';
+import DocumentsPage from '../DocumentsPage/DocumentsPage';
 import prestatLogo from '../../assets/prestat-logo.svg';
 import { getProviderById, saveProfessionalProvider } from '../../data/providers';
 import { navigateTo } from '../../lib/navigation';
 import {
 	BookmarkOutlineIcon,
+	CalendarIcon,
 	CompassIcon,
 	DashboardIcon,
 	DocumentIcon,
@@ -24,7 +27,7 @@ import { FavoritesPanel } from './ProfilePage.shared';
 import ProfessionalDashboardView from './professionalShell/ProfessionalDashboardView';
 import ProfessionalProfileModals from './professionalShell/ProfessionalProfileModals';
 import ProfessionalProfileView from './professionalShell/ProfessionalProfileView';
-import { buildDocumentItems, dailyStats, initialServiceTiles, newsItems, plannerDays, tips } from './professionalShell/professionalProfileData';
+import { dailyStats, initialServiceTiles, newsItems, plannerDays, tips } from './professionalShell/professionalProfileData';
 
 function MenuIcon({ className = '' }) {
 	return (
@@ -36,8 +39,9 @@ function MenuIcon({ className = '' }) {
 	);
 }
 
-export default function ProfessionalDashboardShell({ profile }) {
+export default function ProfessionalDashboardShell({ profile, reservations = [] }) {
 	const [currentProfile, setCurrentProfile] = useState(profile);
+	const [currentReservations, setCurrentReservations] = useState(reservations);
 	const displayName = `${currentProfile.firstName || ''} ${currentProfile.lastName || ''}`.trim() || '[nom pro]';
 	const companyName = currentProfile.company_name || 'TRESSA COIFFURE';
 	const baseProviderId = resolveProfessionalProviderId(currentProfile);
@@ -69,10 +73,15 @@ export default function ProfessionalDashboardShell({ profile }) {
 	const [statView, setStatView] = useState(0);
 	const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 	const [serviceTiles, setServiceTiles] = useState(initialServiceTiles);
+	const [documents, setDocuments] = useState([]);
 
 	useEffect(() => {
 		setCurrentProfile(profile);
 	}, [profile]);
+
+	useEffect(() => {
+		setCurrentReservations(reservations);
+	}, [reservations]);
 
 	useEffect(() => {
 		const id = window.setInterval(() => setTipIndex((i) => (i + 1) % tips.length), 5000);
@@ -99,8 +108,6 @@ export default function ProfessionalDashboardShell({ profile }) {
 		accumulator.push({ ...item, start: previous, end });
 		return accumulator;
 	}, []);
-	const documentItems = buildDocumentItems(companyName);
-
 	function resetServiceForm() {
 		setServiceForm({
 			service_name: '',
@@ -195,6 +202,34 @@ export default function ProfessionalDashboardShell({ profile }) {
 			cancelled = true;
 		};
 	}, [currentProfile?.users_id, serviceListVersion]);
+
+	useEffect(() => {
+		let cancelled = false;
+
+		async function loadProfessionalDocuments() {
+			try {
+				const response = await fetch('/documents/data', {
+					credentials: 'same-origin',
+				});
+				const payload = response.ok ? await response.json() : null;
+				const nextDocuments = Array.isArray(payload?.message) ? payload.message : [];
+
+				if (!cancelled) {
+					setDocuments(nextDocuments);
+				}
+			} catch {
+				if (!cancelled) {
+					setDocuments([]);
+				}
+			}
+		}
+
+		loadProfessionalDocuments();
+
+		return () => {
+			cancelled = true;
+		};
+	}, []);
 
 	async function handleCreateServiceSubmit(event) {
 		event.preventDefault();
@@ -334,6 +369,11 @@ export default function ProfessionalDashboardShell({ profile }) {
 		});
 	}, [baseProvider, professionalProviderId, currentProfile.company_address, currentProfile.company_name, serviceTiles]);
 
+	async function handleLogout() {
+		await fetch('/deconnexion/client', { method: 'POST', credentials: 'same-origin' });
+		navigateTo('/connexion/');
+	}
+
 	return (
 		<main className="min-h-screen bg-[linear-gradient(180deg,#f7f6f2_0%,#fcfcfa_45%,#f3f1ec_100%)] text-[#181818]">
 			<div className="grid min-h-screen xl:grid-cols-[202px_1fr]">
@@ -347,15 +387,19 @@ export default function ProfessionalDashboardShell({ profile }) {
 					<nav className="flex flex-1 flex-col px-5 pb-6 pt-6 xl:px-7 xl:pb-8 xl:pt-10">
 						<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 xl:gap-5">
 							<SidebarLink href="/app/profil/professionnel" active={activeProfessionalTab === 'dashboard'} icon={DashboardIcon} onNavigate={handleProfessionalSidebarNavigation}>Dashboard</SidebarLink>
+							<SidebarLink href="/app/profil/professionnel?tab=calendar" active={activeProfessionalTab === 'calendar'} icon={CalendarIcon} onNavigate={handleProfessionalSidebarNavigation}>Calendrier</SidebarLink>
 							<SidebarLink href="/navigation" icon={CompassIcon}>Découvrir</SidebarLink>
 							<SidebarLink href="/app/profil/professionnel?tab=favorites" active={activeProfessionalTab === 'favorites'} icon={BookmarkOutlineIcon} onNavigate={handleProfessionalSidebarNavigation}>Favoris</SidebarLink>
-							<SidebarLink href="/documents" icon={DocumentIcon} onNavigate={() => setIsDocumentsNoticeOpen(true)}>Documents</SidebarLink>
+							<SidebarLink href="/app/profil/professionnel?tab=documents" active={activeProfessionalTab === 'documents'} icon={DocumentIcon} onNavigate={handleProfessionalSidebarNavigation}>Documents</SidebarLink>
 						</div>
 
 						<div className="mt-6 grid gap-4 sm:grid-cols-2 xl:mt-auto xl:grid-cols-1 xl:gap-5">
 							<SidebarLink href="/app/profil/professionnel?tab=profile" active={activeProfessionalTab === 'profile'} icon={UserIcon} onNavigate={handleProfessionalSidebarNavigation}>Profil</SidebarLink>
 							<SidebarLink href="/app/profil/professionnel?tab=settings" active={activeProfessionalTab === 'settings'} icon={SettingsIcon} onNavigate={handleProfessionalSidebarNavigation}>Paramètres</SidebarLink>
-							<SidebarLink href="/deconnexion/client" icon={LogoutIcon}>Déconnexion</SidebarLink>
+							<button type="button" onClick={handleLogout} className="flex items-center gap-3 text-[0.98rem] font-medium text-white/62 transition hover:text-white">
+								<LogoutIcon className="h-5 w-5" />
+								<span>Déconnexion</span>
+							</button>
 							<SidebarLink href="#" icon={HelpIcon}>Contact</SidebarLink>
 						</div>
 					</nav>
@@ -370,9 +414,13 @@ export default function ProfessionalDashboardShell({ profile }) {
 										? 'Paramètres'
 										: activeProfessionalTab === 'favorites'
 											? 'Favoris'
-											: activeProfessionalTab === 'profile'
-												? 'Profil'
-												: 'Dashboard'}
+											: activeProfessionalTab === 'calendar'
+												? 'Calendrier'
+												: activeProfessionalTab === 'documents'
+													? 'Documents'
+												: activeProfessionalTab === 'profile'
+													? 'Profil'
+													: 'Dashboard'}
 								</h1>
 								<button type="button" onClick={() => setIsMobileSidebarOpen(true)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-black/8 bg-white text-[#151515] shadow-[0_10px_24px_rgba(24,24,35,0.035)] xl:hidden" aria-label="Ouvrir le menu du profil professionnel">
 									<MenuIcon className="h-5 w-5" />
@@ -404,6 +452,24 @@ export default function ProfessionalDashboardShell({ profile }) {
 						<div className="px-5 pb-10 pt-8 sm:px-7 lg:px-9 lg:pt-9">
 							<FavoritesPanel />
 						</div>
+					) : activeProfessionalTab === 'calendar' ? (
+						<div className="px-5 pb-10 pt-8 sm:px-7 lg:px-9 lg:pt-9">
+							<CalendarPage
+								embedded
+								role="professional"
+								reservations={currentReservations}
+								onReservationsChange={setCurrentReservations}
+							/>
+						</div>
+					) : activeProfessionalTab === 'documents' ? (
+						<div className="px-5 pb-10 pt-8 sm:px-7 lg:px-9 lg:pt-9">
+							<DocumentsPage
+								embedded
+								initialProfile={currentProfile}
+								initialReservations={currentReservations}
+								initialDocuments={documents}
+							/>
+						</div>
 					) : activeProfessionalTab === 'profile' ? (
 						<ProfessionalProfileView profile={currentProfile} serviceTiles={serviceTiles} onAddService={() => setIsCreateServiceOpen(true)} onEditService={openEditServiceModal} />
 					) : (
@@ -430,7 +496,7 @@ export default function ProfessionalDashboardShell({ profile }) {
 							showNextService={showNextService}
 							setIsServicesPanelOpen={setIsServicesPanelOpen}
 							servicesLoading={servicesLoading}
-							documentItems={documentItems}
+							documentItems={documents}
 							newsItems={newsItems}
 							setIsNewsOpen={setIsNewsOpen}
 							setIsDayPlannerOpen={setIsDayPlannerOpen}
@@ -464,12 +530,13 @@ export default function ProfessionalDashboardShell({ profile }) {
 				isCreateServiceOpen={isCreateServiceOpen}
 				setIsCreateServiceOpen={setIsCreateServiceOpen}
 				editingServiceId={editingServiceId}
-				resetServiceForm={resetServiceForm}
-				handleCreateServiceSubmit={handleCreateServiceSubmit}
-				serviceForm={serviceForm}
-				handleServiceFieldChange={handleServiceFieldChange}
-				serviceFormState={serviceFormState}
-			/>
+						resetServiceForm={resetServiceForm}
+						handleCreateServiceSubmit={handleCreateServiceSubmit}
+						serviceForm={serviceForm}
+						handleServiceFieldChange={handleServiceFieldChange}
+						serviceFormState={serviceFormState}
+						handleLogout={handleLogout}
+					/>
 		</main>
 	);
 }

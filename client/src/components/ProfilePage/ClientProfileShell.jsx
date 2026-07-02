@@ -3,20 +3,13 @@ import { navigateTo } from '../../lib/navigation';
 import {
   getProfileTabFromLocation,
 } from './ProfilePage.shared';
-import { buildFallbackReservations, buildInvoiceItems, buildQuoteItems, favoriteNewsItems, reviewCards } from './clientShell/clientProfileData';
+import { buildFallbackReservations, favoriteNewsItems, reviewCards } from './clientShell/clientProfileData';
 import { ClientDesktopSidebar, ClientHeader, ClientTabContent } from './clientShell/ClientProfileParts';
 import { ClientProfileModals } from './clientShell/ClientProfileModals';
 
 export default function DashboardShell({ profile, reservations, onProfileUpdated }) {
-	const invoiceItems = useMemo(
-		// Je génère des libellés cohérents à partir du profil client.
-		() => buildInvoiceItems(profile),
-		[profile.city, profile.firstName, profile.lastName]
-	);
-	const quoteItems = useMemo(
-		() => buildQuoteItems(profile),
-		[profile.city, profile.firstName, profile.lastName]
-	);
+	const [currentReservations, setCurrentReservations] = useState(reservations);
+	const [documents, setDocuments] = useState([]);
 
 	async function handleLogout() {
 		// await bloque seulement cette fonction ici le temps que la déconnexion réponde,
@@ -41,20 +34,57 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 	const [reviewStep, setReviewStep] = useState('form');
 
 	// Si le backend a déjà des réservations je les prends, sinon je garde un fallback visuel.
-	const reservationList = reservations.length
-		? reservations.slice(0, 7)
+	const reservationList = currentReservations.length
+		? currentReservations.slice(0, 7)
 		: buildFallbackReservations();
-	const shouldShowAllReservationsButton = reservations.length >= 6;
-	const fullReservationList = reservations.length ? reservations : reservationList;
-	const billingItems = billingView === 'invoices' ? invoiceItems : quoteItems;
+	const shouldShowAllReservationsButton = currentReservations.length >= 6;
+	const fullReservationList = currentReservations.length ? currentReservations : reservationList;
+	const billingItems = useMemo(
+		() => documents.filter((item) => billingView === 'invoices' ? item.type === 'invoice' : item.type === 'quote'),
+		[documents, billingView]
+	);
 	const filteredBillingItems = billingItems.filter((item) =>
-		item.toLowerCase().includes(billingQuery.trim().toLowerCase())
+		`${item.title || ''} ${item.number || ''} ${item.subtitle || ''}`
+			.toLowerCase()
+			.includes(billingQuery.trim().toLowerCase())
 	);
 	const profileAvatarFallback = {
 		...profile,
 		profile_picture: '',
 		profile_picture_preview: '',
 	};
+
+	useEffect(() => {
+		setCurrentReservations(reservations);
+	}, [reservations]);
+
+	useEffect(() => {
+		let cancelled = false;
+
+		async function loadClientDocuments() {
+			try {
+				const response = await fetch('/documents/data', {
+					credentials: 'same-origin',
+				});
+				const payload = response.ok ? await response.json() : null;
+				const nextDocuments = Array.isArray(payload?.message) ? payload.message : [];
+
+				if (!cancelled) {
+					setDocuments(nextDocuments);
+				}
+			} catch {
+				if (!cancelled) {
+					setDocuments([]);
+				}
+			}
+		}
+
+		loadClientDocuments();
+
+		return () => {
+			cancelled = true;
+		};
+	}, []);
 
 	function openReviewModal(providerName) {
 		// J'ouvre la modale en repartant d'un état propre pour éviter de réafficher
@@ -161,7 +191,10 @@ export default function DashboardShell({ profile, reservations, onProfileUpdated
 						billingQuery={billingQuery}
 						setBillingQuery={setBillingQuery}
 						filteredBillingItems={filteredBillingItems}
+						documents={documents}
 						reservationList={reservationList}
+						reservations={currentReservations}
+						onReservationsChange={setCurrentReservations}
 						shouldShowAllReservationsButton={shouldShowAllReservationsButton}
 						setIsReservationsModalOpen={setIsReservationsModalOpen}
 					/>

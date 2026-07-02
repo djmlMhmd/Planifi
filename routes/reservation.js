@@ -19,6 +19,8 @@ router.get('/reservation/client', requiredAuth, reservationController.reservatio
 
 router.get('/reservation/reservedHours', requiredAuth, reservationController.reservation_byHour_get);
 
+router.patch('/reservation/:reservationId', requiredAuth, reservationController.reservation_update);
+
 // SUPPRIMER RÉSERVATION
 router.delete('/reservation/:reservationId', requiredAuth, reservationController.reservation_delete);
 

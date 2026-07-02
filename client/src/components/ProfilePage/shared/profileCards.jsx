@@ -182,21 +182,41 @@ export function ReservationItem({ reservation }) {
 	);
 }
 
-export function InvoiceItem({ label, kind = 'invoice' }) {
+function formatDocumentAmount(value) {
+	return new Intl.NumberFormat('fr-FR', {
+		style: 'currency',
+		currency: 'EUR',
+	}).format(Number(value) || 0);
+}
+
+export function InvoiceItem({ document, kind = 'invoice' }) {
 	const isQuote = kind === 'quote';
+	const badgeLabel = isQuote ? 'Voir' : 'Télécharger';
+	const helperLabel = isQuote ? 'En attente de validation' : 'PDF disponible';
+	const displayTitle = document?.number && document?.title
+		? `${document.number} · ${document.title}`
+		: document?.title || document?.number || 'Document PDF';
+	const displaySubtitle = document?.subtitle || helperLabel;
 
 	return (
 		<div className={`flex items-center gap-3 rounded-[14px] px-3 py-3 ${isQuote ? 'bg-white text-black/62' : 'text-black/62'}`}>
 			<img src={pdfFileIcon} alt="PDF" className="h-5 w-5 shrink-0 object-contain" />
 			<div className="min-w-0 flex-1">
-				<p className="truncate text-[0.88rem]">{label}</p>
-				<p className={`mt-1 text-[0.72rem] ${isQuote ? 'text-[var(--accent-mauve)]' : 'text-black/36'}`}>
-					{isQuote ? 'En attente de validation' : 'PDF disponible'}
+				<p className="truncate text-[0.88rem]">{displayTitle}</p>
+				<p className={`mt-1 truncate text-[0.72rem] ${isQuote ? 'text-[var(--accent-mauve)]' : 'text-black/36'}`}>
+					{displaySubtitle}
 				</p>
 			</div>
-			<span className={`rounded-full px-2.5 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.04em] ${isQuote ? 'bg-[var(--accent-mauve-soft)] text-[var(--accent-mauve)]' : 'bg-black/5 text-black/45'}`}>
-				{isQuote ? 'Voir' : 'Télécharger'}
-			</span>
+			<div className="flex items-center gap-2">
+				{document?.total ? (
+					<span className="hidden text-[0.75rem] font-medium text-black/42 sm:inline">
+						{formatDocumentAmount(document.total)}
+					</span>
+				) : null}
+				<span className={`rounded-full px-2.5 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.04em] ${isQuote ? 'bg-[var(--accent-mauve-soft)] text-[var(--accent-mauve)]' : 'bg-black/5 text-black/45'}`}>
+					{badgeLabel}
+				</span>
+			</div>
 		</div>
 	);
 }

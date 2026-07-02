@@ -4,6 +4,7 @@ import About from './components/About/About';
 import AuthPage from './components/AuthPage/AuthPage';
 import CitiesCarousel from './components/CitiesCarousel/CitiesCarousel';
 import ConnectedNavbar from './components/ConnectedNavbar/ConnectedNavbar';
+import DocumentsPage from './components/DocumentsPage/DocumentsPage';
 import Faq from './components/Faq/Faq';
 import Footer from './components/Footer/Footer';
 import Header from './components/Header/Header';
@@ -122,6 +123,7 @@ export default function App() {
 	const isProfessionalProfilePage = pathname === '/app/profil/professionnel';
 	const isNavigationPage = pathname === '/navigation';
 	const isProviderDetailPage = pathname === '/services';
+	const isDocumentsPage = pathname === '/documents';
 	const isSignupPage = pathname === '/inscription';
 	const isLoginPage = pathname === '/connexion';
 
@@ -173,6 +175,13 @@ export default function App() {
 			<>
 				<ConnectedNavbar />
 				<ProviderDetailPage />
+			</>
+		);
+	} else if (isDocumentsPage) {
+		page = (
+			<>
+				<ConnectedNavbar />
+				<DocumentsPage />
 			</>
 		);
 	} else {

@@ -1,5 +1,6 @@
 import prestatLogo from '../../../assets/prestat-logo.svg';
 import CalendarPage from '../../CalendarPage/CalendarPage';
+import DocumentsPage from '../../DocumentsPage/DocumentsPage';
 import Reveal from '../../Reveal/Reveal';
 import {
 	BookmarkIcon,
@@ -70,7 +71,7 @@ export function ClientDesktopSidebar({ activeTab, handleSidebarNavigation, handl
 					<SidebarLink href="/navigation" icon={CompassIcon}>Découvrir</SidebarLink>
 					<SidebarLink href="/app/profil?tab=favorites" active={activeTab === 'favorites'} icon={BookmarkIcon} onNavigate={handleSidebarNavigation}>Favoris</SidebarLink>
 					<SidebarLink href="/app/profil?tab=settings" active={activeTab === 'settings'} icon={SettingsIcon} onNavigate={handleSidebarNavigation}>Paramètres</SidebarLink>
-					<SidebarLink href="/documents" icon={DocumentIcon} onNavigate={() => setIsDocumentsNoticeOpen(true)}>Documents</SidebarLink>
+					<SidebarLink href="/app/profil?tab=documents" active={activeTab === 'documents'} icon={DocumentIcon} onNavigate={handleSidebarNavigation}>Documents</SidebarLink>
 				</div>
 
 				<div className="mt-6 grid gap-4 sm:grid-cols-2 xl:mt-auto xl:grid-cols-1 xl:gap-9">
@@ -94,6 +95,7 @@ export function ClientHeader({ activeTab, profile, profileAvatarFallback, setIsM
 		activeTab === 'settings' ? 'Paramètres'
 			: activeTab === 'favorites' ? 'Favoris'
 				: activeTab === 'calendar' ? 'Calendrier'
+					: activeTab === 'documents' ? 'Documents'
 					: 'Dashboard';
 
 	return (
@@ -210,7 +212,11 @@ export function ClientDashboardPanel({
 
 					<div className="space-y-2">
 						{filteredBillingItems.length > 0 ? filteredBillingItems.map((item) => (
-							<InvoiceItem key={`${billingView}-${item}`} label={item} kind={billingView === 'quotes' ? 'quote' : 'invoice'} />
+							<InvoiceItem
+								key={`${billingView}-${item.id || item.number || item.title}`}
+								document={item}
+								kind={billingView === 'quotes' ? 'quote' : 'invoice'}
+							/>
 						)) : (
 							<div className="rounded-[16px] border border-dashed border-black/10 bg-white/55 px-4 py-5 text-[0.92rem] text-black/42">
 								Aucun {billingView === 'invoices' ? 'document de facturation' : 'devis'} ne correspond à cette recherche.
@@ -259,7 +265,19 @@ export function ClientTabContent(props) {
 				) : activeTab === 'favorites' ? (
 					<FavoritesPanel />
 				) : activeTab === 'calendar' ? (
-					<CalendarPage embedded />
+					<CalendarPage
+						embedded
+						role="client"
+						reservations={props.reservations}
+						onReservationsChange={props.onReservationsChange}
+					/>
+				) : activeTab === 'documents' ? (
+					<DocumentsPage
+						embedded
+						initialProfile={profile}
+						initialReservations={props.reservations}
+						initialDocuments={props.documents}
+					/>
 				) : (
 					<ClientDashboardPanel {...props} />
 				)}

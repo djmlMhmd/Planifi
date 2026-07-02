@@ -23,11 +23,12 @@ export default function ProfilePage({ variant = 'client' }) {
 			try {
 				// Promise.all lance les deux requêtes en même temps,
 				// donc j'évite d'attendre l'une puis l'autre pour rien.
+				const reservationsEndpoint =
+					variant === 'professional' ? '/reservation' : '/reservation/client';
+
 				const [profileResponse, reservationsResponse] = await Promise.all([
 					fetchWithTimeout(endpoint, { credentials: 'same-origin' }),
-					variant === 'client'
-						? fetchWithTimeout('/reservation/client', { credentials: 'same-origin' })
-						: Promise.resolve(null),
+					fetchWithTimeout(reservationsEndpoint, { credentials: 'same-origin' }),
 				]);
 
 				if (!profileResponse.ok) {
@@ -45,7 +46,7 @@ export default function ProfilePage({ variant = 'client' }) {
 				const profilePayload = await readJsonSafely(profileResponse);
 				let reservations = [];
 
-				if (variant === 'client' && reservationsResponse && reservationsResponse.ok) {
+				if (reservationsResponse && reservationsResponse.ok) {
 					const reservationsPayload = await readJsonSafely(reservationsResponse);
 					reservations = reservationsPayload?.message ?? [];
 				}
@@ -99,7 +100,7 @@ export default function ProfilePage({ variant = 'client' }) {
 	}
 
 	if (variant === 'professional') {
-		return <ProfessionalDashboardShell profile={state.profile} />;
+		return <ProfessionalDashboardShell profile={state.profile} reservations={state.reservations} />;
 	}
 
 	function handleClientProfileUpdated(nextProfile) {

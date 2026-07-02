@@ -3,7 +3,6 @@ import prestatLogo from '../../assets/prestat-logo.svg';
 import navigationPlaceholder from '../../assets/navigation-placeholder.jpg';
 import { navigateTo } from '../../lib/navigation';
 import { ModalPortal } from '../ProfilePage/ProfilePage.shared';
-import Reveal from '../Reveal/Reveal';
 
 function SearchIcon({ className = '' }) {
 	return (
@@ -342,6 +341,7 @@ export default function NavigationPage() {
 	const [favorites, setFavorites] = useState(() => new Set());
 	const [toast, setToast] = useState(null);
 	const [providers, setProviders] = useState([]);
+	const [loadError, setLoadError] = useState('');
 	const [isMobileProviderPanelOpen, setIsMobileProviderPanelOpen] = useState(false);
 	const [mobilePanelOffset, setMobilePanelOffset] = useState(0);
 	const touchStartXRef = useRef(null);
@@ -452,6 +452,10 @@ export default function NavigationPage() {
 
 		async function loadPageData() {
 			try {
+				if (!cancelled) {
+					setLoadError('');
+				}
+
 				// On relit les params au moment du fetch (au cas où l'URL a changé)
 				const params = new URLSearchParams(window.location.search);
 				const q = params.get('q') || '';
@@ -468,14 +472,19 @@ export default function NavigationPage() {
 					fetch(servicesUrl, { credentials: 'same-origin' }),
 				]);
 
-				if (!profileResponse.ok || !servicesResponse.ok) {
+				// Je n'empêche pas l'affichage des prestataires si seule la route profil échoue.
+				// La page découvrir doit rester utile même si le chargement du profil a raté.
+				if (!servicesResponse.ok) {
+					if (!cancelled) {
+						setProviders([]);
+						setSelectedId(null);
+						setLoadError('Impossible de charger les prestataires pour le moment.');
+					}
 					return;
 				}
 
-				const [profilePayload, servicesPayload] = await Promise.all([
-					profileResponse.json(),
-					servicesResponse.json(),
-				]);
+				const servicesPayload = await servicesResponse.json();
+				const profilePayload = profileResponse.ok ? await profileResponse.json() : null;
 
 				if (!cancelled) {
 					if (profilePayload?.message) {
@@ -484,11 +493,16 @@ export default function NavigationPage() {
 
 					const nextProviders = buildNavigationProviders(servicesPayload?.message || []);
 					setProviders(nextProviders);
+					setLoadError('');
 					// On remet la sélection sur le premier résultat à chaque nouvelle recherche
 					setSelectedId(nextProviders[0]?.id || null);
 				}
 			} catch {
-				// On garde un écran vide si le backend n'est pas joignable.
+				if (!cancelled) {
+					setProviders([]);
+					setSelectedId(null);
+					setLoadError('Impossible de charger les prestataires pour le moment.');
+				}
 			}
 		}
 
@@ -517,7 +531,7 @@ export default function NavigationPage() {
 		<main className="min-h-screen animate-[pageEnter_280ms_cubic-bezier(0.22,1,0.36,1)] bg-[linear-gradient(180deg,#fafafa_0%,#ffffff_46%,#f4f4f2_100%)] text-[#1b1b1d]">
 			<section className="px-4 pb-12 pt-5 xl:px-8">
 				<div className="mx-auto w-full max-w-[1480px]">
-				<Reveal from="bottom" className="mb-8">
+				<div className="mb-8">
 					<button
 						type="button"
 						className="inline-flex items-center gap-2 rounded-full bg-[#0a0a0a] px-4 py-1.5 text-[0.85rem] font-medium text-white shadow-[0_10px_24px_rgba(10,10,10,0.18)] transition hover:-translate-y-px hover:opacity-90"
@@ -525,11 +539,11 @@ export default function NavigationPage() {
 						<FilterIcon className="h-4 w-4" />
 						<span>Filtres</span>
 					</button>
-				</Reveal>
+				</div>
 
 				<div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_420px]">
 					<div className="min-w-0">
-						<Reveal from="bottom" delay={80} className="mb-8">
+						<div className="mb-8">
 							{/* On affiche les termes de recherche venant de l'URL */}
 							<h1 className="text-[clamp(1.8rem,3vw,2.55rem)] font-semibold tracking-[-0.04em] text-[#161616]">
 								{searchQuery
@@ -549,48 +563,49 @@ export default function NavigationPage() {
 									</button>
 								) : null}
 							</div>
-						</Reveal>
+						</div>
 
 						<div className="flex flex-col gap-5">
+							{loadError ? (
+								<p className="text-[1rem] text-[#6e6e73]">
+									{loadError}
+								</p>
+							) : null}
+
 							{/* Si la recherche ne donne aucun résultat, on affiche un message */}
-							{providers.length === 0 && (searchQuery || searchVille) ? (
-								<div className="rounded-2xl border border-black/8 bg-white p-8 text-center shadow-sm">
-									<p className="text-[1.1rem] font-medium text-[#333]">
-										Aucun résultat pour &ldquo;{searchQuery}{searchVille ? ` à ${searchVille}` : ''}&rdquo;
-									</p>
-									<p className="mt-2 text-[0.95rem] text-[#888]">
-										Essaie d&apos;autres mots-clés ou consulte tous les prestataires.
+							{!loadError && providers.length === 0 && (searchQuery || searchVille) ? (
+								<div className="space-y-3">
+									<p className="text-[1rem] text-[#6e6e73]">
+										Aucun résultat pour &ldquo;{searchQuery}{searchVille ? ` à ${searchVille}` : ''}&rdquo;.
 									</p>
 									<button
 										type="button"
 										onClick={() => navigateTo('/navigation')}
-										className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--accent-mauve-soft)] px-5 py-2.5 text-[0.9rem] font-medium text-[var(--accent-mauve)] shadow transition hover:opacity-85"
+										className="inline-flex items-center gap-2 rounded-full border border-black/12 px-4 py-2 text-[0.92rem] font-medium text-[#1b1b1d] transition hover:border-black/28 hover:bg-black/3"
 									>
 										Voir tous les prestataires
 									</button>
 								</div>
+							) : !loadError && providers.length === 0 ? (
+								<p className="text-[1rem] text-[#6e6e73]">
+									Aucun prestataire à afficher pour le moment.
+								</p>
 							) : (
-								providers.map((provider, index) => (
-									<Reveal key={provider.id} from="bottom" delay={160 + index * 90}>
-										<NavigationCard
-											item={provider}
-											selected={provider.id === selectedProvider?.id}
-											onSelect={handleSelectProvider}
-											isFavorite={favorites.has(provider.id)}
-											onToggleFavorite={toggleFavorite}
-										/>
-									</Reveal>
+								providers.map((provider) => (
+									<NavigationCard
+										key={provider.id}
+										item={provider}
+										selected={provider.id === selectedProvider?.id}
+										onSelect={handleSelectProvider}
+										isFavorite={favorites.has(provider.id)}
+										onToggleFavorite={toggleFavorite}
+									/>
 								))
 							)}
 						</div>
 					</div>
 
-						<Reveal
-							as="aside"
-							from="right"
-							delay={140}
-							className="hidden xl:sticky xl:top-[7.25rem] xl:block xl:self-start xl:max-h-[calc(100vh-8.5rem)] xl:overflow-y-auto xl:pr-1"
-						>
+						<aside className="hidden xl:sticky xl:top-[7.25rem] xl:block xl:self-start xl:max-h-[calc(100vh-8.5rem)] xl:overflow-y-auto xl:pr-1">
 						<div className="transition-[opacity,filter] duration-180 ease-out">
 						{selectedProvider ? (
 							<>
@@ -686,7 +701,7 @@ export default function NavigationPage() {
 							</div>
 						)}
 						</div>
-					</Reveal>
+					</aside>
 				</div>
 				</div>
 			</section>

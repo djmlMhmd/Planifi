@@ -12,13 +12,15 @@ const {
 	createTableReservation,
 	createTableAvailability,
 	createTableNotation,
+	createTableDocuments,
 	createTableImagesServicesProfessionals,
+	seedDemoDocuments,
 } = require('./db/database');
 const path = require('path');
 const app = express();
 const reactDistPath = path.join(__dirname, 'client', 'dist');
 
-const port = 3000;
+const port = Number(process.env.PORT) || 3000;
 const disconnect = require('./routes/disconnect');
 const routes = require('./routes/authentication');
 const profilRoutes = require('./routes/profil');
@@ -28,18 +30,22 @@ const secretKey = process.env.SECRET_KEY;
 const indexRoutes = require('./routes/index');
 const serviceRouter = require('./routes/services');
 const professionalRoutes = require('./routes/professionalsRoute');
+const documentsRoutes = require('./routes/documents');
 const {logLogger} = require("./config/winston/winston.config");
 const {alterInTables} = require("./db/alterDatabase");
 connectToDatabase()
-	.then(() => {
-		createTableUser();
-		createTableProAccount();
-		createTableService();
-		createTableAvailability();
-		createTableReservation();
-		createTableNotation();
-		alterInTables();
-		createTableImagesServicesProfessionals();
+	.then(async () => {
+		// Je garde l'initialisation dans un ordre lisible pour éviter les seeds avant les tables utiles.
+		await createTableUser();
+		await createTableProAccount();
+		await createTableService();
+		await createTableAvailability();
+		await createTableReservation();
+		await createTableNotation();
+		await createTableDocuments();
+		await alterInTables();
+		await createTableImagesServicesProfessionals();
+		await seedDemoDocuments();
 	})
 	.catch(() => {
 		logLogger(
@@ -48,7 +54,6 @@ connectToDatabase()
 		);
 	});
 
-app.use('/service', serviceRouter);
 app.use(
 	session({
 		secret: secretKey,
@@ -77,9 +82,11 @@ app.use('/', indexRoutes);
 app.use(disconnect);
 app.use(routes);
 app.use(profilRoutes);
+app.use(serviceRouter);
 app.use(availability);
 app.use(reservation);
 app.use(professionalRoutes);
+app.use(documentsRoutes);
 app.use(express.urlencoded({ extended: true }));
 
 if (fs.existsSync(reactDistPath)) {
@@ -91,7 +98,19 @@ if (fs.existsSync(reactDistPath)) {
 		res.sendFile(path.join(reactDistPath, 'index.html'));
 	});
 }
-// permet de lancer serveur web
-app.listen(port, () => {
+// Je garde une erreur lisible si le port est déjà pris au lieu de laisser Node crasher sans contexte métier.
+const server = app.listen(port, () => {
 	logLogger(`App listening port ${port}`, 'App');
+});
+
+server.on('error', (error) => {
+	if (error?.code === 'EADDRINUSE') {
+		console.error(
+			`Le port ${port} est déjà utilisé. ` +
+			`Arrête le process en cours ou relance avec un autre port, par exemple: PORT=3001 npm run dev`
+		);
+		process.exit(1);
+	}
+
+	throw error;
 });
